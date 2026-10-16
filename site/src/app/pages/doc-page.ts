@@ -17,7 +17,9 @@ export class DocPage {
   private readonly router = inject(Router);
   private readonly sanitizer = inject(DomSanitizer);
 
-  protected readonly sections = SECTIONS.map((name) => ({name, pages: DOCS.filter((d) => d.section === name)}));
+  protected readonly sections = SECTIONS.map((name) => ({name, pages: DOCS.filter((d) => d.section === name)})).filter(
+    (section) => section.pages.length > 0,
+  );
   // The HTML comes from this repo's own markdown, compiled at build time.
   protected readonly html = computed(() => this.sanitizer.bypassSecurityTrustHtml(this.doc().html));
   protected readonly neighbours = computed(() => {

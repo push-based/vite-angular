@@ -41,8 +41,8 @@ export const DOCS: DocEntry[] = [
   {path: 'type-checking', label: 'Type-checking', section: 'Features', load: () => import('../../content/type-checking.md').then((m) => m.default)},
   {path: 'styles', label: 'Component styles', section: 'Features', load: () => import('../../content/styles.md').then((m) => m.default)},
   {path: 'i18n', label: 'Internationalization', section: 'Features', load: () => import('../../content/i18n.md').then((m) => m.default)},
-  {path: 'performance', label: 'Performance', section: 'Features', load: () => import('../../content/performance.md').then((m) => m.default)},
   {path: 'status', label: 'Status and limits', section: 'Project', load: () => import('../../content/status.md').then((m) => m.default)},
+  {path: 'performance', label: 'Performance', section: 'Project', load: () => import('../../content/performance.md').then((m) => m.default)},
   {path: 'building-ngp', label: 'Building ngp', section: 'Project', load: () => import('../../content/building-ngp.md').then((m) => m.default)},
   {path: 'changelog', label: 'Changelog', section: 'Project', load: () => import('../../content/changelog.md').then((m) => m.default)},
 ];

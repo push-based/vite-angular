@@ -24,7 +24,7 @@ export default defineConfig({
 
 The entry renders one page. Its default export takes the URL and the contents of `index.html`, and resolves to the rendered HTML. This site's `src/main.server.ts`:
 
-```ts
+```ts title="src/main.server.ts"
 import {mergeApplicationConfig} from '@angular/core';
 import {bootstrapApplication, type BootstrapContext} from '@angular/platform-browser';
 import {provideServerRendering, renderApplication} from '@angular/platform-server';
@@ -42,7 +42,8 @@ export default function render(url: string, document: string): Promise<string> {
 }
 ```
 
-`allowedHosts` matters: Angular refuses to render a URL whose host it hasn't been told to trust, with error `NG05706`. List the hosts your server answers for.
+> [!IMPORTANT]
+> `allowedHosts` matters: Angular refuses to render a URL whose host it hasn't been told to trust, with error `NG05706`. List the hosts your server answers for.
 
 The browser side adds hydration, so Angular reuses the server's DOM instead of rendering the page again:
 

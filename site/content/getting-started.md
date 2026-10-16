@@ -46,9 +46,10 @@ The plugin isn't on npm either. Install it from your clone, after `pnpm build` i
 pnpm add -D ../vite-angular/packages/vite-plugin-ngp vite@8.3.4
 ```
 
-Pin every `@angular/*` package to exactly `22.3.0-next.2`, the release built from the same commit as ngp. Any other version fails, because ngp imports private APIs from `@angular/compiler-cli`:
+> [!WARNING]
+> Pin every `@angular/*` package to exactly `22.3.0-next.2`, the release built from the same commit as ngp. Any other version fails, because ngp imports private APIs from `@angular/compiler-cli`.
 
-```json
+```json title="package.json"
 {
   "dependencies": {
     "@angular/common": "22.3.0-next.2",
@@ -66,7 +67,7 @@ Pin every `@angular/*` package to exactly `22.3.0-next.2`, the release built fro
 
 Then add the plugin to `vite.config.ts`, pointing it at the ngp build:
 
-```ts
+```ts title="vite.config.ts"
 import {defineConfig} from 'vite';
 import {ngp} from 'vite-plugin-ngp';
 
@@ -81,7 +82,7 @@ You can also leave out `toolchain` and set the `NGP_TOOLCHAIN` environment varia
 
 Vite starts from `index.html`, not from `angular.json`. Put one in your project root that loads `src/main.ts`:
 
-```html
+```html title="index.html"
 <!doctype html>
 <html lang="en">
   <head>
@@ -95,9 +96,12 @@ Vite starts from `index.html`, not from `angular.json`. Put one in your project 
 </html>
 ```
 
-Keep `main.ts` as it is. Don't import `@angular/compiler`: the plugin links Angular's libraries ahead of time, so the browser never needs the JIT compiler.
+Keep `main.ts` as it is.
 
-```ts
+> [!NOTE]
+> Don't import `@angular/compiler`. The plugin links Angular's libraries ahead of time, so the browser never needs the JIT compiler, and importing it adds the whole compiler to your bundle.
+
+```ts title="src/main.ts"
 import {bootstrapApplication} from '@angular/platform-browser';
 import {App} from './app/app';
 import {appConfig} from './app/app.config';

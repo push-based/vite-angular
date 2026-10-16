@@ -16,6 +16,7 @@ When you add or change anything a user of the plugin would see, update the match
 | What works, what doesn't, a new limit or a fixed one | `site/content/status.md` |
 | Setup steps, required versions, the toolchain | `site/content/getting-started.md`, `site/content/building-ngp.md` |
 | A number on the home page, or the home page's claims | `site/src/app/pages/home.ts` and `home.html` |
+| Anything above that a user would notice | also a line in `site/content/changelog.md`, under today's date, linking to the page that documents it |
 | A design choice | an entry in `docs/decisions.md`, and `docs/design.md` |
 
 Then check the docs and the site, and push:

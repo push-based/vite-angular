@@ -178,7 +178,7 @@ function compilerPlugin(options: NgpPluginOptions): Plugin & {configureVitest(co
     let owner: string | null = null;
     for (const [consumer, compiler] of compilers) {
       const ngp = await compiler;
-      const stale = await ngp.update(file, content, 'watcher');
+      const {stale} = await ngp.update(file, content, 'watcher');
       owner ??= file.endsWith('.html') ? await ngp.componentForTemplate(file) : null;
       for (const environment of Object.values(server.environments)) {
         if (environment.config.consumer !== consumer) {
@@ -299,17 +299,14 @@ function compilerPlugin(options: NgpPluginOptions): Plugin & {configureVitest(co
       hmr = env.command === 'serve' && options.hmr !== false && !testing;
       root = path.resolve(userConfig.root ?? process.cwd());
       if (testing) {
-        return {
-          define: {ngJitMode: 'false', ngHmrMode: 'false'},
-          // Vitest leaves node_modules to Node, which would load Angular libraries unlinked, and
-          // they'd need the JIT compiler. Inlining them sends them through the linker, and keeps
-          // one copy of @angular/core. Tests use devDependencies too.
-          test: {
-            server: {
-              deps: {inline: [/[\\/]node_modules[\\/]@angular[\\/]/, ...findAngularLibraries(root, {devDependencies: true}).map(packagePathPattern)]},
-            },
-          },
-        } as UserConfig;
+        // Vitest leaves node_modules to Node, which would load Angular libraries unlinked, and
+        // they'd need the JIT compiler. Inlining them sends them through the linker, and keeps
+        // one copy of @angular/core. Tests use devDependencies too.
+        const inline = [
+          /[\\/]node_modules[\\/]@angular[\\/]/,
+          ...findAngularLibraries(root, {devDependencies: true}).map(packagePathPattern),
+        ];
+        return {define: {ngJitMode: 'false', ngHmrMode: 'false'}, test: {server: {deps: {inline}}}} as UserConfig;
       }
       return {
         define: {

@@ -85,6 +85,11 @@ export interface HybridCompilerOptions {
    * the runtime to load them. Inline styles are compiled in either way.
    */
   externalRuntimeStyles: boolean;
+  /** Add legacy message ids (`␟<id>`) to each `$localize` message. ngp defaults to true, like ngc. */
+  enableI18nLegacyMessageIdFormat?: boolean;
+  i18nNormalizeLineEndingsInICUs?: boolean;
+  /** Closure Compiler message names only (`MSG_EXTERNAL_<id>`); no effect on `$localize`. */
+  i18nUseExternalIds?: boolean;
 }
 
 export interface NgpApi {

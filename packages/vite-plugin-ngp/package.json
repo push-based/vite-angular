@@ -10,7 +10,11 @@
       "default": "./dist/index.js"
     }
   },
+  "bin": {
+    "ngp-extract-i18n": "./bin/ngp-extract-i18n.js"
+  },
   "files": [
+    "bin",
     "dist"
   ],
   "scripts": {
@@ -21,11 +25,18 @@
     "@angular/compiler": "22.3.0-next.2",
     "@angular/compiler-cli": "22.3.0-next.2",
     "typescript": ">=6.0 <6.1",
-    "vite": "^8.3.0"
+    "vite": "^8.3.0",
+    "@angular/localize": "22.3.0-next.2"
+  },
+  "peerDependenciesMeta": {
+    "@angular/localize": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@angular/compiler": "22.3.0-next.2",
     "@angular/compiler-cli": "22.3.0-next.2",
+    "@angular/localize": "22.3.0-next.2",
     "@types/node": "26.6.5",
     "typescript": "6.0.3",
     "vite": "8.3.4",

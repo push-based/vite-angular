@@ -15,6 +15,7 @@ import {findAngularLibraries, packagePathPattern, packagePattern} from './angula
 import {budgetsPlugin, type Budget} from './budgets.js';
 import {NgpCompiler, type ComponentStyle, type HmrUpdate} from './compiler.js';
 import {writeEntryTsconfig} from './entry-tsconfig.js';
+import {i18nPlugin, type I18nOptions} from './i18n.js';
 import {link, LINKER_MARKER} from './linker.js';
 import {isSideEffectFree, optimize, OPTIMIZER_CANDIDATE} from './optimizer.js';
 import type {Engine} from './ngp-api.js';
@@ -95,6 +96,12 @@ export interface NgpPluginOptions {
    * plugin rewrite `async`/`await` so zone.js can track it.
    */
   polyfills?: string[];
+  /**
+   * Angular i18n: `i18n` attributes and `$localize`. `vite build` writes one folder per locale,
+   * translated at build time. The dev server serves `devLocale`, translated at runtime. Off by
+   * default: without it, `$localize` messages need `@angular/localize/init` loaded by the app.
+   */
+  i18n?: I18nOptions;
 }
 
 /** What the compiler plugin shares with the other plugins. */
@@ -112,6 +119,9 @@ interface Replacements {
   /** Replacement to replaced file. */
   byReplacement: Map<string, string>;
 }
+
+export type {I18nOptions} from './i18n.js';
+export {extractMessages, type ExtractOptions} from './extract.js';
 
 type Consumer = 'client' | 'server';
 
@@ -153,7 +163,9 @@ const PENDING_EDIT_MS = 1000;
 export function ngp(options: NgpPluginOptions = {}): Plugin[] {
   const replacements: Replacements = {byFile: new Map(), byReplacement: new Map()};
   const compiler = compilerPlugin(options, replacements);
-  const polyfills = options.polyfills ?? [];
+  // With i18n, the plugin loads `$localize` itself in dev, and builds translate it away, so a
+  // `@angular/localize` polyfill is dropped, as the CLI drops it when it inlines translations.
+  const polyfills = (options.polyfills ?? []).filter((p) => !(options.i18n && p.startsWith('@angular/localize')));
   return [
     compiler,
     ...(options.fileReplacements?.length ? [fileReplacementsPlugin(options.fileReplacements, replacements)] : []),
@@ -164,6 +176,7 @@ export function ngp(options: NgpPluginOptions = {}): Plugin[] {
     optimizerPlugin(),
     ...(polyfills.length > 0 ? [polyfillsPlugin(polyfills, () => compiler.api.entries())] : []),
     ...(usesZone(polyfills) ? [zoneAsyncPlugin()] : []),
+    ...(options.i18n ? [i18nPlugin(options.i18n, () => compiler.api.entries())] : []),
   ];
 }
 
@@ -469,6 +482,8 @@ function compilerPlugin(
       return {
         define: {
           ngJitMode: 'false',
+          // `$localize`, never Closure's goog.getMsg, for i18n messages.
+          ngI18nClosureMode: 'false',
           ngHmrMode: String(hmr),
           ...(env.command === 'build' ? {ngDevMode: 'false'} : {}),
         },

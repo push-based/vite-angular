@@ -45,6 +45,9 @@ importers:
       '@angular/compiler-cli':
         specifier: 22.3.0-next.2
         version: 22.3.0-next.2(@angular/compiler@22.3.0-next.2)(typescript@6.0.3)
+      '@angular/localize':
+        specifier: 22.3.0-next.2
+        version: 22.3.0-next.2(@angular/compiler-cli@22.3.0-next.2(@angular/compiler@22.3.0-next.2)(typescript@6.0.3))(@angular/compiler@22.3.0-next.2)
       '@types/node':
         specifier: 26.6.5
         version: 26.6.5
@@ -189,6 +192,14 @@ packages:
         optional: true
       zone.js:
         optional: true
+
+  '@angular/localize@22.3.0-next.2':
+    resolution: {integrity: sha512-Q0+i9GURr6A6jUIi5N4b/2ev8ZKDKfcZ1e1B9u6jT+wb1/mryB+8sJnFD3sT7a+E/2wRkNk5GCQuT+HjYzi+HQ==}
+    engines: {node: ^22.22.3 || ^24.15.0 || >=26.0.0}
+    hasBin: true
+    peerDependencies:
+      '@angular/compiler': 22.3.0-next.2
+      '@angular/compiler-cli': 22.3.0-next.2
 
   '@angular/platform-browser@22.3.0-next.2':
     resolution: {integrity: sha512-/KrZjns+lbZx9pMpWLI1E7C5y8B5veA8D/5dWJnNuiUmbAWevaEGpsMl1xGnopuE8JrJvUEOI2aSU4oT729FIQ==}
@@ -1534,6 +1545,14 @@ snapshots:
     optionalDependencies:
       '@angular/compiler': 22.3.0-next.2
       zone.js: 0.16.3
+
+  '@angular/localize@22.3.0-next.2(@angular/compiler-cli@22.3.0-next.2(@angular/compiler@22.3.0-next.2)(typescript@6.0.3))(@angular/compiler@22.3.0-next.2)':
+    dependencies:
+      '@angular/compiler': 22.3.0-next.2
+      '@angular/compiler-cli': 22.3.0-next.2(@angular/compiler@22.3.0-next.2)(typescript@6.0.3)
+      '@babel/core': 8.0.7
+      tinyglobby: 0.2.17
+      yargs: 18.2.0
 
   '@angular/platform-browser@22.3.0-next.2(@angular/common@22.3.0-next.2(@angular/core@22.3.0-next.2(@angular/compiler@22.3.0-next.2)(rxjs@7.8.2)(zone.js@0.16.3))(rxjs@7.8.2))(@angular/core@22.3.0-next.2(@angular/compiler@22.3.0-next.2)(rxjs@7.8.2)(zone.js@0.16.3))':
     dependencies:

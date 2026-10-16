@@ -87,6 +87,11 @@ export class NgpCompiler {
       enableHmr: options.enableHmr,
       // Stylesheets go through Vite's CSS pipeline instead: see styles.ts.
       externalRuntimeStyles: true,
+      // The i18n options ngc reads from angularCompilerOptions. They change the message ids in the
+      // `$localize` calls ngp emits, so they have to match what the translation files were made with.
+      enableI18nLegacyMessageIdFormat: ngOptions['enableI18nLegacyMessageIdFormat'] as boolean | undefined,
+      i18nNormalizeLineEndingsInICUs: ngOptions['i18nNormalizeLineEndingsInICUs'] as boolean | undefined,
+      i18nUseExternalIds: ngOptions['i18nUseExternalIds'] as boolean | undefined,
     };
     const hybrid = new api.HybridCompiler(analyzer, hybridOptions);
     const typeCheckHybrid = new api.HybridCompiler(analyzer, {...hybridOptions, enableHmr: false, preserveWhitespaces: true});

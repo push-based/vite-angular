@@ -8,9 +8,10 @@
     "build": "pnpm -r --filter ./packages/* build",
     "dev": "pnpm build && pnpm --filter playground dev",
     "playground:build": "pnpm build && pnpm --filter playground build",
-    "test": "pnpm build && NGP_TOOLCHAIN=\"$PWD/toolchain/out\" pnpm --filter vite-plugin-ngp test",
+    "test": "pnpm build && NGP_TOOLCHAIN=\"$PWD/toolchain/out\" pnpm --filter vite-plugin-ngp test && pnpm docs:check",
     "site:dev": "pnpm build && pnpm --filter site dev",
-    "site:build": "pnpm build && pnpm --filter site build"
+    "site:build": "pnpm build && pnpm --filter site build",
+    "docs:check": "node site/scripts/check-docs.ts"
   },
   "engines": {
     "node": ">=26.0.0"

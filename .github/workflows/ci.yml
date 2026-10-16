@@ -38,3 +38,7 @@ jobs:
       - run: pnpm test
 
       - run: pnpm playground:build
+
+      # `pnpm test` above also runs the docs check (site/scripts/check-docs.ts). This makes sure the
+      # site itself builds and prerenders, so a broken page fails CI before it fails a deploy.
+      - run: pnpm site:build

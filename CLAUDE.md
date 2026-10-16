@@ -18,11 +18,17 @@ When you add or change anything a user of the plugin would see, update the match
 | A number on the home page, or the home page's claims | `site/src/app/pages/home.ts` and `home.html` |
 | A design choice | an entry in `docs/decisions.md`, and `docs/design.md` |
 
-Then check the site builds and push:
+Then check the docs and the site, and push:
+
+```bash
+pnpm docs:check
+```
 
 ```bash
 pnpm site:build
 ```
+
+`pnpm docs:check` (also part of `pnpm test`, and of CI) fails when a plugin option has no row in the Configuration table, when a page isn't in the sidebar or a sidebar entry has no page, when a page has no title or description, and when a link between pages points at a page or heading that doesn't exist. It can't tell whether what a page *says* is still true. That part is on you: reread the pages your change touches.
 
 ```bash
 git push

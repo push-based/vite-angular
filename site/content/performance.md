@@ -15,7 +15,7 @@ Four toolchains, each with its own README's setup and nothing else, on the same 
 
 | Toolchain | Version | Type-checks? |
 |---|---|---|
-| vite-plugin-ngp | the repo at the time of the run | yes: in a background process in dev, and before `vite build` finishes |
+| vite-plugin-ngp | the repo at commit `33b8ecd` | yes: in a background process in dev, and before `vite build` finishes |
 | Angular CLI, `ng serve` and `ng build` | `@angular/build` 22.3.0-next.2 | yes, in both |
 | Analog, `@analogjs/vite-plugin-angular` | 2.8.2-beta.1, with a one-line patch (see [below](performance#where-these-numbers-are-weak)) | no: `disableTypeChecking` is on by default |
 | `@oxc-angular/vite` | 0.0.41 | no, by design |
@@ -143,7 +143,7 @@ If your app is large and you use `ng serve`, the dev server is where the plugin 
 
 ## Where these numbers are weak
 
-- **One laptop, with other work running.** An Apple M2 Max with 12 cores and 32 GB, on macOS 27, Node 26.12.0, headless Chrome 155. Other development sessions were building and testing on the same machine. Each start and build waited for the 1-minute load average to drop below 6, and samples ran at loads between 2.8 and 8.2. That keeps them out of the worst spikes, not out of all of them. The same measurement can drift between runs: the plugin's cold start at 5,000 components was 1.87 seconds in the main run and 2.11 seconds in a run an hour later. Starts and builds ran in rounds, one toolchain after another, so a drift lands on every toolchain in a table alike. Compare toolchains within a table, not with numbers from another run or machine.
+- **One laptop, with other work running.** An Apple M2 Max with 12 cores and 32 GB, on macOS 27, Node 26.12.0, headless Chrome 155. Other development sessions were building and testing on the same machine. Each start and build waited for the 1-minute load average to drop below 6, and samples ran at loads between 2.8 and 8.2. That keeps them out of the worst spikes, not out of all of them. The same measurement can drift between runs: the plugin's cold start at 5,000 components was 1.87 seconds in the main run and 2.11 seconds in a run an hour later. Starts and builds ran in rounds, one toolchain after another, so a drift lands on every toolchain in a table alike. Compare toolchains within a table, not with numbers from another run or machine. The plugin changed after the main run, with i18n and the `ng build` options. A recheck at 5,000 components on commit `32b209c` gave the same build time, bundle size and edit times.
 - **Generated apps.** They're realistic in shape, but they're not your app: no third-party libraries beyond Angular, no large stylesheets, a global stylesheet of a few lines. The playground is the only hand-written app, and it's small.
 - **Cold means the toolchains' caches, not the operating system's.** The file system cache was warm for every run. A first start after a reboot would be slower for everyone.
 - **One kind of edit each.** Adding an element to a template, and changing a string in a class. An edit that adds an import or a new component can cost more, and wasn't measured.

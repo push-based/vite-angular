@@ -142,3 +142,17 @@ vite-plugin-ngp at 5,000 components with its default background type-check and w
 |---|---:|---:|---:|
 | `typeCheck` on (default) | 2.11 s | 140 ms (72 ms) | 204 ms (128 ms) |
 | `typeCheck: false` | 1.96 s | 175 ms (74 ms) | 190 ms (186 ms) |
+
+### Recheck on a later plugin (`2026-10-16-spotcheck-main.json`)
+
+vite-plugin-ngp at `32b209c`, after i18n and the `ng build` options landed, with `@oxc-angular/vite` alongside to show the machine's drift. 3 runs.
+
+| At 5,000 components | vite-plugin-ngp | @oxc-angular/vite |
+|---|---:|---:|
+| Cold start to FCP | 2.13 s | 1.57 s |
+| Template edit (fastest) | 168 ms (74 ms) | 119 ms (17 ms) |
+| `.ts` edit (fastest) | 209 ms (129 ms) | 182 ms (180 ms) |
+| Production build | 20.3 s | 1.50 s |
+| All JS, gzip | 2,342 kB | 1,506 kB |
+
+Builds, sizes and edits match the main run. Cold starts are slower for both, oxc's by more (1.13 → 1.57 s) than ngp's (1.87 → 2.13 s), and oxc didn't change, so that's the machine, not the plugin.

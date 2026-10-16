@@ -55,7 +55,8 @@ export function environment(chromeVersion) {
     ),
     patches: fs.existsSync(path.join(BENCH, 'patches')) ? fs.readdirSync(path.join(BENCH, 'patches')) : [],
     ngp: {
-      toolchain,
+      // Relative to the repo, so result files don't carry a home directory.
+      toolchain: path.relative(REPO, toolchain) || '.',
       versions: fs.existsSync(versionsEnv) ? fs.readFileSync(versionsEnv, 'utf8').trim() : null,
       plugin: sh('git', ['-C', REPO, 'log', '-1', '--format=%h', '--', 'packages/vite-plugin-ngp']),
     },

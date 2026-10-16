@@ -221,6 +221,13 @@
           <context context-type="linenumber">45</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="2169188887740160937" datatype="html">
+        <source>{VAR_PLURAL, plural, =1 {One page, each compiled on first visit.} other {<x id="INTERPOLATION"/> pages, each compiled on first visit.}}</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
+          <context context-type="linenumber">45</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="4101941266124151376" datatype="html">
         <source>on</source>
         <context-group purpose="location">
@@ -241,13 +248,6 @@
       </trans-unit>
       <trans-unit id="2799754130116914133" datatype="html">
         <source>connected</source>
-        <context-group purpose="location">
-          <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
-          <context context-type="linenumber">45</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="7851122650020448934" datatype="html">
-        <source>{VAR_PLURAL, plural, =1 {+1 more} other {+<x id="INTERPOLATION"/> more}}</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
           <context context-type="linenumber">45</context>

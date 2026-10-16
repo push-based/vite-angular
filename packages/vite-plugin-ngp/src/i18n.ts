@@ -191,6 +191,11 @@ export function i18nPlugin(options: I18nOptions, getEntries: (root: string) => s
       },
     },
 
+    // In dev, the page is in the dev locale's language. Builds set it per locale in generateBundle.
+    transformIndexHtml(html) {
+      return command === 'serve' ? localizeHtmlLang(html, devLocaleOf(options, locales).code) : html;
+    },
+
     // Editing a translation file reloads the page with the new text.
     hotUpdate({file}) {
       const locale = devLocaleOf(options, locales);
@@ -397,15 +402,18 @@ export async function translateChunk(
   return {code: result?.code ?? code, map: result?.map ?? null, diagnostics: diagnostics.messages};
 }
 
-/** Sets `<html lang>` and `<base href>`, adding the base element when the page has none. */
-export function localizeHtml(html: string, lang: string, baseHref: string): string {
-  let out = /<html\b[^>]*\blang=/i.test(html)
+function localizeHtmlLang(html: string, lang: string): string {
+  return /<html\b[^>]*\blang=/i.test(html)
     ? html.replace(/(<html\b[^>]*\blang=)("[^"]*"|'[^']*'|[^\s>]+)/i, `$1"${lang}"`)
     : html.replace(/<html\b/i, `<html lang="${lang}"`);
-  out = /<base\b[^>]*>/i.test(out)
+}
+
+/** Sets `<html lang>` and `<base href>`, adding the base element when the page has none. */
+export function localizeHtml(html: string, lang: string, baseHref: string): string {
+  const out = localizeHtmlLang(html, lang);
+  return /<base\b[^>]*>/i.test(out)
     ? out.replace(/<base\b[^>]*>/i, `<base href="${baseHref}">`)
     : out.replace(/<head\b[^>]*>/i, (head) => `${head}\n    <base href="${baseHref}">`);
-  return out;
 }
 
 function joinBase(base: string, subPath: string): string {

@@ -1,5 +1,5 @@
 import type {ApplicationConfig} from '@angular/core';
-import {provideClientHydration, withEventReplay} from '@angular/platform-browser';
+import {provideClientHydration, withEventReplay, withI18nSupport} from '@angular/platform-browser';
 import {provideRouter, withComponentInputBinding, withInMemoryScrolling, withViewTransitions} from '@angular/router';
 import {routes} from './routes';
 
@@ -15,7 +15,8 @@ export const appConfig: ApplicationConfig = {
       withInMemoryScrolling({scrollPositionRestoration: 'top', anchorScrolling: 'enabled'}),
     ),
     // The browser takes over the server-rendered DOM instead of rendering it again, and replays
-    // clicks that happen before it has.
-    provideClientHydration(withEventReplay()),
+    // clicks that happen before it has. Without withI18nSupport, Angular hydrates no component
+    // that has an i18n block, and the shell has several.
+    provideClientHydration(withEventReplay(), withI18nSupport()),
   ],
 };

@@ -1,0 +1,3 @@
+node_modules/
+# Generated apps, their caches and build output
+.work/

@@ -1,0 +1,5 @@
+packages:
+  - .
+
+patchedDependencies:
+  '@analogjs/vite-plugin-angular@2.8.2-beta.1': patches/@analogjs__vite-plugin-angular@2.8.2-beta.1.patch

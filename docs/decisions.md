@@ -147,3 +147,27 @@ Each entry records one choice: what we decided, why, what it costs, and when to 
 **Why.** Without `ngDevMode: false`, a production build ran Angular's dev-mode checks and logged "Angular is running in development mode". With these globals the playground bundle shrank from 589 kB to 386 kB, because the minifier drops the dev-only and JIT branches.
 
 **Cost.** `ngJitMode: false` breaks any code that compiles components at runtime. That's rare in apps, and it's the CLI's default for AOT builds too.
+
+## 15. Component HMR for external template edits only
+
+*16 October 2026*
+
+**Decision.** Only an edit to a component's external template is applied in place. Any edit to a `.ts` file reloads the page, even one that only touches the decorator's inline `template` or `styles`.
+
+**Why.** An update module replaces a component's definition, but its dependencies come from the module that's already running. A template edit can't change those dependencies. A `.ts` edit can: a new entry in `imports` needs a component the running module doesn't have, and a selector change alters parent components' output. The CLI decides this with its own analysis of what changed. Reloading for every `.ts` edit is always correct, so it's the safe first version.
+
+**Cost.** Inline templates and inline styles reload, which is most of the playground's components. External styles can't use HMR yet either, because the plugin doesn't handle them.
+
+**Revisit when** we can tell that a `.ts` edit only changed the decorator's `template` or `styles`. ngp's metadata includes the decorator span (`removalSpans`) and `component.argsSpan`, which is a starting point.
+
+## 16. Stop Vite's page reload with an untransformed template node
+
+*16 October 2026*
+
+**Decision.** For a template edit handled by HMR, `hotUpdate` returns `ensureEntryFromUrl(templateUrl, false)`: a module node for the `.html` file that Vite has never transformed.
+
+**Why.** Vite's docs say a hook can return `[]` and send its own event. For a `.html` file in the client environment, though, Vite treats no modules as a page change and reloads. Vite stops propagation at a node whose `isSelfAccepting` is still undefined, because it hasn't been analyzed. That gives "handled, nothing to reload".
+
+**Cost.** It depends on undocumented propagation behavior in Vite 8.3. If Vite changes it, template edits will reload again, with nothing failing loudly. The playground HMR check would catch that.
+
+**Revisit when** Vite offers a supported way to mark a `.html` file as not a page, or on every Vite minor upgrade.

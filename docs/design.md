@@ -16,13 +16,17 @@ Nobody else has a Vite plugin on ngp. The Angular CLI plans ngp as a per-file tr
 
 ## How it works
 
-Four pieces, all in [packages/vite-plugin-ngp/src](../packages/vite-plugin-ngp/src):
+The pieces, all in [packages/vite-plugin-ngp/src](../packages/vite-plugin-ngp/src):
 
 **Loading ngp** ([ngp-api.ts](../packages/vite-plugin-ngp/src/ngp-api.ts)). ngp isn't on npm. The plugin imports `preprocessor/api.js` from a toolchain directory built by the bench repo's `pnpm toolchain`. It passes the native engine's path to `createAnalyzer` explicitly, so the loader can't fall back to wasm without anyone noticing. The bench measured wasm at up to twice native's time.
 
 **Compiling a module** ([compiler.ts](../packages/vite-plugin-ngp/src/compiler.ts)). One `HybridCompiler` lives as long as the dev server, in optimize mode. `transform` runs with `enforce: 'pre'` on every `.ts` outside `node_modules`. If Vite's code differs from what the analyzer last saw, the plugin calls `analyzer.updateFileContent` first. Then it calls `processFile(file, code)` and returns the result with a source map. Vite's own TypeScript transform strips the types afterwards. Files ngp leaves unchanged return `null`.
 
-**Handling an edit** ([index.ts](../packages/vite-plugin-ngp/src/index.ts), `hotUpdate`). The plugin sends the new content of a changed `.ts` or `.html` file to the analyzer, which returns every TypeScript file whose output may have changed. The plugin drops those files from ngp's cache, invalidates them in Vite's module graph, and returns them to Vite. It never runs `analyzeOptimizedDelta`, which streams every file in the program again after each edit. Vite asks again for the modules the page still uses, and those get regenerated. There's no component HMR yet, so every edit reloads the page.
+**Handling an edit** ([index.ts](../packages/vite-plugin-ngp/src/index.ts), `hotUpdate`). The plugin sends the new content of a changed `.ts` or `.html` file to the analyzer, which returns every TypeScript file whose output may have changed. The plugin drops those files from ngp's cache, invalidates them in Vite's module graph, and returns them to Vite. It never runs `analyzeOptimizedDelta`, which streams every file in the program again after each edit. Vite asks again for the modules the page still uses, and those get regenerated. An edit to an external template updates the component in place (next paragraph). Every other edit reloads the page.
+
+**Component HMR** ([index.ts](../packages/vite-plugin-ngp/src/index.ts)). In the dev server, ngp compiles with `enableHmr`, which adds the same initializer to each component that the CLI's compiler emits. At startup, and again whenever an `angular:component-update` event names it, the component imports `<module dir>/@ng/component?c=<id>`. The id is `encodeURIComponent('src/app/home.ts@Home')`. When an external template changes, the plugin asks ngp for that component's update module with `emitHmrUpdateModule`, strips its types with Vite's oxc transform, and stores it. Then it sends `angular:component-update` over Vite's HMR channel. The plugin's middleware answers every `/@ng/component` request, with the stored module or an empty one. Angular's runtime swaps the template into the running component, so state survives: in the playground, a counter at 2 stays at 2 while the heading changes. If the runtime can't apply an update, it sends `angular:invalidate`, and the plugin reloads the page.
+
+Two Vite details shaped this. Vite reloads the page for any changed `.html` file that a hook returns no modules for, because it treats every `.html` file as a page. So for a template edit the plugin returns a module node for the template that Vite has never transformed. Vite stops update propagation at such a node, without reloading. And Vite drops errors thrown from `hotUpdate` silently, so the plugin catches them, logs them, and reloads instead.
 
 **Keeping edits cheap** ([entry-tsconfig.ts](../packages/vite-plugin-ngp/src/entry-tsconfig.ts)). After every update, ngp's analyzer reloads its tsconfig and re-expands the `include` globs, walking the whole source tree. That made a one-line edit cost 172 ms at 5,000 components. The plugin writes a tsconfig into Vite's cache directory that extends the user's and lists only the entry points. The analyzer finds every other file by following imports, and the same edit costs about 1 ms. The upstream fix would be to re-resolve entry points only when files are added or deleted. ngp doesn't accept outside contributions, so the workaround stays until Angular fixes it.
 
@@ -39,11 +43,11 @@ Verified in the [playground](../playground): `vite build` and `vite preview`, de
 | Piece | Status |
 |---|---|
 | Per-module transform, optimize mode | Works |
-| Edit → analyzer update → module invalidation | Works, page reloads |
+| Edit → analyzer update → module invalidation | Works. Template edits update in place, other edits reload |
 | Entry-only analyzer tsconfig | Works. Same output as the full tsconfig for every playground module ([test](../packages/vite-plugin-ngp/test/entry-tsconfig.test.mjs)) |
 | Production build through the same transform | Works. The playground's bundle is 386 kB, down from 1,197 kB with the JIT fallback. No build optimizer yet (pure annotations, dead-code passes) |
 | Linker for `node_modules` | Works, in dev pre-bundling and in builds. Babel-based, the same linker the bench's bundles use. The CLI has since moved to an oxc-based linker, which should be faster |
-| Component HMR (`/@ng/component`, `angular:component-update`) | Missing. ngp already emits the client code and the update modules |
+| Component HMR (`/@ng/component`, `angular:component-update`) | Works for external template edits. Edits to a component's `.ts` file, inline templates and inline styles included, reload the page. Adds nothing to production builds |
 | External styles, encapsulation, preprocessors | Missing. Without `externalRuntimeStyles`, ngp reads `styleUrl` files itself and inlines them, untested here. With it, styles would become Vite modules |
 | Template type-checking | Missing. Planned as a worker running `tsgo` over ngp's `.ngtypecheck.ts` output |
 | SSR, i18n, Vitest | Out of scope for now |

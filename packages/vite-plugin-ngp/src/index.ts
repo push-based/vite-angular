@@ -3,6 +3,7 @@ import * as path from 'node:path';
 import type {EnvironmentModuleNode, Plugin, ResolvedConfig} from 'vite';
 import {NgpCompiler} from './compiler.js';
 import {writeEntryTsconfig} from './entry-tsconfig.js';
+import {link, LINKER_MARKER} from './linker.js';
 import type {Engine} from './ngp-api.js';
 
 export interface NgpPluginOptions {
@@ -26,7 +27,11 @@ export interface NgpPluginOptions {
 
 const TS_MODULE = /\.[cm]?ts$/;
 
-export function ngp(options: NgpPluginOptions = {}): Plugin {
+export function ngp(options: NgpPluginOptions = {}): Plugin[] {
+  return [compilerPlugin(options), linkerPlugin()];
+}
+
+function compilerPlugin(options: NgpPluginOptions): Plugin {
   let config: ResolvedConfig;
   let compiler: Promise<NgpCompiler> | null = null;
 
@@ -117,6 +122,29 @@ export function ngp(options: NgpPluginOptions = {}): Plugin {
       }
       return [...affected];
     },
+  };
+}
+
+/** Runs Angular's linker on library code, both where Vite pre-bundles it and where it doesn't. */
+function linkerPlugin(): Plugin {
+  const filter = {
+    id: {include: /\.[cm]?js$/, exclude: /[\\/]node_modules[\\/]\.vite[\\/]/},
+    code: LINKER_MARKER,
+  };
+  return {
+    name: 'vite-plugin-ngp:linker',
+    config() {
+      // In dev, Vite pre-bundles dependencies with Rolldown, outside the plugin pipeline.
+      return {
+        optimizeDeps: {
+          rolldownOptions: {
+            plugins: [{name: 'vite-plugin-ngp:linker', transform: {filter, handler: (code: string, id: string) => link(code, id) as never}}],
+          },
+        },
+      };
+    },
+    // Production builds, and dependencies Vite serves without pre-bundling.
+    transform: {filter, handler: (code, id) => link(code, id) as never},
   };
 }
 

@@ -44,7 +44,7 @@ vite-plugin-ngp is a first version on top of a prototype compiler. This page say
 - **Component stylesheets take two paths.** The dev server serves them as `<link>`s, and builds inline them into the JavaScript, as the CLI does. Both are tested, but a bug can show in only one.
 - **The build optimizer is a copy of the CLI's.** When `@angular/build` changes its pass, the plugin keeps the old one until someone ports the change. Nothing fails when that happens; only bundle sizes would show it.
 - **The `ng build` options copy the CLI's rules.** Budgets, the zone.js check and the server's polyfills are ported by hand from `@angular/build`. If the CLI changes them, the plugin keeps the old ones. Inline `styles` are measured unminified for `anyComponentStyle`, so they come out larger than under `ng build`.
-- **i18n has one app behind it.** Extraction, translation and per-locale builds are checked on the playground's two locales and 33 messages. Formats other than XLIFF 1.2 were extracted, not translated from. An ICU message inside `@if` inside `@for` fails Angular's i18n hydration, which ngc's output does too.
+- **i18n has one app behind it.** Extraction, translation and per-locale builds are checked on the playground's two locales and 34 messages. Formats other than XLIFF 1.2 were extracted, not translated from. An ICU message inside `@if` inside `@for` fails Angular's i18n hydration, which ngc's output does too.
 - **The linker is the slow one.** It's the Babel-based linker. The Angular CLI has since moved to a faster oxc-based one, which the plugin can't use yet because it's private to `@angular/build`.
 
 ## What hasn't been measured

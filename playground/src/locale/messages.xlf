@@ -45,7 +45,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
-          <context context-type="linenumber">45</context>
+          <context context-type="linenumber">48</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1443956405974162192" datatype="html">
@@ -77,7 +77,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
-          <context context-type="linenumber">45</context>
+          <context context-type="linenumber">48</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3411805131914952915" datatype="html">
@@ -98,77 +98,77 @@
         <source>Vite asks for a module</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
-          <context context-type="linenumber">31</context>
+          <context context-type="linenumber">34</context>
         </context-group>
       </trans-unit>
       <trans-unit id="115145348840462447" datatype="html">
         <source>Only what the browser imports, when it imports it.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
-          <context context-type="linenumber">31</context>
+          <context context-type="linenumber">34</context>
         </context-group>
       </trans-unit>
       <trans-unit id="9159272233897657540" datatype="html">
         <source>ngp compiles it</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
-          <context context-type="linenumber">32</context>
+          <context context-type="linenumber">35</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1546178855245626926" datatype="html">
         <source>Rust analyzer plus Angular&apos;s template compiler, in optimize mode.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
-          <context context-type="linenumber">32</context>
+          <context context-type="linenumber">35</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2374858720744884988" datatype="html">
         <source>Vite strips the types</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
-          <context context-type="linenumber">33</context>
+          <context context-type="linenumber">36</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5461576952190546587" datatype="html">
         <source>ngp returns TypeScript; Vite&apos;s oxc transform does the rest.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
-          <context context-type="linenumber">33</context>
+          <context context-type="linenumber">36</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1413573095942195120" datatype="html">
         <source>Edits update in place</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
-          <context context-type="linenumber">34</context>
+          <context context-type="linenumber">37</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2755635333883506291" datatype="html">
         <source>Template edits arrive over HMR without a reload.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
-          <context context-type="linenumber">34</context>
+          <context context-type="linenumber">37</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7160265881173958663" datatype="html">
         <source>This build</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
-          <context context-type="linenumber">45</context>
+          <context context-type="linenumber">48</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1073370489841373993" datatype="html">
         <source>Compiled per module by ngp</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
-          <context context-type="linenumber">45</context>
+          <context context-type="linenumber">48</context>
         </context-group>
       </trans-unit>
       <trans-unit id="overviewHeading" datatype="html">
         <source>Angular on Vite, <x id="START_TAG_SPAN" ctype="x-span"/>one module at a time<x id="CLOSE_TAG_SPAN" ctype="x-span"/>.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
-          <context context-type="linenumber">45</context>
+          <context context-type="linenumber">48</context>
         </context-group>
         <note priority="1" from="description">Overview page heading</note>
       </trans-unit>
@@ -176,81 +176,88 @@
         <source> This playground runs on <x id="START_TAG_CODE" ctype="x-code"/>vite-plugin-ngp<x id="CLOSE_TAG_CODE" ctype="x-code"/>. Every component you see was compiled by Angular&apos;s new hybrid preprocessor the moment the browser asked for it, with no whole-program build first. Each page below exercises a different part of the compiler. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
-          <context context-type="linenumber">45</context>
+          <context context-type="linenumber">48</context>
         </context-group>
       </trans-unit>
       <trans-unit id="847126266587362272" datatype="html">
         <source>Start with signals</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
-          <context context-type="linenumber">45</context>
+          <context context-type="linenumber">48</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3766793848982270496" datatype="html">
         <source>See @defer</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
-          <context context-type="linenumber">45</context>
+          <context context-type="linenumber">48</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1713271461473302108" datatype="html">
         <source>Mode</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
-          <context context-type="linenumber">45</context>
+          <context context-type="linenumber">48</context>
         </context-group>
       </trans-unit>
       <trans-unit id="584896290273710256" datatype="html">
         <source>Dev checks</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
-          <context context-type="linenumber">45</context>
+          <context context-type="linenumber">48</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7694684546371649457" datatype="html">
+        <source>Environment file</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
+          <context context-type="linenumber">48</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3266045459484508823" datatype="html">
         <source>All modules loaded in</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
-          <context context-type="linenumber">45</context>
+          <context context-type="linenumber">48</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6906003299608353649" datatype="html">
         <source>How a module gets here</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
-          <context context-type="linenumber">45</context>
+          <context context-type="linenumber">48</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2169188887740160937" datatype="html">
         <source>{VAR_PLURAL, plural, =1 {One page, each compiled on first visit.} other {<x id="INTERPOLATION"/> pages, each compiled on first visit.}}</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
-          <context context-type="linenumber">45</context>
+          <context context-type="linenumber">48</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4101941266124151376" datatype="html">
         <source>on</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
-          <context context-type="linenumber">45</context>
+          <context context-type="linenumber">48</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6110089012347909146" datatype="html">
         <source>off</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
-          <context context-type="linenumber">45</context>
+          <context context-type="linenumber">48</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
-          <context context-type="linenumber">45</context>
+          <context context-type="linenumber">48</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2799754130116914133" datatype="html">
         <source>connected</source>
         <context-group purpose="location">
           <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
-          <context context-type="linenumber">45</context>
+          <context context-type="linenumber">48</context>
         </context-group>
       </trans-unit>
     </body>

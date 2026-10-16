@@ -24,7 +24,7 @@
       <dt>HMR</dt>
       <dd><span class="dot" [class.on]="hmr"></span>@if (hmr) {<ng-container i18n>connected</ng-container>} @else {<ng-container i18n>off</ng-container>}</dd>
     </div>
-    <div class="wide"><dt>Environment file</dt><dd>{{ environmentFile }}</dd></div>
+    <div class="wide"><dt i18n>Environment file</dt><dd>{{ environmentFile }}</dd></div>
     <div class="wide"><dt i18n>Locale</dt><dd>{{ locale }} · {{ today | date: 'fullDate' }}</dd></div>
     <div class="wide"><dt i18n>All modules loaded in</dt><dd>{{ loadedMs() === null ? '…' : loadedMs() + ' ms' }}</dd></div>
   </dl>

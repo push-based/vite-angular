@@ -4,6 +4,7 @@
 
 import * as path from 'node:path';
 import type {Plugin, Rolldown} from 'vite';
+import {EXTRACT_ENV} from './i18n.js';
 
 type OutputBundle = Rolldown.OutputBundle;
 type OutputChunk = Rolldown.OutputChunk;
@@ -223,7 +224,8 @@ export function budgetsPlugin(budgets: Budget[], api: BudgetsPluginContext): Plu
   const measureStyles = budgets.some((b) => b.type === 'anyComponentStyle');
   return {
     name: 'vite-plugin-ngp:budgets',
-    apply: 'build',
+    // Not while extracting i18n messages: that build is unminified, as `ng extract-i18n`'s is.
+    apply: (_config, {command}) => command === 'build' && process.env[EXTRACT_ENV] !== '1',
     applyToEnvironment: (environment) => environment.config.consumer === 'client',
     transform: {
       filter: {id: INLINE_STYLESHEET},

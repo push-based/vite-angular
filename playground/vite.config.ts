@@ -5,8 +5,8 @@ import {ngp} from 'vite-plugin-ngp';
 export default defineConfig({
   plugins: [
     ngp({
-      // ngp isn't on npm: build it in ng-hybrid-preprocessor-bench with `pnpm toolchain`.
-      toolchain: process.env.NGP_TOOLCHAIN ?? resolve(import.meta.dirname, '../../ng-hybrid-preprocessor-bench/toolchain/out'),
+      // ngp isn't on npm: `pnpm toolchain` in the repo root builds it into toolchain/out.
+      toolchain: process.env.NGP_TOOLCHAIN ?? resolve(import.meta.dirname, '../toolchain/out'),
     }),
   ],
 });

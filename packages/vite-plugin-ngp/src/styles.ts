@@ -111,8 +111,9 @@ export function stylesPlugin(context: StylesPluginContext): Plugin {
     // An edit to a component stylesheet, or to a partial it imports, reloads its <link>s instead of
     // the page. Vite's own `css-update` can't do this: its client drops the query, `ngcomp`
     // included, and updates only the first matching <link>.
-    hotUpdate({modules, timestamp}) {
-      if (!context.hmr() || this.environment.name !== 'client' || modules.length === 0) {
+    hotUpdate({type, modules, timestamp}) {
+      // A deleted stylesheet is left to Vite, which reloads, so the page shows what's missing.
+      if (!context.hmr() || type === 'delete' || this.environment.name !== 'client' || modules.length === 0) {
         return;
       }
       const stylesheets = new Set<EnvironmentModuleNode>();

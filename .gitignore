@@ -9,3 +9,5 @@ dist/
 # ngp build: sources, local Rust and Cargo caches, and the build itself
 toolchain/.cache/
 toolchain/out/
+# Fixture apps the HMR test writes and removes
+packages/vite-plugin-ngp/test/.hmr-*/

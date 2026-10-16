@@ -13,10 +13,12 @@ permissions:
   pages: write
   id-token: write
 
-# One deploy at a time; a newer push replaces a queued one.
+# One deploy at a time. A running deploy always finishes: many sessions push to main, and
+# cancelling on each push could keep the site from ever deploying. GitHub keeps only the newest
+# queued run, so the site still ends up at the latest commit.
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build:

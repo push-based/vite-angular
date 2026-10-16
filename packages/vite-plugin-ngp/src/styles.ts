@@ -16,9 +16,9 @@ import type {NgpCompiler} from './compiler.js';
 //   runtime adds a <link> per stylesheet and appends `?ngcomp=<encapsulation id>&e=<encapsulation>`,
 //   the Angular CLI's protocol. This plugin scopes the compiled CSS to that id, and a style edit
 //   reloads the <link> in place.
-// - Build: each stylesheet is imported as a CSS string (`?inline`), scoped with Angular's
-//   `%COMP%` placeholder for emulated encapsulation, and prepended to the component's `styles`.
-//   The bundle has no extra requests, like ngp's own output without externalRuntimeStyles.
+// - Build: each stylesheet is imported as a CSS string (`?inline`), scoped with a placeholder for
+//   emulated encapsulation, and prepended to the component's `styles`. The bundle has no extra
+//   requests, like ngp's own output without externalRuntimeStyles.
 
 /** The file extensions Vite's CSS pipeline handles. Matches Vite's own CSS_LANGS_RE. */
 const CSS_LANGS = /\.(?:css|less|sass|scss|styl|stylus|pcss|postcss|sss)(?:$|\?)/;
@@ -31,6 +31,11 @@ const DEFINE_COMPONENT = /ɵɵdefineComponent\(\s*\{\s*type:\s*([\w$]+)/g;
 const COMPONENT_ID = /^[_.\-\p{Letter}\d]+-c\d+$/u;
 /** Set on build imports of emulated-encapsulation stylesheets. */
 const SCOPED_QUERY = 'ngp-scoped';
+/**
+ * Stands in for the component id in build output. Angular's own placeholder, `%COMP%`, isn't valid
+ * CSS, and Vite's minifier rejects it, so the feature swaps this one for it at runtime.
+ */
+const ID_PLACEHOLDER = '__ngpcomp__';
 /** A dev stylesheet name, `<basename>.ngp-<hash>.<ext>`, as the last segment of a request path. */
 const STYLESHEET_NAME = /\/([^/?]+\.ngp-[0-9a-f]{8}\.\w+)(\?.*)?$/;
 /** Served to the browser in dev, from index.html. Swaps component <link>s on a style edit. */
@@ -159,12 +164,11 @@ export function stylesheetName(file: string): string {
 /**
  * Scopes a compiled stylesheet for its component, or returns null to leave it alone. Dev
  * requests carry the runtime's `ngcomp` id, which is empty for `None` and `ShadowDom`. Build
- * imports of emulated stylesheets carry `ngp-scoped`, and get Angular's `%COMP%` placeholder,
- * which the runtime replaces just as it does for ngp's inline styles.
+ * imports of emulated stylesheets carry `ngp-scoped`, and get a placeholder id.
  */
 export function scopeStylesheet(css: string, params: URLSearchParams): string | null {
   if (params.has(SCOPED_QUERY)) {
-    return encapsulateStyle(css);
+    return encapsulateStyle(css, ID_PLACEHOLDER);
   }
   const componentId = params.get('ngcomp');
   if (!componentId) {
@@ -189,8 +193,10 @@ export function rewriteToUrls(code: string, urlFor: (file: string) => string = s
 
 /**
  * Build: replaces every ɵɵExternalStylesFeature call with a feature that prepends the imported
- * stylesheets to the component's styles. Features run inside ɵɵdefineComponent, before anything
- * reads `styles`, and `styles` isn't part of the component id, so server and browser ids match.
+ * stylesheets to the component's styles, with `%COMP%` back in place of the placeholder. Angular's
+ * renderer then fills in the component id, as it does for ngp's inline styles. Features run inside
+ * ɵɵdefineComponent, before anything reads `styles`, and `styles` isn't part of the component id,
+ * so server and browser ids match.
  */
 export function inlineStylesheets(code: string, encapsulations: Map<string, number>) {
   const s = new MagicString(code);
@@ -198,10 +204,11 @@ export function inlineStylesheets(code: string, encapsulations: Map<string, numb
   for (const call of findFeatureCalls(code)) {
     const encapsulation = (call.className ? encapsulations.get(call.className) : undefined) ?? VIEW_ENCAPSULATION_EMULATED;
     const query = encapsulation === VIEW_ENCAPSULATION_EMULATED ? `?${SCOPED_QUERY}&inline` : '?inline';
+    const scoped = encapsulation === VIEW_ENCAPSULATION_EMULATED;
     const names = call.paths.map((literal) => {
       const name = `__ngp_style_${imports.length}`;
       imports.push(`import ${name} from ${JSON.stringify(literal.value + query)};\n`);
-      return name;
+      return scoped ? `${name}.replaceAll(${JSON.stringify(ID_PLACEHOLDER)}, '%COMP%')` : name;
     });
     s.overwrite(call.start, call.end, `((d) => { d.styles = [${names.join(', ')}, ...d.styles]; })`);
   }

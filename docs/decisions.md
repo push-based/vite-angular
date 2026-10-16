@@ -46,7 +46,7 @@ Each entry records one choice: what we decided, why, what it costs, and when to 
 
 **Why.** After every update, the analyzer reloads its tsconfig and re-expands the `include` globs: 172 ms per edit at 5,000 components, against about 1 ms with only `files` to resolve. The output was identical in the bench's spike.
 
-**Cost.** Files that no entry imports, directly or indirectly, are invisible to the analyzer. Adding new files hasn't been tested. Output identity hasn't been checked in this repo yet.
+**Cost.** Files that no entry imports, directly or indirectly, are invisible to the analyzer. Adding new files hasn't been tested. Same output is checked only on the playground ([test](../packages/vite-plugin-ngp/test/entry-tsconfig.test.mjs)), not on a large app.
 
 **Revisit when** Angular re-resolves entry points only when files are added or deleted. The code marks this `TODO(parity)`.
 

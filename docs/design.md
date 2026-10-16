@@ -36,7 +36,7 @@ Verified in the [playground](../playground): `vite build`, dev-server boot with 
 |---|---|
 | Per-module transform, optimize mode | Works |
 | Edit → analyzer update → module invalidation | Works, page reloads |
-| Entry-only analyzer tsconfig | Works. Same output as the full tsconfig not yet tested in this repo |
+| Entry-only analyzer tsconfig | Works. Same output as the full tsconfig for every playground module ([test](../packages/vite-plugin-ngp/test/entry-tsconfig.test.mjs)) |
 | Production build through the same transform | Works, unoptimized |
 | Linker for `node_modules` | Missing. The playground loads `@angular/compiler` so the runtime can JIT Angular's own packages. That compiler ships to the browser: the playground's production bundle is 1.2 MB |
 | Component HMR (`/@ng/component`, `angular:component-update`) | Missing. ngp already emits the client code and the update modules |

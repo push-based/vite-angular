@@ -216,6 +216,7 @@ a {
 }
 
 code {
+  overflow-wrap: anywhere;
   font-family: var(--font-mono);
   font-size: 0.875em;
   background: var(--color-neutral-100);
@@ -335,10 +336,20 @@ code {
   gap: var(--space-3);
 }
 
-.site-footer__note {
+.site-footer__notes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
   max-width: 34rem;
+}
+
+.site-footer__note {
   margin: 0;
   color: var(--color-text-muted);
+}
+
+.site-footer__build code {
+  font-size: 0.75rem;
 }
 
 /* Home */
@@ -668,6 +679,226 @@ code {
   font-size: inherit;
 }
 
+/* Heading links: a "#" that appears on hover or focus, so a section can be shared. */
+
+.heading-anchor {
+  margin-left: var(--space-2);
+  color: var(--color-neutral-400);
+  text-decoration: none;
+  font-weight: 400;
+  opacity: 0;
+  transition: opacity 0.15s ease-out;
+}
+
+.prose :is(h2, h3, h4):hover .heading-anchor,
+.heading-anchor:focus-visible {
+  opacity: 1;
+}
+
+.heading-anchor:hover {
+  color: var(--color-brand-hover);
+}
+
+/* Callouts from GitHub's > [!TYPE] syntax. Warning reuses the home page's style. */
+
+.prose .callout {
+  margin: 0 0 var(--space-5);
+}
+
+.prose .callout > :last-child {
+  margin-bottom: 0;
+}
+
+.callout__label {
+  margin: 0 0 var(--space-1);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.callout--note,
+.callout--important {
+  border-left-color: var(--color-primary-500);
+  background: var(--color-primary-25);
+}
+
+.callout--note .callout__label,
+.callout--important .callout__label {
+  color: var(--color-primary-700);
+}
+
+.callout--tip {
+  border-left-color: var(--color-success-500);
+  background: color-mix(in srgb, var(--color-success-500) 7%, var(--color-surface));
+}
+
+.callout--tip .callout__label {
+  color: var(--color-success-700);
+}
+
+.callout--warning .callout__label {
+  color: var(--color-warning-700);
+}
+
+.callout--caution {
+  border-left-color: var(--color-error-500);
+  background: color-mix(in srgb, var(--color-error-500) 7%, var(--color-surface));
+}
+
+.callout--caution .callout__label {
+  color: var(--color-error-700);
+}
+
+:root[data-theme='dark'] .callout--tip .callout__label {
+  color: var(--color-success-400);
+}
+
+:root[data-theme='dark'] .callout--warning .callout__label {
+  color: var(--color-warning-400);
+}
+
+:root[data-theme='dark'] .callout--caution .callout__label {
+  color: var(--color-error-400);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .callout--tip .callout__label {
+    color: var(--color-success-400);
+  }
+  :root:not([data-theme='light']) .callout--warning .callout__label {
+    color: var(--color-warning-400);
+  }
+  :root:not([data-theme='light']) .callout--caution .callout__label {
+    color: var(--color-error-400);
+  }
+}
+
+/* Code blocks: a header with the file name, if any, and a copy button. */
+
+.code__header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  padding: var(--space-1) var(--space-2) 0 var(--space-4);
+  background: var(--color-neutral-25);
+}
+
+.code--titled .code__header {
+  justify-content: space-between;
+  padding-block: var(--space-1-5);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface-subtle);
+}
+
+.code__title {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.code__copy {
+  padding: var(--space-0-5) var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-neutral-600);
+  font: 500 0.75rem/1rem var(--font-sans);
+  cursor: pointer;
+}
+
+.code__copy:hover {
+  color: var(--color-neutral-900);
+  border-color: var(--color-neutral-300);
+}
+
+.code__copy:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+}
+
+.code__copy[data-state='done'] {
+  color: var(--color-success-700);
+}
+
+.code:not(.code--titled) .code__header + pre {
+  padding-top: var(--space-1);
+}
+
+/* "On this page" for narrow screens, where the side column is hidden. */
+
+.toc-inline {
+  display: none;
+  margin: 0 0 var(--space-6);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.toc-inline summary {
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.toc-inline ul {
+  list-style: none;
+  margin: var(--space-2) 0 0;
+  padding: 0;
+}
+
+.toc-inline a {
+  display: block;
+  padding: var(--space-1) 0;
+  font-size: 0.875rem;
+  color: var(--color-neutral-600);
+  text-decoration: none;
+}
+
+.toc-inline .toc__sub a {
+  padding-left: var(--space-4);
+}
+
+.page-meta {
+  margin-top: var(--space-10);
+  color: var(--color-text-muted);
+}
+
+/* The docs menu button, shown instead of the sidebar on narrow screens. */
+
+.docs-menu-button {
+  display: none;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-2-5) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-subtle);
+  color: var(--color-text-heading);
+  font: 500 0.875rem/1.25rem var(--font-sans);
+  text-align: left;
+  cursor: pointer;
+}
+
+.docs-menu-button:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+}
+
+.docs-menu-button__hint {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
 /* Narrow screens */
 
 @media (max-width: 64rem) {
@@ -677,12 +908,15 @@ code {
   .toc {
     display: none;
   }
+  .toc-inline {
+    display: block;
+  }
 }
 
 @media (max-width: 48rem) {
   .hero__inner,
   .split {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
   .hero__inner {
     padding-block: var(--space-12);
@@ -695,26 +929,36 @@ code {
     grid-template-columns: minmax(0, 1fr);
     gap: var(--space-6);
   }
+  .docs-menu-button {
+    display: flex;
+  }
   .docs-nav {
+    display: none;
     position: static;
     max-height: none;
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-1) var(--space-4);
-    padding-bottom: var(--space-4);
-    border-bottom: 1px solid var(--color-border);
+    margin-top: calc(-1 * var(--space-4));
+    padding: var(--space-4);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
   }
-  .docs-nav ul {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-1);
-    margin-bottom: var(--space-2);
-    width: 100%;
+  .docs-nav.is-open {
+    display: block;
+  }
+  .docs-nav a {
+    padding-block: var(--space-2);
   }
   .site-nav {
     gap: var(--space-4);
+    overflow: visible;
   }
   .brand__name {
+    display: none;
+  }
+}
+
+/* Phones: the header keeps only "Docs". The docs menu and the home page's buttons reach the rest. */
+@media (max-width: 34rem) {
+  .site-nav a:not(:first-child) {
     display: none;
   }
 }

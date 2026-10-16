@@ -1,8 +1,10 @@
 import {DOCUMENT} from '@angular/common';
-import {afterRenderEffect, ChangeDetectionStrategy, Component, computed, effect, inject, input} from '@angular/core';
-import {DomSanitizer, Meta, Title} from '@angular/platform-browser';
+import {afterRenderEffect, ChangeDetectionStrategy, Component, computed, effect, inject, input, signal} from '@angular/core';
+import {DomSanitizer} from '@angular/platform-browser';
 import {Router, RouterLink, RouterLinkActive} from '@angular/router';
 import {DOCS, SECTIONS, type Doc} from '../docs';
+import {copyCodeOnClick} from '../layout/copy-code';
+import {Seo} from '../layout/seo';
 
 @Component({
   selector: 'app-doc-page',
@@ -23,18 +25,35 @@ export class DocPage {
   // The HTML comes from this repo's own markdown, compiled at build time.
   protected readonly html = computed(() => this.sanitizer.bypassSecurityTrustHtml(this.doc().html));
   protected readonly neighbours = computed(() => {
-    const path = this.router.url.split(/[?#]/)[0].replace(/^\//, '');
-    const i = DOCS.findIndex((d) => d.path === path);
+    const i = DOCS.findIndex((d) => d.path === this.path());
     return {previous: DOCS[i - 1] ?? null, next: DOCS[i + 1] ?? null};
   });
 
+  /** The docs menu on narrow screens, where the sidebar collapses behind a button. */
+  protected readonly menuOpen = signal(false);
+  protected readonly currentLabel = computed(() => DOCS.find((d) => d.path === this.path())?.label ?? 'Docs');
+
+  /** The page's route, without the leading slash. */
+  protected readonly path = computed(() => {
+    this.doc();
+    return this.router.url.split(/[?#]/)[0].replace(/^\//, '');
+  });
+
+  /** "16 October 2026", from the last commit that changed the page. */
+  protected readonly updated = computed(() => {
+    const date = this.doc().updated;
+    if (!date) {
+      return null;
+    }
+    const [year, month, day] = date.split('-').map(Number);
+    return {iso: date, text: new Date(Date.UTC(year, month - 1, day)).toLocaleDateString('en-GB', {day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC'})};
+  });
+
   constructor() {
-    const title = inject(Title);
-    const meta = inject(Meta);
+    const seo = inject(Seo);
     effect(() => {
       const doc = this.doc();
-      title.setTitle(`${doc.title} · vite-plugin-ngp`);
-      meta.updateTag({name: 'description', content: doc.description});
+      seo.set({title: `${doc.title} · vite-plugin-ngp`, description: doc.description, path: this.path()});
     });
 
     // Rendering the article replaces its content, which undoes the router's scroll to a #fragment:
@@ -51,6 +70,9 @@ export class DocPage {
 
   /** Links inside the markdown are plain anchors. Send the site's own ones through the router. */
   protected onContentClick(event: MouseEvent): void {
+    if (copyCodeOnClick(event)) {
+      return;
+    }
     const anchor = (event.target as Element).closest('a');
     if (!anchor || anchor.target || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey) {
       return;

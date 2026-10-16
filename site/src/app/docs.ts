@@ -10,6 +10,8 @@ export interface Doc {
   description: string;
   html: string;
   headings: DocHeading[];
+  /** The date of the last commit that changed the page, as YYYY-MM-DD; '' if unknown. */
+  updated: string;
 }
 
 /**
@@ -39,5 +41,6 @@ export const DOCS: DocEntry[] = [
   {path: 'styles', label: 'Component styles', section: 'Features', load: () => import('../../content/styles.md').then((m) => m.default)},
   {path: 'status', label: 'Status and limits', section: 'Project', load: () => import('../../content/status.md').then((m) => m.default)},
   {path: 'building-ngp', label: 'Building ngp', section: 'Project', load: () => import('../../content/building-ngp.md').then((m) => m.default)},
+  {path: 'changelog', label: 'Changelog', section: 'Project', load: () => import('../../content/changelog.md').then((m) => m.default)},
 ];
 

@@ -57,8 +57,15 @@
         <app-pushbased-logo />
       </a>
     </div>
-    <p class="text-caption site-footer__note">
-      vite-plugin-ngp is an independent project. It builds on ngp, a prototype from the Angular team, and isn't affiliated with Google or the Angular project.
-    </p>
+    <div class="site-footer__notes">
+      <p class="text-caption site-footer__note">
+        vite-plugin-ngp is an independent project. It builds on ngp, a prototype from the Angular team, and isn't affiliated with Google or the Angular project.
+      </p>
+      <p class="text-caption site-footer__note site-footer__build">
+        Built from commit <code>{{ build.commit }}</code>, for Angular <code>{{ build.angular }}</code>, with ngp from
+        <a [href]="'https://github.com/angular/angular/commit/' + build.ngpCommit" target="_blank" rel="noopener"><code>angular/angular&#64;{{ build.ngpCommit.slice(0, 7) }}</code></a>.
+        <a href="llms.txt">llms.txt</a>
+      </p>
+    </div>
   </div>
 </footer>

@@ -1,5 +1,6 @@
-import {ChangeDetectionStrategy, Component} from '@angular/core';
+import {ChangeDetectionStrategy, Component, inject} from '@angular/core';
 import {RouterLink} from '@angular/router';
+import {Seo} from '../layout/seo';
 
 @Component({
   selector: 'app-not-found',
@@ -16,4 +17,13 @@ import {RouterLink} from '@angular/router';
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class NotFound {}
+export class NotFound {
+  constructor() {
+    inject(Seo).set({
+      title: 'Page not found · vite-plugin-ngp',
+      description: "This page doesn't exist on the vite-plugin-ngp docs site.",
+      path: '404',
+      noindex: true,
+    });
+  }
+}

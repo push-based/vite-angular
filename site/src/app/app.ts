@@ -19,6 +19,7 @@ export class App {
    * both icons, and CSS shows the right one. The browser fills it in after hydration.
    */
   protected readonly theme = signal<Theme | null>(null);
+  protected readonly build = SITE_BUILD;
 
   constructor() {
     afterNextRender(() => this.theme.set(this.currentTheme()));

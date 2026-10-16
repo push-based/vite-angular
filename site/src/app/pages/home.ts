@@ -1,7 +1,9 @@
 import {ChangeDetectionStrategy, Component, inject} from '@angular/core';
 import {DomSanitizer} from '@angular/platform-browser';
 import {RouterLink} from '@angular/router';
+import {copyCodeOnClick} from '../layout/copy-code';
 import {Logo} from '../layout/logo';
+import {Seo} from '../layout/seo';
 import snippet from '../../../content/_home-snippet.md';
 
 @Component({
@@ -12,6 +14,16 @@ import snippet from '../../../content/_home-snippet.md';
 })
 export class Home {
   protected readonly snippet = inject(DomSanitizer).bypassSecurityTrustHtml(snippet.html);
+  protected readonly copyCode = copyCodeOnClick;
+
+  constructor() {
+    inject(Seo).set({
+      title: 'vite-plugin-ngp: Angular on Vite, one module at a time',
+      description:
+        "A Vite plugin that compiles Angular one module at a time with ngp, Angular's Rust-and-TypeScript preprocessor. Vite owns the module graph; nothing compiles the whole program first.",
+      path: '',
+    });
+  }
 
   protected readonly facts = [
     {value: '164 ms', label: 'to serve the first module of a 5,000-component app, with no whole-program compile first'},

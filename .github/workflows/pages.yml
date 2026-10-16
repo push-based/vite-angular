@@ -26,6 +26,9 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Full history: each page shows the date of the last commit that changed it.
+          fetch-depth: 0
 
       - uses: pnpm/action-setup@v4
 

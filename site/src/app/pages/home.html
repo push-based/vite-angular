@@ -59,7 +59,7 @@
       </p>
       <a class="pb-btn pb-btn-tertiary" routerLink="/getting-started">Read the setup guide <span class="pb-arrow" aria-hidden="true">→</span></a>
     </div>
-    <div class="prose" [innerHTML]="snippet"></div>
+    <div class="prose" (click)="copyCode($event)" [innerHTML]="snippet"></div>
   </div>
 </section>
 

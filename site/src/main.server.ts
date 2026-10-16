@@ -13,6 +13,9 @@ const serverConfig = mergeApplicationConfig(appConfig, {providers: [provideServe
 /** Every path to prerender, relative to the site's base. */
 export const routes = ['', ...DOCS.map((d) => d.path)];
 
+/** The docs pages, for the sitemap and llms.txt that scripts/prerender.mjs writes. */
+export const docs = DOCS;
+
 /** Renders one page: vite-plugin-ngp's `ssr` contract, (url, index.html) → HTML. */
 export default function render(url: string, document: string): Promise<string> {
   return renderApplication((context: BootstrapContext) => bootstrapApplication(App, serverConfig, context), {

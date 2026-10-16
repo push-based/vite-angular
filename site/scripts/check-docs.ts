@@ -1,7 +1,8 @@
 // Fails when the docs site has drifted from the code. Run by `pnpm docs:check` and `pnpm test`.
 //
 // It checks that:
-//   - every option in the plugin's NgpPluginOptions has a row in content/configuration.md;
+//   - every option in the plugin's NgpPluginOptions has a row in content/configuration.md, with
+//     the type the source declares;
 //   - every page in content/ is in DOCS in src/app/docs.ts, and every DOCS entry has a page;
 //   - every page has a title and a description in its front matter;
 //   - every link between pages, in the markdown and on the home page, points at a page and a
@@ -23,11 +24,13 @@ const problems: string[] = [];
 const pluginSource = path.join(repo, 'packages/vite-plugin-ngp/src/index.ts');
 const sourceFile = ts.createSourceFile(pluginSource, await readFile(pluginSource, 'utf8'), ts.ScriptTarget.Latest, true);
 const options: string[] = [];
+const optionTypes = new Map<string, string>();
 sourceFile.forEachChild((node) => {
   if (ts.isInterfaceDeclaration(node) && node.name.text === 'NgpPluginOptions') {
     for (const member of node.members) {
       if (member.name && ts.isIdentifier(member.name)) {
         options.push(member.name.text);
+        optionTypes.set(member.name.text, ts.isPropertySignature(member) && member.type ? member.type.getText() : 'unknown');
       }
     }
   }
@@ -35,10 +38,27 @@ sourceFile.forEachChild((node) => {
 if (options.length === 0) {
   problems.push(`couldn't find NgpPluginOptions in ${path.relative(repo, pluginSource)}`);
 }
+// Type aliases the options use, such as Engine = 'native' | 'wasm', so the table can spell them out.
+const aliases = new Map<string, string>();
+for (const file of await readdir(path.dirname(pluginSource))) {
+  if (!file.endsWith('.ts')) continue;
+  const source = ts.createSourceFile(file, await readFile(path.join(path.dirname(pluginSource), file), 'utf8'), ts.ScriptTarget.Latest, true);
+  source.forEachChild((node) => {
+    if (ts.isTypeAliasDeclaration(node)) aliases.set(node.name.text, node.type.getText());
+  });
+}
 const configuration = await readFile(path.join(site, 'content/configuration.md'), 'utf8');
+const squash = (type: string) => type.replace(/\s+/g, '');
 for (const option of options) {
-  if (!new RegExp(`^\\| \`${option}\` \\|`, 'm').test(configuration)) {
-    problems.push(`option \`${option}\` has no row in the Options table of site/content/configuration.md`);
+  const row = new RegExp(`^\\| \`${option}\` \\| \`((?:[^\`]|\\\\\\|)+)\` \\|`, 'm').exec(configuration);
+  if (!row) {
+    problems.push(`option \`${option}\` has no row in the Options table of site/content/configuration.md, as | \`${option}\` | \`type\` | default | what it does |`);
+    continue;
+  }
+  const documented = squash(row[1].replace(/\\\|/g, '|'));
+  const declared = optionTypes.get(option)!;
+  if (documented !== squash(declared) && documented !== squash(aliases.get(declared) ?? '')) {
+    problems.push(`option \`${option}\` is \`${declared}\` in the plugin, but configuration.md says \`${row[1]}\``);
   }
 }
 
@@ -67,8 +87,8 @@ const ids = new Map<string, Set<string>>();
 const links: {from: string; href: string}[] = [];
 for (const file of files) {
   const source = await readFile(path.join(site, 'content', file), 'utf8');
-  const doc = await renderMarkdown(source);
   const page = file.replace(/\.md$/, '');
+  const doc = await renderMarkdown(source, page);
   if (!/^---\n[\s\S]*?\btitle:\s*\S/.test(source)) problems.push(`site/content/${file} has no title in its front matter`);
   if (!/^---\n[\s\S]*?\bdescription:\s*\S/.test(source)) problems.push(`site/content/${file} has no description in its front matter`);
   ids.set(page, new Set([...doc.html.matchAll(/ id="([^"]+)"/g)].map((m) => m[1])));

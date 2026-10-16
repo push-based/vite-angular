@@ -22,7 +22,7 @@ vite-plugin-ngp is a first version on top of a prototype compiler. This page say
 | Server rendering and hydration | Works in the dev server and in builds, with the `ssr` option. This site is prerendered that way |
 | Internationalization | Works: `i18n` attributes and `$localize`, extraction with `ngp-extract-i18n`, and one translated folder per locale from a single build, with server rendering too. The playground ships English and German. See [Internationalization](i18n) |
 | Vitest with TestBed | Works, with jsdom and zoneless TestBed. A run compiles only the specs it runs and what they import. Watch mode reruns specs after template edits too. See [Testing with Vitest](testing) |
-| [Type-checking](type-checking) | Works, for templates and TypeScript, with TypeScript 7 in a separate process. Errors show in the dev server's terminal and overlay, and fail `vite build`. Planted errors land where `ng build` puts them. Checked on this site and the playground; not measured on a large app |
+| [Type-checking](type-checking) | Works, for templates and TypeScript, with TypeScript 7 in a separate process. Errors show in the dev server's terminal and overlay, and fail `vite build`. Planted errors land where `ng build` puts them. Checked on this site and the playground. At 5,000 components a planted error shows 1.45 s after the edit ([Performance](performance#type-errors-in-the-dev-server)) |
 
 ## What doesn't work yet
 
@@ -39,7 +39,7 @@ vite-plugin-ngp is a first version on top of a prototype compiler. This page say
 - **ngp is a prototype, and the plugin uses it as one.** ngp's API isn't public, and the plugin reaches below it in two places to skip work it doesn't need. Any Angular commit can break that, which is why every Angular package is pinned to exactly `22.3.0-next.2`.
 - **Nobody can `npm install` it.** You build ngp from Angular's source with a Rust toolchain the build installs for you. That works on macOS and Linux, and it's a blocker for most teams until Angular publishes ngp.
 - **File changes are tested on one small app.** Adding, renaming and deleting components and templates is covered by a test on a three-component app, not on a large one. Deleting a component that's still used gives Angular's "is not a known element" error, which names the element, not the missing file. A missing `styleUrl` file isn't reported at all.
-- **Type-checking is whole-program.** Every check runs TypeScript 7 over the whole app. That takes 100–250 ms in the dev server on the repo's 19-component playground. A full check of a 5,000-component app took 18.6 s in benchmarks, and the incremental check the plugin runs hasn't been measured there. See [Type-checking](type-checking#where-its-weak).
+- **Type-checking is whole-program.** Every check runs TypeScript 7 over the whole app. That takes 100–250 ms in the dev server on the repo's 19-component playground. On a 5,000-component app, an error shows up 1.45 s after the edit, a little sooner than under `ng serve`. See [Type-checking](type-checking#where-its-weak).
 - **SSR runs two analyzers.** The browser and the server each get their own ngp compiler, because only the browser's has HMR code. A dev server with SSR needs about twice the analyzer memory, and analyzes every edit twice.
 - **Component stylesheets take two paths.** The dev server serves them as `<link>`s, and builds inline them into the JavaScript, as the CLI does. Both are tested, but a bug can show in only one.
 - **The build optimizer is a copy of the CLI's.** When `@angular/build` changes its pass, the plugin keeps the old one until someone ports the change. Nothing fails when that happens; only bundle sizes would show it.
@@ -49,4 +49,9 @@ vite-plugin-ngp is a first version on top of a prototype compiler. This page say
 
 ## What hasn't been measured
 
-The headline numbers on this site, 164 ms to the first module and about 4 ms per edit at 5,000 components, come from spikes against ngp's API in PushBased's benchmark repo, which isn't public yet. They don't come from this plugin's dev server. The comparison that decides whether the plugin is worth using hasn't run yet: dev-server start to first paint, edit-to-update time, and production build time, against `ng serve`, Analog and `@oxc-angular/vite`, on apps of 100 to 5,000 components.
+The [Performance](performance) page measures the plugin's dev server and builds against `ng serve`, Analog and `@oxc-angular/vite`, on generated apps of 100 to 5,000 components and the playground, on one laptop. Still unmeasured:
+
+- **Real apps with third-party libraries.** The generated apps use only Angular's own packages. An app with Material or NgRx sends more packages through the Babel linker, which probably already costs the plugin about 0.4 s of a cold start at 5,000 components.
+- **Linux and Windows.** Every number is from macOS, where Vite's file watcher adds up to about 100 ms to each edit.
+- **Memory.** The plugin holds ngp's analyzer and a `tsgo` process next to Vite. Nobody has measured how much that is on a large app.
+- **Where an edit's time goes.** A template edit takes at least about 70 ms in the plugin, against 5–20 ms in `@oxc-angular/vite`, and nobody has profiled the difference.

@@ -47,6 +47,10 @@ The first day: from an empty repo to a plugin that compiles, serves, renders, te
 - New option `ssr`: pages render on the server in the dev server, and `vite build` builds a server bundle beside the browser one. [Server rendering](server-rendering)
 - Server builds bundle and link every Angular library in your `dependencies`. [Server rendering](server-rendering#what-the-plugin-does)
 
+### Performance
+
+- The first end-to-end numbers, against `ng serve`, Analog and `@oxc-angular/vite`: at 5,000 components the plugin shows the first page in 1.9 s where `ng serve` takes 28.5 s, and a template edit in about 150 ms where `ng serve` takes 1.8 s. The harness is in the repo's `bench/` folder. [Performance](performance)
+
 ### This site
 
 - Docs at https://push-based.github.io/vite-angular/, built with the plugin itself and prerendered with Angular SSR. They redeploy on every push.

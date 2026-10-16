@@ -2,7 +2,7 @@
 
 A Vite plugin that compiles Angular one module at a time with ngp, Angular's new Rust-and-TypeScript preprocessor. Vite owns the module graph, and no whole-program compile runs before the first module is served.
 
-> **Status:** a first version. Per-module compilation, edits and production builds work in the playground. Angular libraries are linked at build time. Component HMR, external styles and type-checking are still missing. [docs/design.md](docs/design.md) has the details.
+> **Status:** a first version. Per-module compilation, component HMR for template edits, server-side rendering with hydration, and production builds work in the playground. Angular libraries are linked at build time. External styles and type-checking are still missing. [docs/design.md](docs/design.md) has the details.
 
 ## Layout
 
@@ -34,6 +34,8 @@ pnpm toolchain
 ```bash
 pnpm dev
 ```
+
+The dev server renders every page on the server and hydrates it in the browser. For the production build, run `pnpm playground:build`, then `pnpm --filter playground start` to serve it at http://localhost:4000.
 
 `pnpm toolchain` builds ngp into `toolchain/out` (about 2 minutes the first time on an M2 Max). `pnpm dev` builds the plugin and starts Vite on the playground at http://localhost:5173. [docs/building.md](docs/building.md) explains each step, how to check the build, how to move to a newer Angular commit, and what to do when something fails.
 

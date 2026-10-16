@@ -183,3 +183,37 @@ Each entry records one choice: what we decided, why, what it costs, and when to 
 **Cost.** It depends on undocumented propagation behavior in Vite 8.3. If Vite changes it, template edits will reload again, with nothing failing loudly. The playground HMR check would catch that.
 
 **Revisit when** Vite offers a supported way to mark a `.html` file as not a page, or on every Vite minor upgrade.
+
+## 17. One ngp compiler per environment consumer
+
+*16 October 2026*
+
+**Decision.** The plugin keeps one compiler for the browser and one for server environments. Only the browser's compiles with `enableHmr`.
+
+**Why.** HMR code runs at module load and imports `<module dir>/@ng/component?c=<id>`. On the server that's a `file://` URL that doesn't exist, so with one shared compiler every component failed to load its update module during SSR. ngp sets `enableHmr` when the compiler is created, so one compiler can't produce both outputs.
+
+**Cost.** Two Rust analyzers in a dev server with SSR: about twice the analyzer memory, and every edit is analyzed twice. The server compiler starts only when something is rendered on the server.
+
+**Revisit when** ngp can turn HMR output on per `processFile` call.
+
+## 18. Bundle @angular/* in server environments
+
+*16 October 2026*
+
+**Decision.** Server environments set `resolve.noExternal: [/^@angular\//]` and define `ngServerMode: true` and `ngHmrMode: false`.
+
+**Why.** Vite externalizes `node_modules` on the server by default. Node then loads Angular's packages unlinked, and a second `@angular/core` copy appeared next to the one the app used, so rendering failed with `NG0203`. Bundling them sends them through the linker and keeps one copy.
+
+**Cost.** Angular's packages are transformed on every dev server start, not loaded straight from disk. Third-party Angular libraries outside `@angular/` are still externalized, so they'd load unlinked. Each one has to be added to `resolve.noExternal` until the plugin finds them itself.
+
+## 19. Render pages in the plugin, behind a `render(url, document)` contract
+
+*16 October 2026*
+
+**Decision.** With `ssr` on, the plugin's dev middleware renders every page request through the server entry's default export. In production, the app serves `dist/` itself. The playground uses a 46-line `node:http` server.
+
+**Why.** Without the middleware, every app would have to write Vite's custom-server setup (`middlewareMode`, module runner, `transformIndexHtml`) to see SSR in dev. A function from URL and document to HTML is the smallest contract that `renderApplication` fits and that any Node server can call. Production servers vary too much (Express, Fastify, edge runtimes) for the plugin to pick one.
+
+**Cost.** No status codes, headers or redirects: the contract returns a string. `@angular/ssr`'s `AngularNodeAppEngine` handles those, and it expects the CLI's build manifest, which this plugin doesn't produce.
+
+**Revisit when** an app needs status codes or redirects, or route-level render modes and prerendering.

@@ -32,7 +32,14 @@ Two Vite details shaped this. Vite reloads the page for any changed `.html` file
 
 **Linking libraries** ([linker.ts](../packages/vite-plugin-ngp/src/linker.ts)). Angular libraries, Angular's own packages included, ship partially compiled: `ɵɵngDeclareComponent(...)` calls that describe a declaration without being its runtime code. Angular's linker rewrites them into the final `ɵɵdefineComponent(...)` code. ngp only compiles the app's own sources, so the plugin runs Angular's Babel linker on any `node_modules` module that contains `ɵɵngDeclare`. It does this in two places: in dev, inside Rolldown's dependency pre-bundling, which runs outside the plugin pipeline, and in the normal transform for production builds and for dependencies Vite doesn't pre-bundle. `@angular/core` and `@angular/compiler` are skipped, because they define those functions without calling them.
 
-**Compile-time globals** ([index.ts](../packages/vite-plugin-ngp/src/index.ts), `config`). The plugin defines the same globals the Angular CLI does: `ngJitMode` false everywhere, `ngDevMode` false in builds, and `ngServerMode` false in the client environment. Without them, a production build still runs Angular's dev-mode checks.
+**Compile-time globals** ([index.ts](../packages/vite-plugin-ngp/src/index.ts), `config`). The plugin defines the same globals the Angular CLI does: `ngJitMode` false everywhere, `ngDevMode` false in builds, and `ngServerMode` false in the client environment and true in server environments. Without them, a production build still runs Angular's dev-mode checks.
+
+**Server-side rendering** ([index.ts](../packages/vite-plugin-ngp/src/index.ts), the `ssr` option). The app supplies a server entry, by default `src/main.server.ts`, whose default export is `render(url, document)`. In the [playground](../playground/src/main.server.ts) that's three lines around `renderApplication` from `@angular/platform-server`. The plugin then does four things:
+
+- In dev, a middleware runs after Vite's SPA fallback. For every page request it loads the entry through the `ssr` environment's module runner, passes it `index.html` as Vite transformed it, and returns the rendered page. The browser hydrates that page instead of rendering it again.
+- Server environments get their own ngp compiler, compiled without HMR. HMR code imports update modules from URLs only a browser can load, and on the server every component's import failed. Each environment's `hotUpdate` sends edits to its own compiler, so after a template edit the browser updates in place and the next server render shows the edit too.
+- Server environments bundle `@angular/*` (`resolve.noExternal`) rather than letting Node load it. That makes the linker run on Angular's packages, and keeps one copy of `@angular/core`. Without it, rendering failed with `NG0203`.
+- `vite build` builds both environments (`builder: {}`): the browser bundle into `dist/client`, and the entry into `dist/server/main.server.js`. Serving them is the app's job. The playground's [server.mjs](../playground/server.mjs) does it with plain `node:http`.
 
 One trap is already fixed. The plugin remembers what the analyzer has seen for each file. For a file it hasn't seen yet, a transform compares against disk. A watcher event can't, because disk already holds the edit. So watcher edits to unseen files, which includes every template's first edit, always go to the analyzer.
 
@@ -50,14 +57,16 @@ Verified in the [playground](../playground): `vite build` and `vite preview`, de
 | Component HMR (`/@ng/component`, `angular:component-update`) | Works for external template edits. Edits to a component's `.ts` file, inline templates and inline styles included, reload the page. Adds nothing to production builds |
 | External styles, encapsulation, preprocessors | Missing. Without `externalRuntimeStyles`, ngp reads `styleUrl` files itself and inlines them, untested here. With it, styles would become Vite modules |
 | Template type-checking | Missing. Planned as a worker running `tsgo` over ngp's `.ngtypecheck.ts` output |
-| SSR, i18n, Vitest | Out of scope for now |
+| Server-side rendering and hydration | Works in dev and in production builds. In the playground, 24 components hydrate with none skipped, and server renders take 10–35 ms warm. Every page answers 200, including the not-found page, and there's no prerendering and no `@angular/ssr` (route render modes, `AngularNodeAppEngine`) |
+| i18n, Vitest | Out of scope for now |
 
 ## Where it's weak
 
 - **ngp is a prototype, and the plugin uses it as one.** The plugin types the API by hand and reaches into `HybridCompiler.fileCache` and `analyzer.updateFileContent`, below the public `updateFileContent` that runs the delta. Any Angular commit can break that. Pinning Angular to exactly `22.3.0-next.2` holds it still for now.
 - **Nobody can install it.** Using the plugin means building ngp from source with Rust. That's fine for us and a blocker for anyone else, until Angular publishes ngp or we ship prebuilt binaries per platform.
 - **New files are untested.** With an entry-only tsconfig, the analyzer should find a new file through the import that adds it. The bench only measured edits to existing files.
-- **Several environments share one compiler.** Client and SSR environments call the same plugin instance. That's fine for a client-only app. With SSR, updates from two environments could race.
+- **SSR runs two analyzers.** The browser and server compilers each hold their own ngp analyzer, so a dev server with SSR needs about twice the analyzer memory, and every edit is analyzed twice. One analyzer serving both would need a way to compile with and without HMR from the same state.
+- **SSR has no status codes.** `render(url, document)` returns HTML only, so the not-found page answers 200. Angular's way to set the status is `@angular/ssr`'s request and response tokens, which this plugin doesn't wire up.
 - **No numbers of our own yet.** All the performance claims come from the bench's spikes, not from this plugin running a real dev server.
 
 ## What to measure next

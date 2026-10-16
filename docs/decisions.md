@@ -239,3 +239,15 @@ Each entry records one choice: what we decided, why, what it costs, and when to 
 **Cost.** The site is public while the repo is private, so its GitHub links only work for push-based members. Every deploy builds ngp, which takes minutes when the Rust cache is cold. Prerendering uses `renderApplication` directly, not `@angular/ssr`, so the script, not Angular, decides which routes exist.
 
 **Revisit when** the repo goes public, or Angular publishes ngp and deploys no longer need to build it.
+
+## 22. Wait 50 ms before template HMR, and reload if the class changed too
+
+*16 October 2026. Narrows 15.*
+
+**Decision.** The plugin sends a template update 50 ms after the template changed, not right away. If the component's `.ts` file changed within 50 ms of the template, before or after it, the plugin sends no update and lets the `.ts` change reload the page. The plugin's `watchChange` hook records when each file changed. The client's `hotUpdate` returns at once and decides in the background.
+
+**Why.** One edit often touches both files: a save-all, a `git checkout`, a rename of a field used in the template. Vite handles each file's change on its own, in whatever order the watcher reports them. When the template came first, its update module ran against the class still on the page. Renaming `loadedMs` in the playground's overview page threw `ctx.loadedAt is not a function`, Angular sent `angular:invalidate`, and the plugin reloaded. The result was right, but every combined edit cost a failed update and an error in the console. When the `.ts` came first, the template update could still reach the page before its reload did. Comparing the analyzer's copy of the `.ts` file with disk would only catch the template-first order, and only if both writes had landed. Timestamps catch both orders. The first version waited inside `hotUpdate`. Vite runs the server environment's `hotUpdate` only after the client's returns, so the server compiler got the new template 50 ms late. The `.ts` reload's server render then threw `ctx.loadedMs is not a function`.
+
+**Cost.** Every template edit reaches the browser 50 ms later. Two writes more than 50 ms apart still count as two edits, so a slow tool that writes the template first gets the old failed update and reload. The window is a guess at how close one save writes its files. It wasn't measured across editors.
+
+**Revisit when** `.ts` edits can be applied in place (see 15). Then the plugin would send one update for both files instead of reloading.

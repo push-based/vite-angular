@@ -47,6 +47,8 @@ The component keeps its state: a counter at 2 stays at 2 while its heading chang
 
 Edits to a component's `.ts` file reload the page, including inline templates and inline styles. The CLI decides per edit whether a `.ts` change is safe to swap in. The plugin doesn't have that analysis yet.
 
+If one save changes both a component's template and its `.ts` file, the page reloads once, without trying the template update first. The new template may use a field the running class doesn't have yet. The plugin waits 50 ms after a template edit to see whether the `.ts` file changed too, so template updates arrive 50 ms later than they would otherwise.
+
 ## Linking libraries
 
 Angular libraries, Angular's own packages included, ship partially compiled: `ɵɵngDeclareComponent(...)` calls that describe a component without being its runtime code. The linker rewrites them into the final code for your Angular version, as the CLI does. ngp only compiles your own sources, so the plugin runs Angular's linker on every module in `node_modules` that needs it:

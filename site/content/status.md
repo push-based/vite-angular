@@ -15,7 +15,7 @@ vite-plugin-ngp is a first version on top of a prototype compiler. This page say
 | Edits in the dev server | Work. Template edits update in place; other edits reload the page |
 | Production builds | Work, through the same transform. No build optimizer yet |
 | Linking Angular libraries | Works, in dependency pre-bundling and in builds, with Angular's Babel linker |
-| Component HMR | Works for external templates. `.ts` edits reload |
+| Component HMR | Works for external templates. `.ts` edits reload, and so does a template saved together with its `.ts` file |
 | Server rendering and hydration | Works in the dev server and in builds, with the `ssr` option. This site is prerendered that way |
 
 ## What doesn't work yet

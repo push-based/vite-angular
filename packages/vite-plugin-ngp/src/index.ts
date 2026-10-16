@@ -3,6 +3,7 @@ import * as path from 'node:path';
 import {
   isRunnableDevEnvironment,
   transformWithOxc,
+  type DevEnvironment,
   type EnvironmentModuleNode,
   type Plugin,
   type ResolvedConfig,
@@ -52,6 +53,12 @@ type Consumer = 'client' | 'server';
 
 const TS_MODULE = /\.[cm]?ts$/;
 
+/**
+ * How far apart two file changes can be and still count as one edit. An editor saving all files,
+ * a git checkout or a rename across files writes them within a few milliseconds.
+ */
+const EDIT_BATCH_MS = 50;
+
 export function ngp(options: NgpPluginOptions = {}): Plugin[] {
   return [compilerPlugin(options), linkerPlugin()];
 }
@@ -72,6 +79,19 @@ function compilerPlugin(options: NgpPluginOptions): Plugin {
    * id (`src/app/home.ts@Home`), which is what the `c` query parameter decodes to.
    */
   const componentUpdates = new Map<string, string>();
+  /** When each file last changed on disk, as the watcher reported it. */
+  const changedAt = new Map<string, number>();
+
+  /**
+   * Whether `tsFile` changed in the same edit as `templateFile`, which changed just now. Waits for
+   * the rest of the edit to arrive: Vite handles each file's change on its own, in any order.
+   */
+  async function changedTogether(templateFile: string, tsFile: string): Promise<boolean> {
+    const templateTime = changedAt.get(templateFile) ?? Date.now();
+    await new Promise((resolve) => setTimeout(resolve, EDIT_BATCH_MS));
+    const tsTime = changedAt.get(tsFile);
+    return tsTime !== undefined && Math.abs(tsTime - templateTime) <= EDIT_BATCH_MS;
+  }
 
   function getCompiler(consumer: Consumer): Promise<NgpCompiler> {
     let compiler = compilers.get(consumer);
@@ -106,6 +126,56 @@ function compilerPlugin(options: NgpPluginOptions): Plugin {
     for (const compiler of current) {
       (await compiler.catch(() => null))?.close();
     }
+  }
+
+  /**
+   * Sends an edited template to the running component, or reloads the page when it can't. An
+   * update module runs against the class already on the page. If the class changed in the same
+   * edit, the new template may use members it doesn't have yet, so the class's own change
+   * reloads the page instead.
+   */
+  async function updateTemplate(
+    environment: DevEnvironment,
+    ngp: NgpCompiler,
+    file: string,
+    owner: string,
+    stale: string[],
+    timestamp: number,
+  ) {
+    const graph = environment.moduleGraph;
+    const invalidate = () => {
+      for (const f of new Set([...stale, owner])) {
+        for (const mod of graph.getModulesByFile(f) ?? []) {
+          graph.invalidateModule(mod);
+        }
+      }
+    };
+    if (await changedTogether(file, owner)) {
+      invalidate();
+      return;
+    }
+    try {
+      const updates = await ngp.hmrUpdates(owner, file);
+      if (updates.length > 0) {
+        for (const update of updates) {
+          const js = await transformWithOxc(update.code, `${owner}.hmr.ts`, {lang: 'ts'});
+          componentUpdates.set(decodeURIComponent(update.id), js.code);
+        }
+        // Invalidate without reloading, so the next full load compiles the new template.
+        for (const mod of graph.getModulesByFile(owner) ?? []) {
+          graph.invalidateModule(mod, new Set(), timestamp, true);
+        }
+        for (const update of updates) {
+          environment.hot.send({type: 'custom', event: 'angular:component-update', data: {id: update.id, timestamp}});
+          config.logger.info(`hmr update ${decodeURIComponent(update.id)}`, {timestamp: true});
+        }
+        return;
+      }
+    } catch (error) {
+      config.logger.error(`[vite-plugin-ngp] HMR update for ${file} failed, reloading: ${String(error)}`);
+    }
+    invalidate();
+    environment.hot.send({type: 'full-reload'});
   }
 
   return {
@@ -239,6 +309,11 @@ function compilerPlugin(options: NgpPluginOptions): Plugin {
       },
     },
 
+    // Vite calls this for every change before any hotUpdate, so hotUpdate sees the whole edit.
+    watchChange(id) {
+      changedAt.set(id, Date.now());
+    },
+
     // Template edits update the component in place. Every other edit returns the affected modules,
     // and since compiled components don't accept updates, Vite reloads the page.
     async hotUpdate({file, type, read, timestamp}) {
@@ -253,31 +328,14 @@ function compilerPlugin(options: NgpPluginOptions): Plugin {
       const graph = this.environment.moduleGraph;
 
       if (owner && hmr && this.environment.name === 'client') {
-        try {
-          const updates = await ngp.hmrUpdates(owner, file);
-          if (updates.length > 0) {
-            for (const update of updates) {
-              const js = await transformWithOxc(update.code, `${owner}.hmr.ts`, {lang: 'ts'});
-              componentUpdates.set(decodeURIComponent(update.id), js.code);
-            }
-            // Invalidate without reloading, so the next full load compiles the new template.
-            for (const mod of graph.getModulesByFile(owner) ?? []) {
-              graph.invalidateModule(mod, new Set(), timestamp, true);
-            }
-            for (const update of updates) {
-              this.environment.hot.send({type: 'custom', event: 'angular:component-update', data: {id: update.id, timestamp}});
-              config.logger.info(`hmr update ${decodeURIComponent(update.id)}`, {timestamp: true});
-            }
-            // Returning [] would make Vite reload: it treats every changed .html file with no
-            // modules as a page. A node for the template that Vite has never transformed stops
-            // update propagation without a reload, which is what "handled" means here.
-            const url = '/' + path.relative(config.root, file).split(path.sep).join('/');
-            return [await graph.ensureEntryFromUrl(url, false)];
-          }
-        } catch (error) {
-          // Vite drops errors thrown from hotUpdate silently. Say so, and reload instead.
-          config.logger.error(`[vite-plugin-ngp] HMR update for ${file} failed, reloading: ${String(error)}`);
-        }
+        // Decided in the background: Vite runs the other environments' hotUpdate only after this
+        // one returns, and the server has to see the new template before the page reloads.
+        void updateTemplate(this.environment, ngp, file, owner, stale, timestamp);
+        // Returning [] would make Vite reload: it treats every changed .html file with no modules
+        // as a page. A node for the template that Vite has never transformed stops update
+        // propagation without a reload, which is what "handled" means here.
+        const url = '/' + path.relative(config.root, file).split(path.sep).join('/');
+        return [await graph.ensureEntryFromUrl(url, false)];
       }
 
       const affected = new Set<EnvironmentModuleNode>();

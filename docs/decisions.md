@@ -198,7 +198,7 @@ Each entry records one choice: what we decided, why, what it costs, and when to 
 
 ## 18. Bundle @angular/* in server environments
 
-*16 October 2026*
+*16 October 2026. Partly superseded by 20, which widens what's bundled.*
 
 **Decision.** Server environments set `resolve.noExternal: [/^@angular\//]` and define `ngServerMode: true` and `ngHmrMode: false`.
 
@@ -217,3 +217,13 @@ Each entry records one choice: what we decided, why, what it costs, and when to 
 **Cost.** No status codes, headers or redirects: the contract returns a string. `@angular/ssr`'s `AngularNodeAppEngine` handles those, and it expects the CLI's build manifest, which this plugin doesn't produce.
 
 **Revisit when** an app needs status codes or redirects, or route-level render modes and prerendering.
+
+## 20. Bundle every Angular library on the server, found from package.json
+
+*16 October 2026. Widens 18.*
+
+**Decision.** Server environments bundle `@angular/*`, plus every package the app depends on that depends or peer-depends on `@angular/core`. The plugin finds those by walking `package.json` files from the app's `dependencies`, following each Angular library's own dependencies too.
+
+**Why.** Material, NgRx and in-house UI kits ship partially compiled, just like Angular's own packages. With only `/^@angular\//` bundled, Node would load them on the server unlinked, and rendering would need the JIT compiler. A dependency on `@angular/core` is the one thing every Angular library declares.
+
+**Cost.** Only `dependencies` count, not `devDependencies`, so an Angular library listed under `devDependencies` stays external. The walk reads a few `package.json` files per server start. A library that imports Angular without declaring it would be missed. That's a broken package, but the user can still list it in `resolve.noExternal`.

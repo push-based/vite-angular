@@ -38,7 +38,7 @@ Two Vite details shaped this. Vite reloads the page for any changed `.html` file
 
 - In dev, a middleware runs after Vite's SPA fallback. For every page request it loads the entry through the `ssr` environment's module runner, passes it `index.html` as Vite transformed it, and returns the rendered page. The browser hydrates that page instead of rendering it again.
 - Server environments get their own ngp compiler, compiled without HMR. HMR code imports update modules from URLs only a browser can load, and on the server every component's import failed. Each environment's `hotUpdate` sends edits to its own compiler, so after a template edit the browser updates in place and the next server render shows the edit too.
-- Server environments bundle `@angular/*` (`resolve.noExternal`) rather than letting Node load it. That makes the linker run on Angular's packages, and keeps one copy of `@angular/core`. Without it, rendering failed with `NG0203`.
+- Server environments bundle every Angular library (`resolve.noExternal`) rather than letting Node load it: `@angular/*`, plus every dependency that depends or peer-depends on `@angular/core`, which covers Material, NgRx and the like. That makes the linker run on them, and keeps one copy of `@angular/core`. Without it, rendering failed with `NG0203`.
 - `vite build` builds both environments (`builder: {}`): the browser bundle into `dist/client`, and the entry into `dist/server/main.server.js`. Serving them is the app's job. The playground's [server.mjs](../playground/server.mjs) does it with plain `node:http`.
 
 One trap is already fixed. The plugin remembers what the analyzer has seen for each file. For a file it hasn't seen yet, a transform compares against disk. A watcher event can't, because disk already holds the edit. So watcher edits to unseen files, which includes every template's first edit, always go to the analyzer.
@@ -57,7 +57,7 @@ Verified in the [playground](../playground): `vite build` and `vite preview`, de
 | Component HMR (`/@ng/component`, `angular:component-update`) | Works for external template edits. Edits to a component's `.ts` file, inline templates and inline styles included, reload the page. Adds nothing to production builds |
 | External styles, encapsulation, preprocessors | Missing. Without `externalRuntimeStyles`, ngp reads `styleUrl` files itself and inlines them, untested here. With it, styles would become Vite modules |
 | Template type-checking | Missing. Planned as a worker running `tsgo` over ngp's `.ngtypecheck.ts` output |
-| Server-side rendering and hydration | Works in dev and in production builds. In the playground, 24 components hydrate with none skipped, and server renders take 10–35 ms warm. Every page answers 200, including the not-found page, and there's no prerendering and no `@angular/ssr` (route render modes, `AngularNodeAppEngine`) |
+| Server-side rendering and hydration | Works in dev and in production builds. In the playground, pages hydrate with no components skipped, except the Styles page's `ShadowDom` component, which Angular never hydrates and renders in the browser instead. Server renders take 10–35 ms warm. Every page answers 200, including the not-found page, and there's no prerendering and no `@angular/ssr` (route render modes, `AngularNodeAppEngine`) |
 | i18n, Vitest | Out of scope for now |
 
 ## Where it's weak

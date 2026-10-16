@@ -1,0 +1,8 @@
+<h1>vite-plugin-ngp</h1>
+@for (name of names; track name) {
+  <app-greeting [name]="name" />
+}
+<button type="button" (click)="increment()">Clicked {{ count() }} times</button>
+@if (count() > 0) {
+  <p>Doubled: {{ doubled() }}</p>
+}

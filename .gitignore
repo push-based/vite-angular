@@ -4,3 +4,5 @@ dist/
 *.tsbuildinfo
 .DS_Store
 .idea/
+# Machine-specific dev-server launch config for Claude Code
+.claude/launch.json

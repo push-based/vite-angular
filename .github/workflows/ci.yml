@@ -1,4 +1,5 @@
-# Builds ngp from source, then the plugin, its tests and the playground, on a clean machine.
+# Builds ngp from source, then the plugin, its tests, the playground's Vitest specs and the
+# playground itself, on a clean machine.
 # This is the check that the build instructions in docs/building.md work.
 name: ci
 
@@ -35,6 +36,7 @@ jobs:
 
       - run: pnpm toolchain
 
+      # The plugin's own tests, then the playground's specs under Vitest.
       - run: pnpm test
 
       - run: pnpm playground:build

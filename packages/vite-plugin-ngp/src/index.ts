@@ -11,7 +11,7 @@ import {
   type UserConfig,
   type ViteDevServer,
 } from 'vite';
-import {findAngularLibraries, packagePattern} from './angular-libraries.js';
+import {findAngularLibraries, packagePathPattern, packagePattern} from './angular-libraries.js';
 import {NgpCompiler, type HmrUpdate} from './compiler.js';
 import {writeEntryTsconfig} from './entry-tsconfig.js';
 import {link, LINKER_MARKER} from './linker.js';
@@ -306,7 +306,7 @@ function compilerPlugin(options: NgpPluginOptions): Plugin & {configureVitest(co
           // one copy of @angular/core. Tests use devDependencies too.
           test: {
             server: {
-              deps: {inline: [/[\\/]node_modules[\\/]@angular[\\/]/, ...findAngularLibraries(root, {devDependencies: true})]},
+              deps: {inline: [/[\\/]node_modules[\\/]@angular[\\/]/, ...findAngularLibraries(root, {devDependencies: true}).map(packagePathPattern)]},
             },
           },
         } as UserConfig;

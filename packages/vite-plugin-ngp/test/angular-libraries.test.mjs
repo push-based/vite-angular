@@ -6,7 +6,7 @@ import * as fs from 'node:fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import {test} from 'node:test';
-import {findAngularLibraries, packagePattern} from '../dist/angular-libraries.js';
+import {findAngularLibraries, packagePathPattern, packagePattern} from '../dist/angular-libraries.js';
 
 async function writePackage(dir, pkg) {
   await fs.mkdir(dir, {recursive: true});
@@ -36,4 +36,23 @@ test('packagePattern matches a package and its subpaths only', () => {
   assert.ok(pattern.test('@ngrx/store/testing'));
   assert.ok(!pattern.test('@ngrx/store-devtools'));
   assert.ok(!pattern.test('x@ngrx/store'));
+});
+
+test('devDependencies count only when asked for', async () => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'ngp-libs-'));
+  await writePackage(root, {dependencies: {'ui-kit': '*'}, devDependencies: {'@testing-library/angular': '*'}});
+  await writePackage(path.join(root, 'node_modules/ui-kit'), {peerDependencies: {'@angular/core': '*'}});
+  await writePackage(path.join(root, 'node_modules/@testing-library/angular'), {peerDependencies: {'@angular/core': '*'}});
+
+  assert.deepEqual(findAngularLibraries(root), ['ui-kit']);
+  assert.deepEqual(findAngularLibraries(root, {devDependencies: true}), ['@testing-library/angular', 'ui-kit']);
+});
+
+test('packagePathPattern matches files inside a package, at any depth of node_modules', () => {
+  const pattern = packagePathPattern('@ngrx/store');
+  assert.ok(pattern.test('/app/node_modules/@ngrx/store/fesm2022/ngrx-store.mjs'));
+  assert.ok(pattern.test('/app/node_modules/ui-kit/node_modules/@ngrx/store/index.mjs'));
+  assert.ok(pattern.test('C:\\app\\node_modules\\@ngrx\\store\\index.mjs'));
+  assert.ok(!pattern.test('/app/node_modules/@ngrx/store-devtools/index.mjs'));
+  assert.ok(!pattern.test('/app/src/@ngrx/store/index.ts'));
 });

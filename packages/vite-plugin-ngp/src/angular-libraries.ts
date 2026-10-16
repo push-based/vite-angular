@@ -42,7 +42,21 @@ export function findAngularLibraries(root: string, options: {devDependencies?: b
 
 /** A `resolve.noExternal` pattern for a package and its subpaths. */
 export function packagePattern(name: string): RegExp {
-  return new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&')}(?:/|$)`);
+  return new RegExp(`^${escapeRegExp(name)}(?:/|$)`);
+}
+
+/**
+ * A pattern for files inside a package, at any depth of `node_modules`. Vitest's
+ * `server.deps.inline` matches against file paths, not import specifiers.
+ */
+export function packagePathPattern(name: string): RegExp {
+  const separator = String.raw`[\\/]`;
+  const segments = ['node_modules', ...name.split('/')].map(escapeRegExp);
+  return new RegExp(separator + segments.join(separator) + separator);
+}
+
+function escapeRegExp(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&');
 }
 
 function dependsOnAngular(pkg: PackageJson): boolean {

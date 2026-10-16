@@ -1,0 +1,63 @@
+# Builds the docs site in site/ (an Angular app compiled by vite-plugin-ngp and prerendered with
+# Angular SSR) and publishes it to GitHub Pages at https://push-based.github.io/vite-angular/.
+# Every push to main redeploys, so docs changes go live when they're pushed.
+name: pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deploy at a time; a newer push replaces a queued one.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # Same cache as ci.yml: Rust, wasm-bindgen and Cargo's build cache, keyed on the pins.
+      - uses: actions/cache@v4
+        with:
+          path: |
+            toolchain/.cache/rust
+            toolchain/.cache/target
+          key: ngp-${{ runner.os }}-${{ hashFiles('toolchain/versions.env') }}
+
+      - run: pnpm toolchain
+
+      - run: pnpm site:build
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site/dist/client
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

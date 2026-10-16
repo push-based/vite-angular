@@ -24,9 +24,10 @@ const APP_LABEL = {
   'standalone-5000-s1': '5,000',
   playground: 'playground',
 };
-const TOOLS = ['ngp', 'cli', 'analog', 'analog-hmr', 'oxc'].filter((t) => [...latest.values()].some((r) => r.tool === t));
+const TOOLS = ['ngp', 'ngp-notc', 'cli', 'analog', 'analog-hmr', 'oxc'].filter((t) => [...latest.values()].some((r) => r.tool === t));
 const TOOL_LABEL = {
   ngp: 'vite-plugin-ngp',
+  'ngp-notc': 'vite-plugin-ngp, `typeCheck: false`',
   cli: 'Angular CLI',
   analog: 'Analog',
   'analog-hmr': 'Analog, `liveReload: true`',

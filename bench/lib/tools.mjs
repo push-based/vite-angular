@@ -25,6 +25,17 @@ export default defineConfig({
   plugins: [ngp()],
 });
 `,
+  // Not a default: ngp with its type-check off, to compare with tools that don't type-check.
+  'ngp-notc': `import {defineConfig} from 'vite';
+import {ngp} from 'vite-plugin-ngp';
+
+// vite-plugin-ngp's documented setup with typeCheck: false.
+export default defineConfig({
+  cacheDir: 'node_modules/.vite-ngp-notc',
+  build: {outDir: 'dist-ngp-notc'},
+  plugins: [ngp({typeCheck: false})],
+});
+`,
   analog: `import {defineConfig} from 'vite';
 import angular from '@analogjs/vite-plugin-angular';
 
@@ -90,6 +101,7 @@ export const TOOLS = {
   },
   analog: viteTool('analog', 'Analog', '@analogjs/vite-plugin-angular'),
   oxc: viteTool('oxc', '@oxc-angular/vite', '@oxc-angular/vite'),
+  'ngp-notc': viteTool('ngp-notc', 'vite-plugin-ngp, typeCheck off', 'vite-plugin-ngp'),
   'analog-hmr': viteTool('analog-hmr', 'Analog, liveReload on', '@analogjs/vite-plugin-angular'),
 };
 

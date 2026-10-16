@@ -8,7 +8,8 @@ import {fileURLToPath} from 'node:url';
 
 export const BENCH = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const REPO = path.resolve(BENCH, '..');
-export const APPS_DIR = path.join(BENCH, '.work/apps');
+// .noindex keeps Spotlight from indexing 10,000 generated files while the benchmark runs.
+export const APPS_DIR = path.join(BENCH, '.work/apps.noindex');
 
 export const GENERATED_SIZES = [100, 1000, 5000];
 

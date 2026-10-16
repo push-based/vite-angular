@@ -2,7 +2,7 @@
 //
 // Vendored from ng-hybrid-preprocessor-bench (corpus/generate.mjs at 300c6ae), so this repo's
 // benchmark runs on the same apps as the bench repo's. Three changes, none to the app's sources:
-//   - versions come from bench/package.json, and apps go to bench/.work/apps/<name>, where
+//   - versions come from bench/package.json, and apps go to bench/.work/apps.noindex/<name>, where
 //     packages resolve from bench/node_modules by walking up;
 //   - angular.json gets the `serve` target `ng new` writes, so `ng serve` works;
 //   - manifest.json gets `benchTargets`: the files the harness edits.
@@ -49,7 +49,7 @@ const N = Number(args.components);
 const SEED = Number(args.seed);
 if (!Number.isInteger(N) || N < 20) throw new Error('--components must be an integer >= 20');
 const name = `standalone-${N}-s${SEED}`;
-const outDir = path.resolve(args.out ?? path.join(root, '.work/apps', name));
+const outDir = path.resolve(args.out ?? path.join(root, '.work/apps.noindex', name));
 
 // Probabilities. Changing any of these changes every generated app, so bump GENERATOR_VERSION.
 const GENERATOR_VERSION = 1;

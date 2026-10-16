@@ -1,4 +1,4 @@
-// Sets up the benchmark's apps in .work/apps: the generated apps at 100, 1,000 and 5,000
+// Sets up the benchmark's apps in .work/apps.noindex: the generated apps at 100, 1,000 and 5,000
 // components, and a copy of this repo's playground. Then adds what the Vite-based tools need
 // next to each app's Angular CLI files: a root index.html and one vite.config.<tool>.mjs per tool.
 //

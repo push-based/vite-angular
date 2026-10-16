@@ -113,3 +113,13 @@ Each entry records one choice: what we decided, why, what it costs, and when to 
 **Why.** The bench repo is private, and the plugin depends on its unpublished toolchain.
 
 **Revisit when** we publish the bench results or the plugin.
+
+## 11. Node 26
+
+*16 October 2026*
+
+**Decision.** `.nvmrc` pins Node 26.12.0, and both `package.json` files require `>=26.0.0`.
+
+**Why.** We chose to run on the newest Node line. Angular's CLI and ngp both accept it: their `engines` field allows `>=26.0.0`.
+
+**Cost.** The bench repo still pins Node 24, so ngp is built under 24 and run under 26 here. That works because the native engine is an N-API addon, and N-API is stable across Node versions. The plugin test, `vite build` and the dev server all pass on 26.12.0.

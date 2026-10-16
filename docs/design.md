@@ -4,7 +4,7 @@ vite-plugin-ngp lets Vite compile Angular one module at a time, using ngp, the R
 
 This page is for whoever builds or reviews the plugin next. It covers why the plugin exists, how it works today, what it doesn't do yet, and where the design is weakest. The evidence behind each choice lives in [ng-hybrid-preprocessor-bench](https://github.com/push-based/ng-hybrid-preprocessor-bench), mainly its [Vite plugin investigation](https://github.com/push-based/ng-hybrid-preprocessor-bench/blob/main/docs/vite-plugin-investigation.md). Individual choices are logged in [decisions.md](decisions.md).
 
-Snapshot: 16 October 2026. ngp built from Angular `92e5aa8` (`22.3.0-next.2`), Vite 8.3.4, Node 24.21.0.
+Snapshot: 16 October 2026. ngp built from Angular `92e5aa8` (`22.3.0-next.2`), Vite 8.3.4, Node 26.12.0.
 
 ## Why build it
 

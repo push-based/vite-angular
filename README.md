@@ -21,7 +21,7 @@ ngp isn't on npm, so build it first in [ng-hybrid-preprocessor-bench](https://gi
 cd ../ng-hybrid-preprocessor-bench && pnpm install && pnpm toolchain
 ```
 
-Then, in this repo, on Node 24 from `.nvmrc`:
+Then, in this repo, on Node 26 from `.nvmrc`:
 
 ```bash
 nvm use

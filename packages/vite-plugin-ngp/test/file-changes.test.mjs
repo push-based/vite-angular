@@ -99,6 +99,21 @@ async function startApp() {
     );
   }
 
+  /**
+   * When each file was last written. Vite's watcher, chokidar 3, drops a second change to the same
+   * file within 50 ms of the first, with no later event, and a fast machine gets from one step of
+   * a test to the next in less than that.
+   */
+  const written = new Map();
+  async function writeFiles(files) {
+    const due = Math.max(0, ...Object.keys(files).map((rel) => (written.get(rel) ?? 0) + 60 - Date.now()));
+    await new Promise((resolve) => setTimeout(resolve, due));
+    for (const [rel, content] of Object.entries(files)) {
+      await fs.writeFile(abs(rel), content);
+      written.set(rel, Date.now());
+    }
+  }
+
   const app = {
     root,
     errors,
@@ -106,9 +121,7 @@ async function startApp() {
     async write(files, timeout) {
       sent.length = 0;
       const done = expect(Object.keys(files), timeout);
-      for (const [rel, content] of Object.entries(files)) {
-        await fs.writeFile(abs(rel), content);
-      }
+      await writeFiles(files);
       await done;
     },
     async remove(...files) {
@@ -124,9 +137,7 @@ async function startApp() {
       sent.length = 0;
       const done = expect([from, to, ...Object.keys(files)]);
       await fs.rename(abs(from), abs(to));
-      for (const [rel, content] of Object.entries(files)) {
-        await fs.writeFile(abs(rel), content);
-      }
+      await writeFiles(files);
       await done;
     },
     read: (rel) => fs.readFile(abs(rel), 'utf8'),

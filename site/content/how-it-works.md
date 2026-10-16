@@ -72,3 +72,26 @@ The plugin defines the same globals the Angular CLI does, so the minifier can dr
 | `ngHmrMode` | `true` in the dev server's browser environment |
 
 These took the playground's bundle from 589 kB to 386 kB, and stopped production builds from logging "Angular is running in development mode".
+
+## The build optimizer
+
+`vite build` runs one more pass over your code and your libraries, which the dev server skips: Angular's build optimizer, the same rewrites `ng build` makes. It has nothing to do with ngp's optimize mode. It exists because the bundler can only drop code it knows is safe to drop, and Angular's compiled output doesn't say. A component's `static ɵcmp = ɵɵdefineComponent(...)` is a function call, so without help Rolldown keeps every component, pipe and service it has seen, whether your app uses it or not.
+
+The plugin's pass is a port of the CLI's, and makes the same changes:
+
+- A class with Angular's static definitions (`ɵcmp`, `ɵfac`, `ɵprov` and the rest) moves into a function marked `/*#__PURE__*/`. If nothing uses the class, Rolldown drops it with its definition.
+- In Angular's own packages, which declare `"sideEffects": false`, every top-level call and `new` is marked pure. In your code and in other libraries, only `new InjectionToken(...)` is.
+- TypeScript enums move into a pure function too, and `forwardRef(...)` calls count as pure.
+- `ɵsetClassMetadata` calls and JIT-only decorator metadata are removed. With `ngDevMode` set to `false` the minifier drops those anyway, so this changes nothing you'd notice.
+
+Measured on the repo's playground, with the same script for each build (raw size, gzip in brackets):
+
+| | JavaScript on the first page | All JavaScript |
+|---|---|---|
+| Before the optimizer | 502 kB (158 kB) | 552 kB (179 kB) |
+| With it | 316 kB (99 kB) | 390 kB (129 kB) |
+| `ng build` of the same app | 336 kB (109 kB) | 383 kB (129 kB) |
+
+On this site, the first page's JavaScript went from 462 kB to 298 kB (143 kB to 93 kB gzipped). Taken as a whole, the plugin's output is now as big as `ng build`'s for the same app: 2% larger raw, the same size gzipped. The first page is smaller than `ng build`'s only because Rolldown splits chunks differently from esbuild.
+
+The pass trusts what the CLI trusts: that no top-level code in Angular's packages runs for its side effects. It's a copy, so when the CLI changes its pass, the plugin's copy doesn't change with it until someone ports the change.

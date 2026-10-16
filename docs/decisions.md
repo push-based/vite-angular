@@ -265,3 +265,29 @@ A template and its `.ts` file saved together still go through decision 22's 50 m
 **Cost.** Being textual makes it strict. Reformatting a method, or a comment inside a class, reloads even though nothing changed. So does a template kept in a constant outside the decorator, like the playground's `encapsulation.ts`, and any component with a second decorator. Each `.ts` edit is parsed twice more, outside ngp; that's not measured, but it's one file. The CLI also updates in place when `templateUrl`, `styleUrl` or `styleUrls` change, and the plugin doesn't yet, because pointing a component at another file hasn't been tried with ngp's analyzer.
 
 **Revisit when** ngp exposes its own "what changed" answer for an edit, or when external styles become Vite modules and `styleUrl` edits need the same treatment.
+
+## 24. Port the CLI's build optimizer, in builds only
+
+*16 October 2026*
+
+**Decision.** `vite build` runs a copy of the oxc-based pass from `@angular/build` (`src/tools/oxc/oxc-transform.js` at `22.3.0-next.2`) on every module that mentions `ɵ`, `InjectionToken` or decorator metadata: the app's own code after Vite strips its types, and library code after the linker ([optimizer.ts](../packages/vite-plugin-ngp/src/optimizer.ts)). It wraps classes with Angular static members, and TypeScript enums, in IIFEs marked `/*#__PURE__*/`. In `@angular/*` packages that declare `"sideEffects": false` it marks every top-level call and `new` pure, and elsewhere only `new InjectionToken(...)`. It replaces `ɵsetClassMetadata` calls inside their wrappers with `void 0`, and removes `ctorParameters`, `decorators` and `propDecorators` assignments. `forwardRef` is pure through Rolldown's `treeshake.manualPureFunctions`, which is what the CLI passes to esbuild as `pure`. The pass parses with Vite's own oxc parser (`parseSync`) and edits with magic-string. The dev server never runs it.
+
+**Why.** Rolldown already drops an unused expression marked pure, but nothing in Angular's output tells it which expressions are. A class with `static ɵcmp = ɵɵdefineComponent(...)` has a call in a static initializer, so Rolldown keeps every component, pipe and service it has seen, used or not. Rolldown has no option that covers this. `manualPureFunctions` takes function names, not "every top-level call in this package", and nothing makes a class with side-effecting statics removable. So the rewrites have to happen in a transform, and the CLI's is the one Angular's packages are tested against.
+
+Measured on the playground's client build, with the same script for every row (JavaScript on the first page, then all JavaScript, in kB, gzip level 9 in brackets):
+
+| | First page | All JS |
+|---|---|---|
+| Before | 502.2 (158.4) | 551.5 (178.6) |
+| After | 315.7 (99.1) | 389.9 (128.7) |
+| `ng build` of the same app | 335.6 (108.5) | 383.1 (128.7) |
+
+The docs site, the other app built with the plugin, went from 461.9 kB (143.3 gzip) to 297.5 kB (92.8) on its first page. The pass runs on server bundles too, where the playground's JavaScript went from 1,492 kB to 1,172 kB.
+
+The halves need each other. Marking top-level calls pure alone gives 418.6 kB on the playground's first page, wrapping classes alone 442.1 kB, and both together 315.7 kB: a pure call that references a class still keeps it, if the class itself looks side-effecting, and the other way round. Enums are worth 4 kB. The metadata removal saves nothing here, because `ngDevMode: false` (decision 13) already lets the minifier drop those calls. It stays because it's part of the CLI's pass and costs nothing.
+
+The `ng build` row is the playground copied into a CLI project with an `angular.json`, minus the server entry and the CSS import in `main.ts`, built with `@angular/build` `22.3.0-next.2`. All JavaScript is within 2% raw and equal gzipped. The first page is smaller here because Rolldown splits chunks differently from esbuild, not because less code ships.
+
+**Cost.** It's a copy of someone else's code. When the CLI changes its pass, this one doesn't follow until someone ports the change. Marking every top-level call in Angular's packages pure trusts that none of them is there for its side effect. The CLI trusts the same thing, so a package that broke it would break `ng build` too. Third-party libraries such as NgRx get the class wrapping but not the top-level marking, as under the CLI. The pass takes about 0.2 s over the 1.8 MB of Angular's own packages. Whole builds didn't get slower, because the minifier then has less code to work on. That was measured on the playground only.
+
+**Revisit when** `@angular/build` exports its optimizer, or Rolldown can mark a package's top-level code pure. Then the plugin should call that instead of keeping a copy.

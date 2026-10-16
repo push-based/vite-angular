@@ -36,6 +36,8 @@ Two Vite details shaped this. Vite reloads the page for any changed `.html` file
 
 **Compile-time globals** ([index.ts](../packages/vite-plugin-ngp/src/index.ts), `config`). The plugin defines the same globals the Angular CLI does: `ngJitMode` false everywhere, `ngDevMode` false in builds, and `ngServerMode` false in the client environment and true in server environments. Without them, a production build still runs Angular's dev-mode checks.
 
+**Build optimizer** ([optimizer.ts](../packages/vite-plugin-ngp/src/optimizer.ts)). `vite build` runs a copy of the CLI's build optimizer, the pass `ng build` applies to every module, so Rolldown can drop Angular code the app doesn't use. It's unrelated to ngp's optimize mode, which is about how ngp compiles. It runs after the linker for libraries, and after Vite strips types for the app's own modules. A class with `ɵcmp`, `ɵfac`, `ɵprov` and the like moves into an IIFE marked `/*#__PURE__*/`, and so does a TypeScript enum. In `@angular/*` packages that declare `"sideEffects": false`, every top-level call and `new` is marked pure. `forwardRef` is pure through Rolldown's `treeshake.manualPureFunctions`. The pass parses with Vite's own oxc parser and edits with magic-string, so it adds no parser and no Babel. On the playground, the JavaScript on the first page went from 502 kB to 316 kB, against 336 kB from `ng build` of the same app. Decision 24 has the full numbers. The dev server doesn't run it: it would only make each served module slower.
+
 **Server-side rendering** ([index.ts](../packages/vite-plugin-ngp/src/index.ts), the `ssr` option). The app supplies a server entry, by default `src/main.server.ts`, whose default export is `render(url, document)`. In the [playground](../playground/src/main.server.ts) that's three lines around `renderApplication` from `@angular/platform-server`. The plugin then does four things:
 
 - In dev, a middleware runs after Vite's SPA fallback. For every page request it loads the entry through the `ssr` environment's module runner, passes it `index.html` as Vite transformed it, and returns the rendered page. The browser hydrates that page instead of rendering it again.
@@ -54,7 +56,7 @@ Verified in the [playground](../playground): `vite build` and `vite preview`, de
 | Per-module transform, optimize mode | Works |
 | Edit → analyzer update → module invalidation | Works. Template and inline style edits update in place, other edits reload |
 | Entry-only analyzer tsconfig | Works. Same output as the full tsconfig for every playground module ([test](../packages/vite-plugin-ngp/test/entry-tsconfig.test.mjs)) |
-| Production build through the same transform | Works. The playground's bundle is 386 kB, down from 1,197 kB with the JIT fallback. No build optimizer yet (pure annotations, dead-code passes) |
+| Production build through the same transform | Works, with the CLI's build optimizer. The playground's first page loads 316 kB of JavaScript (99 kB gzipped), and all its JavaScript is 390 kB. `ng build` of the same app gives 336 kB and 383 kB |
 | Linker for `node_modules` | Works, in dev pre-bundling and in builds. Babel-based, the same linker the bench's bundles use. The CLI has since moved to an oxc-based linker, which should be faster |
 | Component HMR (`/@ng/component`, `angular:component-update`) | Works for external templates, and for `.ts` edits that only change inline `template` or `styles`, with the CLI's rules. Every other `.ts` edit reloads, and so does a template edit that lands within 50 ms of such a `.ts` edit ([test](../packages/vite-plugin-ngp/test/hmr.test.mjs)). `templateUrl` and `styleUrl` changes reload, unlike under the CLI. Adds nothing to production builds |
 | External styles, encapsulation, preprocessors | Missing. Without `externalRuntimeStyles`, ngp reads `styleUrl` files itself and inlines them, untested here. With it, styles would become Vite modules |
@@ -69,7 +71,8 @@ Verified in the [playground](../playground): `vite build` and `vite preview`, de
 - **New files are untested.** With an entry-only tsconfig, the analyzer should find a new file through the import that adds it. The bench only measured edits to existing files.
 - **SSR runs two analyzers.** The browser and server compilers each hold their own ngp analyzer, so a dev server with SSR needs about twice the analyzer memory, and every edit is analyzed twice. One analyzer serving both would need a way to compile with and without HMR from the same state.
 - **SSR has no status codes.** `render(url, document)` returns HTML only, so the not-found page answers 200. Angular's way to set the status is `@angular/ssr`'s request and response tokens, which this plugin doesn't wire up.
-- **No numbers of our own yet.** All the performance claims come from the bench's spikes, not from this plugin running a real dev server.
+- **No speed numbers of our own yet.** Bundle sizes are measured on the playground, but every dev-server timing comes from the bench's spikes, not from this plugin running a real dev server.
+- **The build optimizer is a copy.** It's the CLI's pass, ported by hand. When the CLI changes its pass, the plugin's copy stays as it is until someone ports the change, and nothing fails to say so. Bundle size is the only signal.
 
 ## What to measure next
 

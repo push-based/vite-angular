@@ -56,6 +56,7 @@ You don't configure these, but they're worth knowing when you debug:
 
 - `define`: `ngJitMode`, `ngDevMode`, `ngServerMode` and `ngHmrMode`, as [How it works](how-it-works) lists.
 - `optimizeDeps.rolldownOptions.plugins`: Angular's linker, for dependency pre-bundling.
+- `build.rolldownOptions.treeshake.manualPureFunctions`: `forwardRef`, so unused `forwardRef(...)` calls can be dropped, as `ng build` does. The rest of the build optimizer is a transform and needs no configuration.
 - `resolve.noExternal` in server environments: every `@angular/*` package, plus every package in your `dependencies` that depends on `@angular/core`, so Angular libraries get bundled and linked instead of loaded unlinked by Node. An Angular library under `devDependencies` stays external; add it to `resolve.noExternal` yourself.
 - A dev-server middleware that answers `/@ng/component` requests with component updates.
 - With `ssr`: `builder: {}` and output directories for the `client` and `ssr` environments, and a middleware that renders page requests through your server entry.

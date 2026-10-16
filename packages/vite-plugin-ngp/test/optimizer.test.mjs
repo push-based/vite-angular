@@ -1,5 +1,5 @@
 // The build optimizer rewrites Angular code so the bundler can drop what an app doesn't use
-// (decision 21 in docs/decisions.md). These check each rewrite, and that Rolldown then drops an
+// (decision 24 in docs/decisions.md). These check each rewrite, and that Rolldown then drops an
 // unused component. Run `pnpm build` first.
 
 import assert from 'node:assert/strict';

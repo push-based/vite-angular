@@ -110,7 +110,7 @@ export function i18nPlugin(options: I18nOptions, getEntries: (root: string) => s
           return {code, subPath: spec.subPath ?? code, files};
         }),
       ];
-      if (env.command === 'serve') {
+      if (env.command === 'serve' && !env.isPreview) {
         const devLocale = devLocaleOf(options, locales);
         const deps = ['@angular/localize/init', '@angular/localize'];
         const data = localeDataModule(devLocale.code, root);
@@ -126,6 +126,7 @@ export function i18nPlugin(options: I18nOptions, getEntries: (root: string) => s
       // Every locale's files sit one folder down, at `<base><subPath>/`. Relative URLs, resolved
       // against each page's <base href>, let one build serve all of them. The public directory is
       // copied into each locale's folder by generateBundle instead of once into the outDir.
+      // `vite preview` serves the outDir at `/`, and the preview middleware handles `base`.
       return {base: './', build: {copyPublicDir: false}};
     },
 
@@ -290,7 +291,7 @@ export function i18nPlugin(options: I18nOptions, getEntries: (root: string) => s
     // locale the browser prefers.
     configurePreviewServer(server) {
       const outDir = path.resolve(config.root, config.environments['client']?.build.outDir ?? config.build.outDir);
-      server.middlewares.use(previewMiddleware(locales, source.code, outDir));
+      server.middlewares.use(previewMiddleware(locales, source.code, outDir, deployBase));
     },
   };
 }
@@ -608,15 +609,21 @@ function joinBase(base: string, subPath: string): string {
 
 /**
  * Page requests under `/<subPath>/` that match no file get that locale's index.html. `/` redirects
- * to the first locale the browser accepts, else the source locale.
+ * to the first locale the browser accepts, else the source locale. With a `base` like `/app/`,
+ * requests under it are served from the outDir as if the prefix weren't there.
  */
-export function previewMiddleware(locales: Locale[], sourceLocale: string, outDir: string): Connect.NextHandleFunction {
+export function previewMiddleware(locales: Locale[], sourceLocale: string, outDir: string, base = '/'): Connect.NextHandleFunction {
+  const prefix = base.startsWith('/') ? base.replace(/\/+$/, '') : '';
   return (req, res, next) => {
+    const url = new URL(req.url ?? '/', 'http://localhost');
+    if (prefix && (url.pathname === prefix || url.pathname.startsWith(prefix + '/'))) {
+      url.pathname = url.pathname.slice(prefix.length) || '/';
+      req.url = url.pathname + url.search;
+    }
     const accept = req.headers.accept ?? '';
     if ((req.method !== 'GET' && req.method !== 'HEAD') || !accept.includes('text/html')) {
       return next();
     }
-    const url = new URL(req.url ?? '/', 'http://localhost');
     const [first] = url.pathname.split('/').filter(Boolean);
     const locale = locales.find((l) => l.subPath === first);
     if (!locale) {
@@ -625,7 +632,7 @@ export function previewMiddleware(locales: Locale[], sourceLocale: string, outDi
       }
       const preferred = negotiateLocale(req.headers['accept-language'] ?? '', locales) ?? locales.find((l) => l.code === sourceLocale)!;
       res.statusCode = 302;
-      res.setHeader('Location', `/${preferred.subPath}/`);
+      res.setHeader('Location', joinBase(prefix || '/', preferred.subPath));
       return res.end();
     }
     const file = path.join(outDir, decodeURIComponent(url.pathname));

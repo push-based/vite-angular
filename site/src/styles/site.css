@@ -7,6 +7,80 @@
   box-sizing: border-box;
 }
 
+/* Dark theme. The PushBased design system has only a light theme, so this one mirrors its own
+   neutral and violet scales: a light step becomes the matching dark step (50 <-> 900, 100 <-> 800,
+   and so on). Every rule written against the tokens flips with them; the few that need more get
+   their own [data-theme] rules below. The hex values are the design system's, from tokens.css.
+   It applies when the visitor picks it (data-theme="dark"), or when the system is dark and no
+   choice is saved. */
+:root {
+  --logo-gear: var(--color-brand-navy);
+  --pushbased-navy: var(--color-brand-navy);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --color-neutral-25: #0D121C;
+    --color-neutral-50: #121926;
+    --color-neutral-100: #202939;
+    --color-neutral-200: #364152;
+    --color-neutral-300: #4B5565;
+    --color-neutral-400: #697586;
+    --color-neutral-500: #9AA4B2;
+    --color-neutral-600: #CDD5DF;
+    --color-neutral-700: #E3E8EF;
+    --color-neutral-800: #EEF2F6;
+    --color-neutral-900: #F8FAFC;
+    --color-neutral-950: #FCFCFD;
+    --color-primary-25: #2E125E;
+    --color-primary-50: #2E125E;
+    --color-primary-100: #491C96;
+    --color-primary-200: #5720B7;
+    --color-primary-300: #6927DA;
+    --color-primary-400: #7839EE;
+    --color-primary-500: #875BF7;
+    --color-primary-600: #A48AFB;
+    --color-primary-700: #C3B5FD;
+    --color-primary-800: #DDD6FE;
+    --color-primary-900: #ECE9FE;
+    --color-surface: #0B0F17;
+    --logo-gear: #A48AFB;
+    --pushbased-navy: #F8FAFC;
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --color-neutral-25: #0D121C;
+  --color-neutral-50: #121926;
+  --color-neutral-100: #202939;
+  --color-neutral-200: #364152;
+  --color-neutral-300: #4B5565;
+  --color-neutral-400: #697586;
+  --color-neutral-500: #9AA4B2;
+  --color-neutral-600: #CDD5DF;
+  --color-neutral-700: #E3E8EF;
+  --color-neutral-800: #EEF2F6;
+  --color-neutral-900: #F8FAFC;
+  --color-neutral-950: #FCFCFD;
+  --color-primary-25: #2E125E;
+  --color-primary-50: #2E125E;
+  --color-primary-100: #491C96;
+  --color-primary-200: #5720B7;
+  --color-primary-300: #6927DA;
+  --color-primary-400: #7839EE;
+  --color-primary-500: #875BF7;
+  --color-primary-600: #A48AFB;
+  --color-primary-700: #C3B5FD;
+  --color-primary-800: #DDD6FE;
+  --color-primary-900: #ECE9FE;
+  --color-surface: #0B0F17;
+  --logo-gear: #A48AFB;
+  --pushbased-navy: #F8FAFC;
+}
+
+
 html {
   scroll-padding-top: calc(var(--space-16) + var(--space-4));
 }
@@ -23,10 +97,122 @@ a {
 }
 
 /* The design system's README: white on primary-500 is 4.31:1, below WCAG AA for text under 24px.
-   Use primary-600 (5.8:1) for the button, and primary-700 to hover. */
+   Use primary-600 (5.8:1) for the button, and primary-700 to hover. In the dark theme the scale
+   is mirrored, so the same two colors are primary-400 and primary-300 there. */
 .pb-btn-primary {
   --btn-bg: var(--color-primary-600);
   --btn-bg-hover: var(--color-primary-700);
+}
+
+:root[data-theme='dark'] .pb-btn-primary {
+  --btn-bg: var(--color-primary-400);
+  --btn-bg-hover: var(--color-primary-300);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .pb-btn-primary {
+    --btn-bg: var(--color-primary-400);
+    --btn-bg-hover: var(--color-primary-300);
+  }
+}
+
+.logo-gear {
+  fill: var(--logo-gear);
+}
+
+.pushbased-navy {
+  fill: var(--pushbased-navy);
+}
+
+/* Header icon buttons: the theme toggle and the GitHub link. */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.icon-button {
+  display: inline-grid;
+  place-items: center;
+  width: var(--space-9);
+  height: var(--space-9);
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-lg);
+  background: none;
+  color: var(--color-neutral-600);
+  cursor: pointer;
+}
+
+.icon-button:hover {
+  color: var(--color-neutral-900);
+  background: var(--color-neutral-50);
+  border-color: var(--color-border);
+}
+
+.icon-button:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+}
+
+/* Show the icon for the theme you'd switch to: a moon in light, a sun in dark. */
+.icon-sun {
+  display: none;
+}
+
+:root[data-theme='dark'] .icon-sun {
+  display: block;
+}
+
+:root[data-theme='dark'] .icon-moon {
+  display: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .icon-sun {
+    display: block;
+  }
+  :root:not([data-theme='light']) .icon-moon {
+    display: none;
+  }
+}
+
+/* Dark-theme rules the mirrored scales don't cover: tinted backgrounds that would glare, the
+   warning callout, and Shiki's dark colors. */
+:root[data-theme='dark'] .hero {
+  background:
+    radial-gradient(60rem 30rem at 85% 0%, color-mix(in srgb, var(--color-primary-500) 18%, transparent), transparent 70%),
+    radial-gradient(40rem 24rem at 0% 100%, color-mix(in srgb, var(--color-secondary-600) 10%, transparent), transparent 70%);
+}
+
+:root[data-theme='dark'] .callout--warning {
+  background: color-mix(in srgb, var(--color-warning-500) 10%, var(--color-surface));
+  border-color: color-mix(in srgb, var(--color-warning-500) 45%, transparent);
+  border-left-color: var(--color-warning-500);
+  color: var(--color-text);
+}
+
+:root[data-theme='dark'] .prose .shiki,
+:root[data-theme='dark'] .prose .shiki span {
+  color: var(--shiki-dark) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .hero {
+    background:
+      radial-gradient(60rem 30rem at 85% 0%, color-mix(in srgb, var(--color-primary-500) 18%, transparent), transparent 70%),
+      radial-gradient(40rem 24rem at 0% 100%, color-mix(in srgb, var(--color-secondary-600) 10%, transparent), transparent 70%);
+  }
+  :root:not([data-theme='light']) .callout--warning {
+    background: color-mix(in srgb, var(--color-warning-500) 10%, var(--color-surface));
+    border-color: color-mix(in srgb, var(--color-warning-500) 45%, transparent);
+    border-left-color: var(--color-warning-500);
+    color: var(--color-text);
+  }
+  :root:not([data-theme='light']) .prose .shiki,
+  :root:not([data-theme='light']) .prose .shiki span {
+    color: var(--shiki-dark) !important;
+  }
 }
 
 code {
@@ -86,7 +272,6 @@ code {
 .site-header__inner {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: var(--space-4);
   min-height: var(--space-16);
 }
@@ -109,6 +294,7 @@ code {
   display: flex;
   gap: var(--space-6);
   overflow-x: auto;
+  margin-left: auto;
 }
 
 .site-nav a {
@@ -200,8 +386,17 @@ code {
 }
 
 .hero__logo {
+  display: block;
   width: 15rem;
+}
+
+.hero__logo svg {
+  width: 100%;
   height: auto;
+}
+
+.brand app-logo {
+  display: flex;
 }
 
 .callout {

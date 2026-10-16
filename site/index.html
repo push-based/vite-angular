@@ -7,6 +7,15 @@
     <title>vite-plugin-ngp</title>
     <meta name="description" content="A Vite plugin that compiles Angular one module at a time with ngp, Angular's Rust-and-TypeScript preprocessor." />
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <meta name="color-scheme" content="light dark" />
+    <script>
+      // Apply a saved theme before the first paint, so prerendered pages don't flash light.
+      // Without one, CSS follows the system setting.
+      try {
+        var theme = localStorage.getItem('theme');
+        if (theme === 'light' || theme === 'dark') document.documentElement.dataset.theme = theme;
+      } catch (e) {}
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   </head>

@@ -79,11 +79,12 @@ export async function renderMarkdown(source: string) {
     }
   });
 
-  highlighter ??= createHighlighter({themes: ['github-light'], langs: LANGS});
+  highlighter ??= createHighlighter({themes: ['github-light', 'github-dark'], langs: LANGS});
   const shiki = await highlighter;
   for (const block of code) {
     const lang = LANGS.includes(block.lang ?? '') ? block.lang! : 'text';
-    const html = shiki.codeToHtml(block.text, {lang, theme: 'github-light'});
+    // Both themes: light colors inline, dark ones as --shiki-dark variables for site.css to switch to.
+    const html = shiki.codeToHtml(block.text, {lang, themes: {light: 'github-light', dark: 'github-dark'}});
     // marked prints an html token's text as it is.
     Object.assign(block, {type: 'html', block: true, pre: false, text: `<div class="code" data-lang="${lang}">${html}</div>`});
   }

@@ -1,11 +1,12 @@
 import {ChangeDetectionStrategy, Component, inject} from '@angular/core';
 import {DomSanitizer} from '@angular/platform-browser';
 import {RouterLink} from '@angular/router';
+import {Logo} from '../layout/logo';
 import snippet from '../../../content/_home-snippet.md';
 
 @Component({
   selector: 'app-home',
-  imports: [RouterLink],
+  imports: [Logo, RouterLink],
   templateUrl: './home.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

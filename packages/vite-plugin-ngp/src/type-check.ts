@@ -1,4 +1,4 @@
-import {spawn} from 'node:child_process';
+import {spawn, type ChildProcess} from 'node:child_process';
 import * as fs from 'node:fs/promises';
 import {createRequire} from 'node:module';
 import * as path from 'node:path';
@@ -48,6 +48,7 @@ export class TypeChecker {
   /** Block contents on disk, by block path. */
   private readonly written = new Map<string, string>();
   private rootNames: string[] | null = null;
+  private child: ChildProcess | null = null;
 
   constructor(private readonly options: TypeCheckerOptions) {
     this.tcbDir = path.join(options.outDir, 'blocks');
@@ -72,7 +73,7 @@ export class TypeChecker {
     const started = performance.now();
     const snapshot = await this.writeBlocks(blocks);
     await this.writeConfig([...snapshot.keys()]);
-    const output = await runTsgo(this.configFile, this.options.cwd);
+    const output = await this.runTsgo();
     const raw = parseTscOutput(output.text, this.options.cwd);
     const diagnostics = await this.map(raw, snapshot);
     // tsgo failed without printing a single error: a crash, or a missing binary.
@@ -80,6 +81,26 @@ export class TypeChecker {
       diagnostics.push({code: 'TS0', message: `tsgo exited with code ${output.code}:\n${output.text.trim()}`});
     }
     return {diagnostics, durationMs: performance.now() - started};
+  }
+
+  /** Stops a running tsgo. The check it belongs to then resolves with whatever it printed. */
+  abort(): void {
+    this.child?.kill();
+  }
+
+  private runTsgo(): Promise<{code: number | null; text: string}> {
+    return new Promise((resolve, reject) => {
+      const child = spawn(process.execPath, [tsgoBin(), '-p', this.configFile, '--pretty', 'false'], {cwd: this.options.cwd});
+      this.child = child;
+      let text = '';
+      child.stdout.on('data', (chunk) => (text += chunk));
+      child.stderr.on('data', (chunk) => (text += chunk));
+      child.on('error', reject);
+      child.on('close', (code) => {
+        this.child = null;
+        resolve({code, text});
+      });
+    });
   }
 
   private blockPath(file: string): string {
@@ -186,17 +207,6 @@ function tsgoBin(): string {
   return path.join(path.dirname(require.resolve('typescript7/package.json')), 'bin/tsc');
 }
 
-function runTsgo(configFile: string, cwd: string): Promise<{code: number | null; text: string}> {
-  return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, [tsgoBin(), '-p', configFile, '--pretty', 'false'], {cwd});
-    let text = '';
-    child.stdout.on('data', (chunk) => (text += chunk));
-    child.stderr.on('data', (chunk) => (text += chunk));
-    child.on('error', reject);
-    child.on('close', (code) => resolve({code, text}));
-  });
-}
-
 /**
  * Runs checks after edits without ever running two at once. Each `schedule()` restarts a short
  * wait. A request that arrives while a check runs starts one more check when it finishes.
@@ -205,6 +215,7 @@ export class CheckScheduler {
   private timer: NodeJS.Timeout | null = null;
   private running: Promise<void> | null = null;
   private again = false;
+  private closed = false;
 
   constructor(
     private readonly run: () => Promise<void>,
@@ -212,6 +223,9 @@ export class CheckScheduler {
   ) {}
 
   schedule(delayMs = this.delayMs): void {
+    if (this.closed) {
+      return;
+    }
     if (this.running) {
       this.again = true;
       return;
@@ -231,11 +245,15 @@ export class CheckScheduler {
     }, delayMs);
   }
 
-  close(): void {
+  /** Cancels a pending check, and resolves when a running one has finished. */
+  async close(): Promise<void> {
     if (this.timer) {
       clearTimeout(this.timer);
+      this.timer = null;
     }
     this.again = false;
+    this.closed = true;
+    await this.running;
   }
 }
 
@@ -293,26 +311,32 @@ export function startDevTypeCheck(options: {
   run: () => Promise<TypeCheckResult>;
   /** Called when a .ts file is added or deleted. */
   filesChanged: () => void;
+  /** Stops a running check. */
+  abort: () => void;
   overlay: boolean;
-}): CheckScheduler {
+}): {schedule(): void; close(): Promise<void>} {
   const {server} = options;
   const logger = server.config.logger;
   const root = server.config.root;
   const hot = server.environments.client.hot;
   let reported = '';
   let overlayError: object | null = null;
+  let closed = false;
 
   const scheduler = new CheckScheduler(async () => {
     let result: TypeCheckResult;
     try {
       result = await options.run();
     } catch (error) {
+      if (closed) {
+        return;
+      }
       logger.error(`[vite-plugin-ngp] type-check failed: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}`, {timestamp: true});
       return;
     }
     const {diagnostics} = result;
     const text = formatReport(diagnostics, root, true);
-    if (text === reported) {
+    if (closed || text === reported) {
       return;
     }
     const firstReport = reported === '' && diagnostics.length === 0;
@@ -356,9 +380,15 @@ export function startDevTypeCheck(options: {
   // Give the first page load a head start: generating the blocks shares its thread.
   if (server.httpServer) {
     server.httpServer.once('listening', () => scheduler.schedule(1000));
-    server.httpServer.once('close', () => scheduler.close());
   } else {
     scheduler.schedule(1000);
   }
-  return scheduler;
+  return {
+    schedule: () => scheduler.schedule(),
+    async close() {
+      closed = true;
+      options.abort();
+      await scheduler.close();
+    },
+  };
 }

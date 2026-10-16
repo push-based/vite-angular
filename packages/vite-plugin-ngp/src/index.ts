@@ -24,7 +24,6 @@ import {
   OVERLAY_CLIENT_URL,
   startDevTypeCheck,
   TypeChecker,
-  type CheckScheduler,
   type TypeCheckResult,
 } from './type-check.js';
 
@@ -121,9 +120,9 @@ function compilerPlugin(options: NgpPluginOptions): Plugin & {configureVitest(co
    * id (`src/app/home.ts@Home`), which is what the `c` query parameter decodes to.
    */
   const componentUpdates = new Map<string, string>();
-  const typeCheck = options.typeCheck ?? !process.env['VITEST'];
+  const typeCheck = options.typeCheck ?? !testing;
   let checker: TypeChecker | null = null;
-  let devCheck: CheckScheduler | null = null;
+  let devCheck: ReturnType<typeof startDevTypeCheck> | null = null;
   let typeCheckOverlay = false;
   let buildCheck: Promise<TypeCheckResult> | null = null;
   /**
@@ -162,7 +161,7 @@ function compilerPlugin(options: NgpPluginOptions): Plugin & {configureVitest(co
   /** One check over every file the tsconfig includes, plus any other the compiler has compiled. */
   async function runTypeCheck(): Promise<TypeCheckResult> {
     checker ??= new TypeChecker({
-      tsconfig: resolveTsconfig(config.root, options.tsconfig),
+      tsconfig: resolveTsconfig(config.root, options.tsconfig, testing),
       outDir: path.join(config.cacheDir, 'vite-plugin-ngp/type-check'),
       cwd: config.root,
     });
@@ -401,6 +400,7 @@ function compilerPlugin(options: NgpPluginOptions): Plugin & {configureVitest(co
           server,
           run: runTypeCheck,
           filesChanged: () => checker?.filesChanged(),
+          abort: () => checker?.abort(),
           overlay: typeCheckOverlay,
         });
       }
@@ -477,8 +477,10 @@ function compilerPlugin(options: NgpPluginOptions): Plugin & {configureVitest(co
       config.logger.info(report.info);
     },
 
-    closeBundle() {
-      // Vitest closes its Vite server through here, with no HTTP server to wait for.
+    // Also runs when the dev server closes: a check still writing to the cache would outlive it.
+    // Vitest closes its Vite server through here, with no HTTP server to wait for.
+    async closeBundle() {
+      await devCheck?.close();
       if (config.command === 'build' || testing) {
         return closeCompilers();
       }

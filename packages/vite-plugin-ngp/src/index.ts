@@ -63,6 +63,23 @@ function compilerPlugin(options: NgpPluginOptions): Plugin {
     // Before Vite's own TypeScript transform: ngp returns TypeScript, and Vite strips the types.
     enforce: 'pre',
 
+    // The same compile-time globals the Angular CLI defines, so Angular can drop dev-only and JIT
+    // code. The linker makes every library AOT, so JIT is never needed.
+    config(_, env) {
+      return {
+        define: {
+          ngJitMode: 'false',
+          ...(env.command === 'build' ? {ngDevMode: 'false'} : {}),
+        },
+      };
+    },
+
+    configEnvironment(name, environment) {
+      if ((environment.consumer ?? (name === 'client' ? 'client' : 'server')) === 'client') {
+        return {define: {ngServerMode: 'false'}};
+      }
+    },
+
     configResolved(resolved) {
       config = resolved;
     },

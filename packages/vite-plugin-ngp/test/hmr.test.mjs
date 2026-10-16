@@ -1,6 +1,7 @@
 // Component HMR in a real Vite dev server: what the plugin sends to the browser after an edit.
 // A template-only edit updates in place. A template edited together with its component's class
-// reloads once, with no update first (decision 22 in docs/decisions.md). Run `pnpm build` first;
+// reloads once, with no update first (decision 22 in docs/decisions.md). A .ts edit that only
+// changes inline styles updates in place, alone or with its template (decision 23). Run `pnpm build` first;
 // needs an ngp toolchain build.
 
 import assert from 'node:assert/strict';
@@ -18,9 +19,9 @@ const toolchain = process.env.NGP_TOOLCHAIN ?? path.join(repo, 'toolchain/out');
 /** Longer than the plugin's 50 ms batch window, with room for the analyzer. */
 const SETTLE_MS = 400;
 
-const COMPONENT = (field) => `import {Component, signal} from '@angular/core';
+const COMPONENT = (field, color) => `import {Component, signal} from '@angular/core';
 
-@Component({selector: 'app-root', templateUrl: './app.html'})
+@Component({selector: 'app-root', templateUrl: './app.html'${color ? `, styles: 'p { color: ${color}; }'` : ''}})
 export class App {
   protected readonly ${field} = signal(1);
 }
@@ -92,6 +93,16 @@ async function settle(condition) {
   await new Promise((resolve) => setTimeout(resolve, SETTLE_MS));
 }
 
+/** The update module the plugin serves for a component, as the browser would fetch it. */
+function served(id) {
+  return new Promise((resolve, reject) => {
+    const headers = {};
+    const res = {getHeader: (name) => headers[name], setHeader: (name, value) => (headers[name] = value), end: resolve};
+    const req = {url: `/src/@ng/component?c=${id}`, method: 'GET', headers: {}};
+    server.middlewares.handle(req, res, (error) => reject(error ?? new Error(`${req.url} wasn't served`)));
+  });
+}
+
 async function write(file, content) {
   await fs.writeFile(path.join(root, 'src', file), content);
 }
@@ -119,6 +130,47 @@ test('a template written just after its class reloads once, with no update', asy
   sent = [];
   await write('app.ts', COMPONENT('count'));
   await write('app.html', TEMPLATE('count'));
+  await settle(() => reloads().length > 0);
+  assert.equal(updates().length, 0);
+  assert.equal(reloads().length, 1);
+});
+
+test('an inline styles edit in the class updates the component in place', async () => {
+  // The page reloaded in the previous test, so the component is back in the module graph.
+  await server.environments.client.transformRequest('/src/app.ts');
+  sent = [];
+  await write('app.ts', COMPONENT('count', 'red'));
+  await settle(() => updates().length > 0);
+  assert.deepEqual(updates().map((p) => decodeURIComponent(p.data.id)), ['src/app.ts@App']);
+  assert.equal(reloads().length, 0);
+  assert.match(await served(updates()[0].data.id), /color: red/);
+});
+
+for (const [order, files] of [
+  ['before', ['app.ts', 'app.html']],
+  ['after', ['app.html', 'app.ts']],
+]) {
+  test(`a template written ${order === 'before' ? 'after' : 'before'} an inline styles edit updates both in place`, async () => {
+    sent = [];
+    const color = order === 'before' ? 'blue' : 'green';
+    const text = order === 'before' ? 'Sum' : 'Amount';
+    const contents = {'app.ts': COMPONENT('count', color), 'app.html': TEMPLATE('count', text)};
+    for (const file of files) {
+      await write(file, contents[file]);
+    }
+    // The .ts update can go out before the analyzer has the template, so the last one counts.
+    await settle(() => updates().length > 0);
+    assert.equal(reloads().length, 0);
+    assert.ok(updates().every((p) => decodeURIComponent(p.data.id) === 'src/app.ts@App'));
+    const code = await served(updates().at(-1).data.id);
+    assert.match(code, new RegExp(`color: ${color}`));
+    assert.match(code, new RegExp(text));
+  });
+}
+
+test('a class edit outside the decorator reloads, with no update', async () => {
+  sent = [];
+  await write('app.ts', COMPONENT('count', 'green').replace('signal(1)', 'signal(2)'));
   await settle(() => reloads().length > 0);
   assert.equal(updates().length, 0);
   assert.equal(reloads().length, 1);

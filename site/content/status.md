@@ -13,6 +13,7 @@ vite-plugin-ngp is a first version on top of a prototype compiler. This page say
 |---|---|
 | Per-module compilation | Works, in ngp's optimize mode, from the code Vite hands over |
 | Edits in the dev server | Work. Template edits and inline style edits update in place; other edits reload the page |
+| Adding, renaming and deleting files | Works. New files compile as they would in a fresh build. Deleting a file that's still used is an error until the file is back. Checked by an automated dev-server test |
 | Production builds | Work, through the same transform, with the CLI's build optimizer. The playground's JavaScript is within 2% of `ng build`'s for the same app, and the same size gzipped |
 | Linking Angular libraries | Works, in dependency pre-bundling and in builds, with Angular's Babel linker |
 | Component HMR | Works for external templates, and for `.ts` edits that only change a component's inline `template` or `styles`. Other `.ts` edits reload, as under `ng serve`, and so does a template saved together with such a `.ts` edit. Changing `templateUrl` or `styleUrl` reloads too, unlike `ng serve` |
@@ -32,7 +33,7 @@ vite-plugin-ngp is a first version on top of a prototype compiler. This page say
 
 - **ngp is a prototype, and the plugin uses it as one.** ngp's API isn't public, and the plugin reaches below it in two places to skip work it doesn't need. Any Angular commit can break that, which is why every Angular package is pinned to exactly `22.3.0-next.2`.
 - **Nobody can `npm install` it.** You build ngp from Angular's source with a Rust toolchain the build installs for you. That works on macOS and Linux, and it's a blocker for most teams until Angular publishes ngp.
-- **New files are untested.** The analyzer should find a new file through the import that adds it. Edits to existing files have been checked, adding files hasn't.
+- **File changes are tested on one small app.** Adding, renaming and deleting components and templates is covered by a test on a three-component app, not on a large one. Deleting a component that's still used gives Angular's "is not a known element" error, which names the element, not the missing file. A missing `styleUrl` file isn't reported at all.
 - **SSR runs two analyzers.** The browser and the server each get their own ngp compiler, because only the browser's has HMR code. A dev server with SSR needs about twice the analyzer memory, and analyzes every edit twice.
 - **The build optimizer is a copy of the CLI's.** When `@angular/build` changes its pass, the plugin keeps the old one until someone ports the change. Nothing fails when that happens; only bundle sizes would show it.
 - **The linker is the slow one.** It's the Babel-based linker. The Angular CLI has since moved to a faster oxc-based one, which the plugin can't use yet because it's private to `@angular/build`.

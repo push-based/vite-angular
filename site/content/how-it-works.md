@@ -29,6 +29,8 @@ The plugin always uses ngp's **optimize mode**, in development and in production
 
 When a file changes, the plugin sends the new content to the analyzer. The analyzer answers with every file whose output may have changed. The plugin drops those files from ngp's cache and invalidates them in Vite's module graph. Vite then asks again for the ones the page still uses.
 
+Adding, renaming and deleting files works the same way. The analyzer finds a new file through the import that adds it. When you delete a file, the plugin tells the analyzer it's gone and recompiles everything that imports it. An importer that still uses the file fails with an error, and recovers when the file is back. If a component's `templateUrl` points at a file that doesn't exist, the plugin reports `NG2008: Could not find template file`, as `ng build` would. ngp on its own would compile it to an empty template.
+
 The Angular CLI's path runs a "delta" pass after each edit, which streams every file in the program again: 465 ms at 5,000 components. The plugin skips it, because Vite's module graph already knows which modules the page still uses.
 
 ### Keeping edits cheap in large apps

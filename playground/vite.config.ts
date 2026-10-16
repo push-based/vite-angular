@@ -7,6 +7,8 @@ export default defineConfig({
     ngp({
       // ngp isn't on npm: `pnpm toolchain` in the repo root builds it into toolchain/out.
       toolchain: process.env.NGP_TOOLCHAIN ?? resolve(import.meta.dirname, '../toolchain/out'),
+      // Renders pages on the server with src/main.server.ts, in dev and in `vite build`.
+      ssr: true,
     }),
   ],
 });

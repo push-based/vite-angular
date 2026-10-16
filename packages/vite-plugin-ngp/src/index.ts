@@ -8,6 +8,8 @@ import {
   type EnvironmentModuleNode,
   type Plugin,
   type ResolvedConfig,
+  type UserConfig,
+  type ViteDevServer,
 } from 'vite';
 import {findAngularLibraries, packagePattern} from './angular-libraries.js';
 import {NgpCompiler, type HmrUpdate} from './compiler.js';
@@ -24,11 +26,15 @@ export interface NgpPluginOptions {
   toolchain?: string;
   /** Analyzer engine. Defaults to `native`, with no fallback to wasm. */
   engine?: Engine;
-  /** The app's tsconfig, relative to Vite's root. Defaults to tsconfig.app.json, else tsconfig.json. */
+  /**
+   * The app's tsconfig, relative to Vite's root. Defaults to tsconfig.app.json, else tsconfig.json.
+   * Under Vitest, tsconfig.spec.json comes first.
+   */
   tsconfig?: string;
   /**
    * Entry modules, relative to Vite's root. Defaults to `src/main.ts`, plus `src/main.server.ts`
-   * when it exists.
+   * when it exists. Under Vitest it defaults to none: the analyzer reads each spec, and what it
+   * imports, when Vitest asks for it.
    */
   entries?: string[];
   /**
@@ -43,7 +49,7 @@ export interface NgpPluginOptions {
    */
   hmr?: boolean;
   /**
-   * Server-side rendering. The entry module default-exports
+   * Server-side rendering. Ignored under Vitest. The entry module default-exports
    * `render(url: string, document: string): Promise<string>`, which turns index.html into the
    * rendered page. In dev, the plugin renders every page request through it. `vite build` then
    * builds the client into `dist/client` and the entry into `dist/server`. `true` means the entry
@@ -54,7 +60,19 @@ export interface NgpPluginOptions {
 
 type Consumer = 'client' | 'server';
 
+/**
+ * The slice of Vitest's `configureVitest` hook this plugin uses, typed by hand so the plugin
+ * doesn't depend on Vitest.
+ */
+interface VitestPluginContext {
+  vitest: {watcher: {onFileChange(file: string): void}};
+  /** Called only when Vitest's fsModuleCache is on. `false` keeps a module out of the cache. */
+  defineCacheKeyGenerator(generator: (context: {id: string}) => string | false | undefined): void;
+}
+
 const TS_MODULE = /\.[cm]?ts$/;
+/** `DEBUG=vite-plugin-ngp` logs every module ngp compiles, with its time. */
+const debug = /(?:^|,)vite-plugin-ngp(?:,|$)/.test(process.env['DEBUG'] ?? '');
 
 /**
  * How far apart two file changes can be and still count as one edit. An editor saving all files,
@@ -66,8 +84,9 @@ export function ngp(options: NgpPluginOptions = {}): Plugin[] {
   return [compilerPlugin(options), linkerPlugin(), optimizerPlugin()];
 }
 
-function compilerPlugin(options: NgpPluginOptions): Plugin {
+function compilerPlugin(options: NgpPluginOptions): Plugin & {configureVitest(context: VitestPluginContext): void} {
   let config: ResolvedConfig;
+  let vitest: VitestPluginContext['vitest'] | null = null;
   /**
    * One compiler per consumer. Server environments get their own, compiled without HMR: HMR code
    * imports update modules from URLs that only a browser can load.
@@ -75,7 +94,9 @@ function compilerPlugin(options: NgpPluginOptions): Plugin {
   const compilers = new Map<Consumer, Promise<NgpCompiler>>();
   let hmr = false;
   let root = process.cwd();
-  const ssrOptions = options.ssr === true ? {} : options.ssr || null;
+  /** Under Vitest: specs are compiled like any other module, with no HMR and no SSR. */
+  const testing = isVitest();
+  const ssrOptions = testing ? null : options.ssr === true ? {} : options.ssr || null;
   const ssrEntry = ssrOptions ? (ssrOptions.entry ?? 'src/main.server.ts') : null;
   /**
    * Latest update module per component, served at `/@ng/component?c=<id>`. Keyed by the decoded
@@ -122,8 +143,8 @@ function compilerPlugin(options: NgpPluginOptions): Plugin {
       if (!toolchainDir) {
         throw new Error('vite-plugin-ngp: set the `toolchain` option or NGP_TOOLCHAIN to an ngp build.');
       }
-      const tsconfig = resolveTsconfig(config.root, options.tsconfig);
-      const entries = (options.entries ?? ['src/main.ts', 'src/main.server.ts'])
+      const tsconfig = resolveTsconfig(config.root, options.tsconfig, testing);
+      const entries = (options.entries ?? (testing ? [] : ['src/main.ts', 'src/main.server.ts']))
         .map((e) => path.resolve(config.root, e))
         .filter((e) => options.entries || fs.existsSync(e));
       const analyzerTsconfig =
@@ -140,6 +161,39 @@ function compilerPlugin(options: NgpPluginOptions): Plugin {
     })();
     compilers.set(consumer, compiler);
     return compiler;
+  }
+
+  /**
+   * Watch mode under Vitest. Vitest turns Vite's HMR off, so `hotUpdate` never runs, but the
+   * analyzer still has to see each edit, and every module whose output it changes has to be
+   * compiled again. Vitest reruns the specs that import an edited module. A template isn't a
+   * module, so for a template edit the plugin tells Vitest its component changed.
+   */
+  async function onTestEdit(server: ViteDevServer, file: string) {
+    if (!(TS_MODULE.test(file) || file.endsWith('.html')) || compilers.size === 0) {
+      return;
+    }
+    // Read synchronously, so the update is queued before Vitest's debounced rerun transforms.
+    const content = fs.readFileSync(file, 'utf8');
+    let owner: string | null = null;
+    for (const [consumer, compiler] of compilers) {
+      const ngp = await compiler;
+      const stale = await ngp.update(file, content, 'watcher');
+      owner ??= file.endsWith('.html') ? await ngp.componentForTemplate(file) : null;
+      for (const environment of Object.values(server.environments)) {
+        if (environment.config.consumer !== consumer) {
+          continue;
+        }
+        for (const f of new Set([...stale, ...(owner ? [owner] : [])])) {
+          for (const mod of environment.moduleGraph.getModulesByFile(f) ?? []) {
+            environment.moduleGraph.invalidateModule(mod);
+          }
+        }
+      }
+    }
+    if (owner) {
+      vitest?.watcher.onFileChange(owner);
+    }
   }
 
   async function closeCompilers() {
@@ -242,8 +296,21 @@ function compilerPlugin(options: NgpPluginOptions): Plugin {
     // The same compile-time globals the Angular CLI defines, so Angular can drop dev-only and JIT
     // code. The linker makes every library AOT, so JIT is never needed.
     config(userConfig, env) {
-      hmr = env.command === 'serve' && options.hmr !== false;
+      hmr = env.command === 'serve' && options.hmr !== false && !testing;
       root = path.resolve(userConfig.root ?? process.cwd());
+      if (testing) {
+        return {
+          define: {ngJitMode: 'false', ngHmrMode: 'false'},
+          // Vitest leaves node_modules to Node, which would load Angular libraries unlinked, and
+          // they'd need the JIT compiler. Inlining them sends them through the linker, and keeps
+          // one copy of @angular/core. Tests use devDependencies too.
+          test: {
+            server: {
+              deps: {inline: [/[\\/]node_modules[\\/]@angular[\\/]/, ...findAngularLibraries(root, {devDependencies: true})]},
+            },
+          },
+        } as UserConfig;
+      }
       return {
         define: {
           ngJitMode: 'false',
@@ -276,7 +343,23 @@ function compilerPlugin(options: NgpPluginOptions): Plugin {
       config = resolved;
     },
 
+    configureVitest(context) {
+      vitest = context.vitest;
+      // Vitest caches transformed modules on disk, keyed by the module's own content. A compiled
+      // component also depends on its template, its styles, and the components it imports, so
+      // the app's modules are compiled fresh on every run. Linked libraries are still cached.
+      context.defineCacheKeyGenerator(({id}) => (isAppModule(id) ? false : undefined));
+    },
+
     configureServer(server) {
+      if (testing) {
+        server.watcher.on('change', (file) => {
+          onTestEdit(server, file).catch((error) => {
+            config.logger.error(`[vite-plugin-ngp] ${file}: ${String(error)}`);
+          });
+        });
+        return;
+      }
       server.httpServer?.once('close', closeCompilers);
       // Runs after Vite's own middlewares, once its SPA fallback has rewritten a page request to
       // /index.html, and before Vite would serve that file as it is.
@@ -331,7 +414,8 @@ function compilerPlugin(options: NgpPluginOptions): Plugin {
     },
 
     closeBundle() {
-      if (config.command === 'build') {
+      // Vitest closes its Vite server through here, with no HTTP server to wait for.
+      if (config.command === 'build' || testing) {
         return closeCompilers();
       }
     },
@@ -344,7 +428,13 @@ function compilerPlugin(options: NgpPluginOptions): Plugin {
         if (this.environment.name === 'client') {
           failed.add(file);
         }
+        const start = performance.now();
         const result = await ngp.transform(file, code);
+        if (debug) {
+          const ms = (performance.now() - start).toFixed(1);
+          // To stderr, like Vite's own DEBUG output: Vitest silences Vite's logger.
+          process.stderr.write(`vite-plugin-ngp ${result ? 'compiled' : 'unchanged'} ${path.relative(config.root, file)} (${ms} ms)\n`);
+        }
         // Freshly compiled code already contains any pending template update.
         const prefix = decodeURIComponent(ngp.componentId(file, ''));
         for (const componentId of componentUpdates.keys()) {
@@ -510,8 +600,10 @@ function modulesOf(graph: EnvironmentModuleGraph, files: string[]): EnvironmentM
   return files.flatMap((f) => [...(graph.getModulesByFile(f) ?? [])]);
 }
 
-function resolveTsconfig(root: string, configured: string | undefined): string {
-  const candidates = configured ? [configured] : ['tsconfig.app.json', 'tsconfig.json'];
+function resolveTsconfig(root: string, configured: string | undefined, testing: boolean): string {
+  const candidates = configured
+    ? [configured]
+    : [...(testing ? ['tsconfig.spec.json'] : []), 'tsconfig.app.json', 'tsconfig.json'];
   for (const candidate of candidates) {
     const file = path.resolve(root, candidate);
     if (fs.existsSync(file)) {
@@ -519,6 +611,17 @@ function resolveTsconfig(root: string, configured: string | undefined): string {
     }
   }
   throw new Error(`vite-plugin-ngp: no tsconfig found in ${root} (tried ${candidates.join(', ')})`);
+}
+
+/** A module the compiler plugin transforms: the app's own TypeScript. */
+function isAppModule(id: string): boolean {
+  const file = cleanId(id);
+  return TS_MODULE.test(file) && !/\.d\.[cm]?ts$/.test(file) && !/[\\/]node_modules[\\/]/.test(file);
+}
+
+/** Vitest sets VITEST in the process that runs Vite and in every worker. */
+function isVitest(): boolean {
+  return !!process.env['VITEST'];
 }
 
 function cleanId(id: string): string {

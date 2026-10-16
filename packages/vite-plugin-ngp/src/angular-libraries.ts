@@ -3,6 +3,7 @@ import * as path from 'node:path';
 
 interface PackageJson {
   dependencies?: Record<string, string>;
+  devDependencies?: Record<string, string>;
   peerDependencies?: Record<string, string>;
 }
 
@@ -10,12 +11,14 @@ interface PackageJson {
  * The Angular libraries an app depends on, directly or through another Angular library: every
  * package that lists `@angular/core` as a dependency or peer dependency.
  *
- * They ship partially compiled, like Angular's own packages. On the server, Vite leaves
- * `node_modules` to Node, which would load them unlinked, so the plugin bundles these instead.
+ * They ship partially compiled, like Angular's own packages. On the server, and under Vitest,
+ * `node_modules` is left to Node, which would load them unlinked, so the plugin bundles these
+ * instead. `devDependencies` count only when asked for: tests use them, the app doesn't.
  */
-export function findAngularLibraries(root: string): string[] {
+export function findAngularLibraries(root: string, options: {devDependencies?: boolean} = {}): string[] {
   const app = readPackageJson(path.join(root, 'package.json'));
-  const queue: {name: string; from: string}[] = Object.keys({...app?.dependencies}).map((name) => ({name, from: root}));
+  const direct = {...app?.dependencies, ...(options.devDependencies ? app?.devDependencies : {})};
+  const queue: {name: string; from: string}[] = Object.keys(direct).map((name) => ({name, from: root}));
   const seen = new Set<string>();
   const libraries: string[] = [];
   while (queue.length > 0) {

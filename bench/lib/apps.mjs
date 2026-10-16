@@ -25,6 +25,8 @@ export function loadApp(id) {
       // The overview page renders its hero heading and the pipeline list.
       gate: `() => !!document.querySelector('app-root h1')?.textContent.includes('one module at a time')
         && document.querySelectorAll('app-root ol.pipeline li').length === 4`,
+      // A build must also render a lazy route.
+      lazy: {path: 'signals', gate: `() => !!document.querySelector('app-root app-signals app-page-header h1')`},
       template: 'src/app/pages/overview/overview.html',
       ts: {
         file: 'src/app/pages/overview/overview.ts',
@@ -36,6 +38,7 @@ export function loadApp(id) {
   }
   const manifest = JSON.parse(fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8'));
   const t = manifest.benchTargets;
+  const last = 'f' + String(t.features - 1).padStart(t.route.length - 1, '0');
   return {
     id,
     dir,
@@ -45,6 +48,8 @@ export function loadApp(id) {
     // The shell rendered every feature link, and the first lazy route rendered its page heading.
     gate: `() => document.querySelectorAll('app-root nav a').length === ${t.features}
       && !!document.querySelector('app-root app-${t.route}-page h3')`,
+    // A build must also render the last lazy route, not only the first.
+    lazy: {path: last, gate: `() => !!document.querySelector('app-root app-${last}-page h3')`},
     template: t.template,
     ts: t.ts,
     unsupported: {},

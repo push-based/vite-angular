@@ -108,12 +108,13 @@ async function devStart(app, tool) {
   const proc = start(tool.dev(app, PORT), app.dir);
   try {
     const answeredAt = await waitForHttp(URL_, proc, 600_000);
-    const opened = await openApp(browser, URL_, app.gate);
-    await sleep(500); // a dependency-optimizer reload would show up here
+    const opened = await openApp(browser, URL_, app.gate, {settleMs: 2000});
     const errors = [...opened.errors];
-    if (!(await gateHolds(opened.page, app.gate).catch(() => false))) errors.push('gate no longer holds after 500 ms');
+    if (!(await gateHolds(opened.page, app.gate).catch(() => false))) errors.push('gate no longer holds once settled');
     const sample = {
       fcp: opened.fcpAt - t0,
+      // Differs from fcp only when the optimizer reloaded the page after its first paint.
+      firstPaint: opened.firstPaint - t0,
       rendered: opened.renderedAt - t0,
       answered: answeredAt - t0,
       documents: opened.documents(),
@@ -291,8 +292,11 @@ async function buildSeries(app, active) {
       const server = await serveStatic(dir);
       try {
         const opened = await openApp(browser, server.url, app.gate, {timeoutMs: 60_000});
+        // Then a lazy route, through the router like a user would get there.
+        await opened.page.evaluate((p) => document.querySelector(`a[href$="/${p}"]`).click(), app.lazy.path);
+        await opened.page.waitForFunction(app.lazy.gate, {polling: 'mutation', timeout: 60_000});
         await sleep(500);
-        boot = {errors: opened.errors};
+        boot = {errors: opened.errors, lazyRoute: app.lazy.path};
         errors.push(...opened.errors.map((e) => `boot: ${e}`));
         await opened.context.close();
       } catch (e) {

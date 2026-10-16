@@ -51,7 +51,7 @@ const MARKER_OBSERVER = `(() => {
  * holds. Returns the page, the epoch times of first contentful paint and of the gate passing,
  * and every error the page logged.
  */
-export async function openApp(browser, url, gate, {timeoutMs = 600_000, markers = null} = {}) {
+export async function openApp(browser, url, gate, {timeoutMs = 600_000, markers = null, settleMs = 0} = {}) {
   const context = await browser.createBrowserContext();
   const page = await context.newPage();
   const errors = [];
@@ -75,9 +75,20 @@ export async function openApp(browser, url, gate, {timeoutMs = 600_000, markers 
   page.setDefaultTimeout(timeoutMs);
   await page.goto(url, {waitUntil: 'domcontentloaded', timeout: timeoutMs});
   await page.waitForFunction(gate, {polling: 'mutation', timeout: timeoutMs});
-  const renderedAt = Date.now();
-  const paint = await firstContentfulPaint(page);
-  return {page, context, errors, renderedAt, ...paint, documents: () => documents};
+  let renderedAt = Date.now();
+  let paint = await firstContentfulPaint(page);
+  // Vite's dependency optimizer can reload the page after it rendered, when it finds a
+  // dependency its first scan missed. What counts is the document that stays: wait until no new
+  // document loads for settleMs, and time that one.
+  const firstPaint = paint.fcpAt;
+  for (let seen = documents; settleMs > 0; seen = documents) {
+    await sleep(settleMs);
+    if (documents === seen) break;
+    await page.waitForFunction(gate, {polling: 'mutation', timeout: timeoutMs});
+    renderedAt = Date.now();
+    paint = await firstContentfulPaint(page);
+  }
+  return {page, context, errors, renderedAt, firstPaint, ...paint, documents: () => documents};
 }
 
 /** Epoch time of the current document's first contentful paint. */

@@ -36,6 +36,18 @@ export default defineConfig({
   plugins: [angular()],
 });
 `,
+  // Not a default: Analog's component HMR is opt-in. Measured only to show what turning it on buys.
+  'analog-hmr': `import {defineConfig} from 'vite';
+import angular from '@analogjs/vite-plugin-angular';
+
+// Analog's README setup plus liveReload: true, its opt-in component HMR.
+export default defineConfig({
+  cacheDir: 'node_modules/.vite-analog-hmr',
+  build: {outDir: 'dist-analog-hmr'},
+  resolve: {mainFields: ['module']},
+  plugins: [angular({liveReload: true})],
+});
+`,
   oxc: `import {defineConfig} from 'vite';
 import {angular} from '@oxc-angular/vite';
 
@@ -78,6 +90,7 @@ export const TOOLS = {
   },
   analog: viteTool('analog', 'Analog', '@analogjs/vite-plugin-angular'),
   oxc: viteTool('oxc', '@oxc-angular/vite', '@oxc-angular/vite'),
+  'analog-hmr': viteTool('analog-hmr', 'Analog, liveReload on', '@analogjs/vite-plugin-angular'),
 };
 
 function projectName(app) {

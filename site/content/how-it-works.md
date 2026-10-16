@@ -53,6 +53,10 @@ The comparison is strict, and that's deliberate. It doesn't try to tell a harmle
 
 If one save changes both a component's template and its `.ts` file, and the `.ts` change needs a reload, the page reloads once, without trying the template update first. The new template may use a field the running class doesn't have yet. If the `.ts` change only touched inline templates or styles, both update in place. The plugin waits 50 ms after a template edit to see whether the `.ts` file changed too, so template updates arrive 50 ms later than they would otherwise.
 
+## Type-checking
+
+Compiling a module doesn't check its types. Separately, after startup and after each edit, the plugin asks ngp for a type-check block per component file, and runs TypeScript 7 over your app and those blocks in another process. It maps errors in a block back to your template. [Type-checking](type-checking) has the details.
+
 ## Linking libraries
 
 Angular libraries, Angular's own packages included, ship partially compiled: `ɵɵngDeclareComponent(...)` calls that describe a component without being its runtime code. The linker rewrites them into the final code for your Angular version, as the CLI does. ngp only compiles your own sources, so the plugin runs Angular's linker on every module in `node_modules` that needs it:

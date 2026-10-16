@@ -19,12 +19,12 @@ vite-plugin-ngp is a first version on top of a prototype compiler. This page say
 | Component HMR | Works for external templates, and for `.ts` edits that only change a component's inline `template` or `styles`. Other `.ts` edits reload, as under `ng serve`, and so does a template saved together with such a `.ts` edit. Changing `templateUrl` or `styleUrl` reloads too, unlike `ng serve` |
 | Server rendering and hydration | Works in the dev server and in builds, with the `ssr` option. This site is prerendered that way |
 | Vitest with TestBed | Works, with jsdom and zoneless TestBed. A run compiles only the specs it runs and what they import. Watch mode reruns specs after template edits too. See [Testing with Vitest](testing) |
+| [Type-checking](type-checking) | Works, for templates and TypeScript, with TypeScript 7 in a separate process. Errors show in the dev server's terminal and overlay, and fail `vite build`. Planted errors land where `ng build` puts them. Checked on this site and the playground; not measured on a large app |
 
 ## What doesn't work yet
 
 | Piece | Status |
 |---|---|
-| Template type-checking | Missing. Run `tsc` or `tsgo` on its own. ngp can write type-check files for it, and the plugin doesn't use them yet |
 | External stylesheets | Untested. ngp reads `styleUrl` files and inlines them itself. They aren't Vite CSS modules, so preprocessors and CSS HMR don't apply |
 | HTTP status codes from SSR | Missing. `render` returns HTML only, so a not-found page answers 200 when a Node server renders it |
 | i18n | Out of scope for now |
@@ -36,6 +36,7 @@ vite-plugin-ngp is a first version on top of a prototype compiler. This page say
 - **ngp is a prototype, and the plugin uses it as one.** ngp's API isn't public, and the plugin reaches below it in two places to skip work it doesn't need. Any Angular commit can break that, which is why every Angular package is pinned to exactly `22.3.0-next.2`.
 - **Nobody can `npm install` it.** You build ngp from Angular's source with a Rust toolchain the build installs for you. That works on macOS and Linux, and it's a blocker for most teams until Angular publishes ngp.
 - **File changes are tested on one small app.** Adding, renaming and deleting components and templates is covered by a test on a three-component app, not on a large one. Deleting a component that's still used gives Angular's "is not a known element" error, which names the element, not the missing file. A missing `styleUrl` file isn't reported at all.
+- **Type-checking is whole-program.** Every check runs TypeScript 7 over the whole app. That takes 100–250 ms in the dev server on the repo's 19-component playground. A full check of a 5,000-component app took 18.6 s in benchmarks, and the incremental check the plugin runs hasn't been measured there. See [Type-checking](type-checking#where-its-weak).
 - **SSR runs two analyzers.** The browser and the server each get their own ngp compiler, because only the browser's has HMR code. A dev server with SSR needs about twice the analyzer memory, and analyzes every edit twice.
 - **The build optimizer is a copy of the CLI's.** When `@angular/build` changes its pass, the plugin keeps the old one until someone ports the change. Nothing fails when that happens; only bundle sizes would show it.
 - **The linker is the slow one.** It's the Babel-based linker. The Angular CLI has since moved to a faster oxc-based one, which the plugin can't use yet because it's private to `@angular/build`.

@@ -341,3 +341,36 @@ The `ng build` row is the playground copied into a CLI project with an `angular.
 **Cost.** Every app copies the same file, and an app that forgets the `afterEach` gets a confusing error. The plugin could export a ready-made setup module instead, at the cost of hiding which test environment runs.
 
 **Revisit when** apps start copying the file with changes nobody needs, or Angular's own Vitest builder settles on a setup the plugin could reuse.
+## 29. Type-check with tsgo over the app's sources and ngp's type-check blocks, in a child process
+
+*16 October 2026*
+
+**Decision.** The plugin type-checks with TypeScript 7's CLI (`tsgo`, installed as the `typescript7` alias of `typescript@7.0.2`), spawned as a child process with `--pretty false`. Its program is the app's own tsconfig, extended: the app's `include` stays, the type-check block of every component file is added under `files`, and `rootDirs` lists the blocks' directory next to the filesystem root. The blocks come from `HybridCompiler.getTcbForFile`, per file, cached until the analyzer marks a file stale. They're written under Vite's cache directory at each component's absolute path. A block's `import * as i0 from './app'` then resolves to the app's own `app.ts`, not to ngp's compiled output. Errors inside a block are mapped to the template with Angular's own rule (compiler-cli's `findSourceLocation`): from the node at the error, walk up to the first node followed by a `/*start,end*/` span comment, and take the template file from the block's `ngp-tcb-template-sources` comment. Errors in host bindings map to the component's `.ts`. In dev, a check runs 1 s after the server starts and 300 ms after the last edit, never two at once, and reports to the terminal and to Vite's error overlay when the set of errors changes. `vite build` starts the check after the last module is transformed, waits for it in `generateBundle`, and fails on any error. `typeCheck: false` turns it off, and it's off by default under Vitest.
+
+**Why.** ngp doesn't type-check, by design: its CLI writes `.ngtypecheck.ts` files for a separate TypeScript run. The bench measured that pipeline (S3/S4) on two real apps at 1.87× and 2.04× ngc's speed with `tsgo`, and at 0.90× and 0.97× with `tsc` 6, so TypeScript 7 it is. A child process keeps the Go checker off Vite's thread, so transforms and HMR never wait for it. Checking the app's original sources rather than ngp's compiled output means TypeScript errors need no source map: they're already at the right line and column, and ngp's output, which carries `// @ts-ignore` imports and template functions, never enters the program. The bench checked ngp's output because it also emitted from it. The plugin doesn't emit, Vite does. Getting blocks per file from the compiler, instead of running ngp's CLI, means an edit regenerates only the stale files' blocks. On the playground, a check after an edit takes 100–250 ms in dev, and 90–110 ms in `vite build` for the playground and the docs site. Vite's overlay closes only on the next module update or page reload, and an in-place template update is neither, so a 20-line client module opens and closes the overlay itself, and a page that loads later asks for the current errors.
+
+**Cost.** Every component file has its block generated on the main thread at startup, one file at a time with a yield in between, so it shares the thread with the first page's transforms. That's not measured beyond the playground: 20 blocks, from 19 components, in 60 ms. Every check is a whole-program `tsgo` run, made cheaper by `--incremental` build info in the cache: the bench measured `tsgo` at 18.6 s for a full check at 5,000 components, and the incremental case hasn't been measured. The check's tsconfig lives in Vite's cache directory, and TypeScript resolves `types` entries like `vite/client` from there. With the default cache directory, `node_modules/.vite`, that finds the app's `node_modules`. With a cache directory outside the project, an app whose tsconfig lists `types` gets TS2688 on every check, and tsgo, like tsc, then skips semantic errors. A template given as an expression (`template: TEMPLATE`) gets its errors at the expression, not inside the string, as ngp's own diagnostics do. The `typescript7` dependency adds a platform binary to every install: 26 MB on macOS arm64.
+
+**Revisit when** ngp's analyzer can feed TypeScript 7's API (`typescript/unstable`) directly, which would keep one long-lived program instead of spawning `tsgo` per check. Or when the bench measures the incremental check at 5,000 components and it's too slow for the dev loop.
+
+## 30. Generate type-check blocks from a second compiler that keeps whitespace
+
+*16 October 2026*
+
+**Decision.** `NgpCompiler` holds two `HybridCompiler`s on the same analyzer. The one that compiles modules collapses whitespace, as before. The one that generates type-check blocks is created with `preserveWhitespaces: true` and without HMR, and has its own cache, dropped for the same stale files.
+
+**Why.** ngp parses each template once, with whitespace collapsed, and takes the type-check block's spans from that parse. Every span after a collapsed run of whitespace in the same text node then points too early: in `<h1>\n  {{ titel }}</h1>`, ngp's span puts the error at column 4 and ngc at column 6, under the `t`. ngtsc parses templates a second time for type-checking, with whitespace preserved (its `diagNodes`), and ngp's own source marks the missing second parse `TODO(parity)` in `parseComponentTemplate`. With the second compiler, the plugin's positions match ngc's for every error in the type-check test, checked against ngc on the same app.
+
+**Cost.** Each template is parsed twice, once per compiler. A component that sets `preserveWhitespaces: false` in its decorator overrides the compiler's setting, so its spans still drift. ngtsc ignores the decorator for its type-check parse. ngp doesn't let the plugin do that.
+
+**Revisit when** ngp type-checks a whitespace-preserving parse itself. Then the second compiler goes.
+
+## 31. Drop Angular's ignored codes in type-check blocks, instead of turning off noUnusedLocals
+
+*16 October 2026*
+
+**Decision.** The check keeps the app's `noUnusedLocals` and `noUnusedParameters`. In a type-check block, the plugin drops TS6133, TS6199, TS2695 and TS7006, the same four codes compiler-cli's `shouldReportDiagnostic` drops, and any error under a `/*D:ignore*/` marker.
+
+**Why.** ngp's blocks fail `noUnusedLocals` and `noUnusedParameters`: no `_tcbN` function is ever called. The bench turned both options off for the whole program, which also hides unused locals in the app's own code, which `ng build` reports. Dropping the codes only inside blocks is what ngc does, so the app gets the same errors it would get from `ng build`.
+
+**Cost.** None found. If ngp ever emits a block where one of those codes means a real template error, the plugin hides it, as ngc would.

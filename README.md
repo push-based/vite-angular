@@ -23,10 +23,10 @@ A first version on top of a prototype compiler. Each item below was checked in t
 - Per-module compilation in ngp's optimize mode, from the code Vite hands over.
 - Component HMR for external templates and for inline `template` and `styles` edits. Other `.ts` edits reload the page, as under `ng serve`.
 - Server rendering with hydration, in the dev server and in builds (`ssr` option).
+- Template and TypeScript type-checking with TypeScript 7 in a separate process: errors in the dev server's terminal and overlay, and a failed `vite build`.
 - Production builds with Angular's linker and a port of the CLI's build optimizer. The playground's JavaScript comes out within 2% of `ng build`'s for the same app.
 
 **Missing**
-- Template type-checking. Run `tsc` or `tsgo` separately for now.
 - External stylesheets as Vite CSS modules. ngp inlines `styleUrl` files itself, so preprocessors and CSS HMR don't apply.
 - HTTP status codes from SSR, i18n, Vitest, and Windows outside WSL 2.
 

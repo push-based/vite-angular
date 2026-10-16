@@ -1,6 +1,7 @@
-// Type-checking (decision 21 in docs/decisions.md): tsgo checks the app plus ngp's type-check
-// blocks, and errors inside a block are mapped back to the template. The unit tests pin the
-// mapping rules; the end-to-end test plants errors in a small app and checks where they land.
+// Type-checking (decisions 29 to 31 in docs/decisions.md): tsgo checks the app plus ngp's
+// type-check blocks, and errors inside a block are mapped back to the template. The unit tests pin
+// the mapping rules. The end-to-end test plants errors in a small app and checks they land where
+// ngc puts them.
 // Run `pnpm build` first; the end-to-end test needs an ngp toolchain build.
 
 import assert from 'node:assert/strict';

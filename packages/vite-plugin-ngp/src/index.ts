@@ -16,7 +16,10 @@ export interface NgpPluginOptions {
   engine?: Engine;
   /** The app's tsconfig, relative to Vite's root. Defaults to tsconfig.app.json, else tsconfig.json. */
   tsconfig?: string;
-  /** Entry modules, relative to Vite's root. Defaults to `['src/main.ts']`. */
+  /**
+   * Entry modules, relative to Vite's root. Defaults to `src/main.ts`, plus `src/main.server.ts`
+   * when it exists.
+   */
   entries?: string[];
   /**
    * Give the analyzer a generated tsconfig that lists only `entries`, which keeps edits from
@@ -53,7 +56,9 @@ function compilerPlugin(options: NgpPluginOptions): Plugin {
         throw new Error('vite-plugin-ngp: set the `toolchain` option or NGP_TOOLCHAIN to an ngp build.');
       }
       const tsconfig = resolveTsconfig(config.root, options.tsconfig);
-      const entries = (options.entries ?? ['src/main.ts']).map((e) => path.resolve(config.root, e));
+      const entries = (options.entries ?? ['src/main.ts', 'src/main.server.ts'])
+        .map((e) => path.resolve(config.root, e))
+        .filter((e) => options.entries || fs.existsSync(e));
       const analyzerTsconfig =
         options.entryOnlyTsconfig === false
           ? tsconfig
@@ -97,6 +102,9 @@ function compilerPlugin(options: NgpPluginOptions): Plugin {
       if ((environment.consumer ?? (name === 'client' ? 'client' : 'server')) === 'client') {
         return {define: {ngServerMode: 'false'}};
       }
+      // Server environments externalize node_modules by default, and Node would then load
+      // Angular's packages unlinked, which needs the JIT compiler. Bundling them runs the linker.
+      return {define: {ngServerMode: 'true'}, resolve: {noExternal: [/^@angular\//]}};
     },
 
     configResolved(resolved) {

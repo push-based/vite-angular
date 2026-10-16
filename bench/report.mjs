@@ -55,13 +55,16 @@ function table(title, metric, key, note, extra = () => '') {
   return lines.join('\n') + '\n\n';
 }
 
-const modeNote = (r) => (r?.ok && r.mode && r.mode !== 'in-place' ? `, ${r.mode}` : '');
+// Edits also show the fastest sample: Vite's file watcher on macOS adds a delay of either about
+// 0 or about 100 ms to each edit, so the minimum is closer to the tool's own work.
+const modeNote = (r) =>
+  r?.ok && r.latency ? ` (${time(r.latency.min)})${r.mode && r.mode !== 'in-place' ? `, ${r.mode}` : ''}` : '';
 
 let out = '';
 out += table('Dev server: cold start to first contentful paint', 'dev-cold', 'fcp', 'Process start to the first paint of the rendered app, with every cache deleted first. Median.');
 out += table('Dev server: restart to first contentful paint', 'dev-warm', 'fcp', 'The same, keeping the caches the previous start wrote.');
-out += table('Template edit to DOM', 'edit-template', 'latency', 'Writing an external template until the new element is in the page. "reload" means the page reloaded to show it; otherwise the component updated in place.', modeNote);
-out += table('.ts edit to DOM', 'edit-ts', 'latency', "Changing a signal's initial value in a page component until the new text is in the page. Every tool reloads the page for this.", modeNote);
+out += table('Template edit to DOM', 'edit-template', 'latency', 'Writing an external template until the new element is in the page. "reload" means the page reloaded to show it; otherwise the component updated in place. Median, and the fastest edit in brackets.', modeNote);
+out += table('.ts edit to DOM', 'edit-ts', 'latency', "Changing a signal's initial value in a page component until the new text is in the page. Every tool reloads the page for this. Median, and the fastest edit in brackets.", modeNote);
 out += table('Production build', 'build', 'time', 'Process start to exit, caches deleted first.');
 out += table('Type error reported in the dev server', 'typecheck', 'error', "Planting a template type error until the dev server's terminal names it. Only the tools that type-check in dev.");
 out += table('Type error cleared in the dev server', 'typecheck', 'clean', 'Removing it until the dev server reports the app clean again.');

@@ -1,5 +1,6 @@
 import {ChangeDetectionStrategy, Component, VERSION, afterNextRender, isDevMode, signal} from '@angular/core';
 import {RouterLink} from '@angular/router';
+import {environment} from '../../../environments/environment';
 import {FEATURES} from '../../core/features';
 import {Icon} from '../../ui/icon';
 
@@ -16,6 +17,8 @@ export class Overview {
   protected readonly devMode = isDevMode();
   protected readonly hmr = !!import.meta.hot;
   protected readonly mode = import.meta.env.MODE;
+  /** Which environment file was compiled: the plugin's fileReplacements swap it in builds. */
+  protected readonly environmentFile = environment.file;
   /**
    * When DOMContentLoaded finished: by then the browser has fetched and run every module script,
    * which in dev means every module ngp compiled for this page. Read from navigation timing, so an

@@ -24,6 +24,7 @@
       <dt>HMR</dt>
       <dd><span class="dot" [class.on]="hmr"></span>{{ hmr ? 'connected' : 'off' }}</dd>
     </div>
+    <div class="wide"><dt>Environment file</dt><dd>{{ environmentFile }}</dd></div>
     <div class="wide"><dt>All modules loaded in</dt><dd>{{ loadedMs() === null ? '…' : loadedMs() + ' ms' }}</dd></div>
   </dl>
 </section>

@@ -1,7 +1,6 @@
 import * as fs from 'node:fs';
 import {createRequire} from 'node:module';
 import * as path from 'node:path';
-import type {NodePath, PluginItem, PluginObject, types} from '@babel/core';
 import type {ɵParsedTranslation} from '@angular/localize';
 import MagicString from 'magic-string';
 import type {Connect, Logger, Plugin, ResolvedConfig} from 'vite';
@@ -78,6 +77,8 @@ export function i18nPlugin(options: I18nOptions, getEntries: (root: string) => s
   /** Locale per output directory, so a render hook knows which locale it renders. */
   const localeByOutDir = new Map<string, Locale>();
   const translations = new Map<string, Promise<Translations>>();
+  /** Every locale renders the same code for a chunk, so each chunk is parsed once. */
+  const scans = new Map<string, Promise<LocalizeSites>>();
   /** Each diagnostic once per locale, though every environment's output repeats it. */
   const reported = new Set<string>();
 
@@ -221,6 +222,7 @@ export function i18nPlugin(options: I18nOptions, getEntries: (root: string) => s
         // The source locale has no translations: every message is "missing", on purpose.
         missingTranslation: locale.files.length ? (options.missingTranslation ?? 'warning') : 'ignore',
         localeData: readLocaleData(locale.code, config.root, config.logger),
+        cache: scans,
       });
       for (const {type, message} of result.diagnostics) {
         const key = `${locale.code}\0${message}`;
@@ -234,6 +236,10 @@ export function i18nPlugin(options: I18nOptions, getEntries: (root: string) => s
         this.warn(`[${locale.code}] ${message}`);
       }
       return {code: result.code, map: result.map as never};
+    },
+
+    closeBundle() {
+      scans.clear();
     },
 
     // Each locale's index.html gets its language, and a <base href> that both the relative asset
@@ -352,54 +358,180 @@ function readLocaleData(code: string, root: string, logger: Logger): string {
   return fs.readFileSync(data.file, 'utf8');
 }
 
-let babelPlugins: Promise<typeof import('@angular/localize/tools')> | null = null;
+/** An ESTree node as Vite's parser returns it, with UTF-16 offsets into the code. */
+interface AstNode {
+  type: string;
+  start: number;
+  end: number;
+  [key: string]: unknown;
+}
 
 /**
- * Translates one rendered chunk for one locale with @angular/localize's Babel plugins, the ones the
- * CLI's inliner was built on: every `$localize` call becomes its translated string, every read of
- * `$localize.locale` becomes the locale code, and the prelude's placeholder becomes the locale code
- * followed by the locale's data.
+ * Translates one rendered chunk for one locale: every `$localize` tagged template becomes its
+ * translated string, every read of `$localize.locale` becomes the locale code, and the prelude's
+ * placeholder becomes the locale code followed by the locale's data.
+ *
+ * The chunk is parsed with Vite's native parser and edited with MagicString, the approach the
+ * CLI's inliner moved to from Babel. Messages are translated by @angular/localize's public
+ * `translate`, which is what its Babel plugins call too. Most chunks are vendor code whose only
+ * `$localize` is Angular reading `$localize.locale`, and Babel spent 150–400 ms on each of those.
  */
 export async function translateChunk(
   code: string,
   fileName: string,
   locale: {code: string},
-  options: {translations: Translations; missingTranslation: 'error' | 'warning' | 'ignore'; localeData: string},
+  options: {
+    translations: Translations;
+    missingTranslation: 'error' | 'warning' | 'ignore';
+    localeData: string;
+    /** Scans by chunk code. Every locale renders the same code for a chunk, so one scan serves all. */
+    cache?: Map<string, Promise<LocalizeSites>>;
+  },
 ): Promise<{code: string; map: unknown; diagnostics: {type: 'error' | 'warning'; message: string}[]}> {
-  babelPlugins ??= import('@angular/localize/tools');
-  const tools = await babelPlugins;
-  const babel = await import('@babel/core');
+  const tools = await import('@angular/localize/tools');
+  let scan = options.cache?.get(code);
+  if (!scan) {
+    scan = scanChunk(code);
+    options.cache?.set(code, scan);
+  }
+  const sites = await scan;
   const diagnostics = new tools.Diagnostics();
-  const localeDataStatements = options.localeData
-    ? (babel.parseSync(options.localeData, {configFile: false, babelrc: false, sourceType: 'script'})?.program.body ?? [])
-    : [];
-  const placeholderPlugin: PluginObject = {
-    visitor: {
-      StringLiteral(literal: NodePath<types.StringLiteral>) {
-        if (literal.node.value !== LOCALE_PLACEHOLDER) {
-          return;
-        }
-        literal.replaceWith(babel.types.stringLiteral(locale.code));
-        if (localeDataStatements.length > 0) {
-          literal.getStatementParent()?.insertAfter(localeDataStatements.map((s) => babel.types.cloneNode(s)));
-        }
-      },
-    },
+  for (const message of sites.errors) {
+    diagnostics.error(`${fileName}: ${message}`);
+  }
+  const s = new MagicString(code);
+  const literal = JSON.stringify(locale.code);
+  for (const site of sites.messages) {
+    // Sites are in post-order, so a message nested in another's substitution is already replaced
+    // and the outer one copies the result.
+    const expressions = site.expressions.map(([start, end]) => s.slice(start, end));
+    const [parts, substitutions] = tools.translate(
+      diagnostics,
+      options.translations,
+      site.messageParts,
+      expressions.map((_, i) => i),
+      options.missingTranslation,
+    );
+    s.overwrite(site.start, site.end, templateLiteral(parts, substitutions.map((i: number) => expressions[i]!)));
+  }
+  for (const [start, end] of sites.localeReads) {
+    s.overwrite(start, end, literal);
+  }
+  for (const site of sites.placeholders) {
+    s.overwrite(site.start, site.end, literal);
+    if (options.localeData) {
+      s.appendRight(site.statementEnd, `\n${options.localeData}\n`);
+    }
+  }
+  return {
+    code: s.toString(),
+    map: s.hasChanged() ? s.generateMap({hires: 'boundary', source: fileName, includeContent: true}) : null,
+    diagnostics: diagnostics.messages,
   };
-  const result = await babel.transformAsync(code, {
-    filename: fileName,
-    configFile: false,
-    babelrc: false,
-    compact: false,
-    sourceMaps: true,
-    plugins: [
-      // @angular/localize's PluginObject type comes from its own view of @babel/core's types.
-      tools.makeEs2015TranslatePlugin(diagnostics, options.translations, {missingTranslation: options.missingTranslation}) as PluginItem,
-      tools.makeLocalePlugin(locale.code) as PluginItem,
-      placeholderPlugin as PluginItem,
-    ],
+}
+
+/** Where a chunk uses `$localize`, found once per chunk and reused for every locale. */
+export interface LocalizeSites {
+  messages: {start: number; end: number; messageParts: TemplateStringsArray; expressions: [number, number][]}[];
+  localeReads: [number, number][];
+  placeholders: {start: number; end: number; statementEnd: number}[];
+  errors: string[];
+}
+
+async function scanChunk(code: string): Promise<LocalizeSites> {
+  const {parseAstAsync} = await import('vite');
+  const program = (await parseAstAsync(code)) as unknown as AstNode;
+  const sites: LocalizeSites = {messages: [], localeReads: [], placeholders: [], errors: []};
+  walk(program, [], (node, ancestors) => {
+    const parent = ancestors[ancestors.length - 1];
+    if (node.type === 'TaggedTemplateExpression' && isLocalize(node['tag'])) {
+      const quasi = node['quasi'] as {quasis: {value: {raw: string; cooked: string | null}}[]; expressions: AstNode[]};
+      if (quasi.quasis.some((q) => q.value.cooked == null)) {
+        sites.errors.push('malformed escape sequence in a $localize message.');
+        return;
+      }
+      const messageParts = Object.assign(
+        quasi.quasis.map((q) => q.value.cooked!),
+        {raw: quasi.quasis.map((q) => q.value.raw)},
+      ) as unknown as TemplateStringsArray;
+      const expressions = quasi.expressions.map((e): [number, number] => [e.start, e.end]);
+      sites.messages.push({start: node.start, end: node.end, messageParts, expressions});
+    } else if (isLocaleRead(node, parent)) {
+      // `typeof $localize !== "undefined" && $localize.locale` collapses to the locale too.
+      const guarded = parent?.type === 'LogicalExpression' && parent['operator'] === '&&' && parent['right'] === node && isLocalizeGuard(parent['left'] as AstNode);
+      const target = guarded ? parent : node;
+      sites.localeReads.push([target.start, target.end]);
+    } else if (node.type === 'Literal' && node['value'] === LOCALE_PLACEHOLDER) {
+      const statement = [...ancestors].reverse().find((a) => a.type.endsWith('Statement'));
+      sites.placeholders.push({start: node.start, end: node.end, statementEnd: statement?.end ?? node.end});
+    }
   });
-  return {code: result?.code ?? code, map: result?.map ?? null, diagnostics: diagnostics.messages};
+  return sites;
+}
+
+function walk(node: AstNode, ancestors: AstNode[], visit: (node: AstNode, ancestors: AstNode[]) => void): void {
+  ancestors.push(node);
+  for (const key in node) {
+    const value = node[key];
+    if (Array.isArray(value)) {
+      for (const child of value) {
+        if (child && typeof child === 'object' && typeof (child as AstNode).type === 'string') {
+          walk(child as AstNode, ancestors, visit);
+        }
+      }
+    } else if (value && typeof value === 'object' && typeof (value as AstNode).type === 'string') {
+      walk(value as AstNode, ancestors, visit);
+    }
+  }
+  ancestors.pop();
+  visit(node, ancestors);
+}
+
+/** `$localize`, by name. Like the CLI's inliner, this doesn't check that it isn't shadowed. */
+function isLocalize(node: unknown): boolean {
+  return (node as AstNode | undefined)?.type === 'Identifier' && (node as AstNode)['name'] === '$localize';
+}
+
+/** `$localize.locale`, except as the target of an assignment. */
+function isLocaleRead(node: AstNode, parent: AstNode | undefined): boolean {
+  if (node.type !== 'MemberExpression' || node['computed'] || !isLocalize(node['object'])) {
+    return false;
+  }
+  const property = node['property'] as AstNode;
+  if (property.type !== 'Identifier' || property['name'] !== 'locale') {
+    return false;
+  }
+  return !(parent?.type === 'AssignmentExpression' && parent['left'] === node);
+}
+
+/** `typeof $localize !== "undefined"`, either way round. */
+function isLocalizeGuard(node: AstNode): boolean {
+  if (node.type !== 'BinaryExpression' || (node['operator'] !== '!==' && node['operator'] !== '!=')) {
+    return false;
+  }
+  const isTypeof = (n: AstNode) => n.type === 'UnaryExpression' && n['operator'] === 'typeof' && isLocalize(n['argument']);
+  const isUndefined = (n: AstNode) => n.type === 'Literal' && n['value'] === 'undefined';
+  const [left, right] = [node['left'] as AstNode, node['right'] as AstNode];
+  return (isTypeof(left) && isUndefined(right)) || (isUndefined(left) && isTypeof(right));
+}
+
+/** A string literal, or a template literal when the translation has substitutions. */
+function templateLiteral(parts: readonly string[], substitutions: string[]): string {
+  if (substitutions.length === 0) {
+    return JSON.stringify(parts[0]);
+  }
+  const escape = (part: string) =>
+    JSON.stringify(part)
+      .slice(1, -1)
+      .replace(/\\"|`|\$\{/g, (m) => (m === '\\"' ? '"' : '\\' + m));
+  let out = '`';
+  for (let i = 0; i < parts.length; i++) {
+    out += escape(parts[i]!);
+    if (i < substitutions.length) {
+      out += '${' + substitutions[i] + '}';
+    }
+  }
+  return out + '`';
 }
 
 function localizeHtmlLang(html: string, lang: string): string {

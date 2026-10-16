@@ -18,6 +18,8 @@ process.env.NGP_TOOLCHAIN ??= path.join(repo, 'toolchain/out');
 
 test('translateChunk translates messages, inlines the locale, and adds locale data', async () => {
   const code = [
+    // Non-ASCII before the messages: the parser's offsets must be UTF-16, like JS strings.
+    'const ɵüber = "Grüße";',
     '(globalThis.$localize ??= {}).locale = "___NG_LOCALE_INSERT___";',
     'export const greeting = (name) => $localize`:@@greeting:Hello ${name}:name:!`;',
     'export const missing = $localize`:@@missing:Not translated`;',
@@ -28,7 +30,7 @@ test('translateChunk translates messages, inlines the locale, and adds locale da
     missingTranslation: 'warning',
     localeData: 'globalThis.registered = "de";',
   });
-  assert.match(result.code, /"Hallo " \+ name \+ "!"/);
+  assert.match(result.code, /`Hallo \$\{name\}!`/);
   assert.match(result.code, /"Not translated"/);
   assert.match(result.code, /\.locale = "de";\s*globalThis\.registered = "de";/);
   assert.match(result.code, /export const locale = "de";/);

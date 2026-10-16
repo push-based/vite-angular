@@ -36,6 +36,7 @@ export const DOCS: DocEntry[] = [
   {path: 'server-rendering', label: 'Server rendering', section: 'Guide', load: () => import('../../content/server-rendering.md').then((m) => m.default)},
   {path: 'testing', label: 'Testing with Vitest', section: 'Features', load: () => import('../../content/testing.md').then((m) => m.default)},
   {path: 'type-checking', label: 'Type-checking', section: 'Features', load: () => import('../../content/type-checking.md').then((m) => m.default)},
+  {path: 'styles', label: 'Component styles', section: 'Features', load: () => import('../../content/styles.md').then((m) => m.default)},
   {path: 'status', label: 'Status and limits', section: 'Project', load: () => import('../../content/status.md').then((m) => m.default)},
   {path: 'building-ngp', label: 'Building ngp', section: 'Project', load: () => import('../../content/building-ngp.md').then((m) => m.default)},
 ];

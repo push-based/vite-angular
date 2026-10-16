@@ -13,7 +13,7 @@ Run it from the repo root with `pnpm dev`, or build it with `pnpm playground:bui
 | Control flow | `@if`/`@else if`, `@switch`, `@for` with `$index`/`$first`/`$last`/`$even`, `@empty`, `@defer (on viewport)` with `@placeholder` and `@loading` | Blocks render in the wrong branch; the chart never loads, or `sparkline` gets no chunk of its own in a production build |
 | Components | `input()`, `output()`, `model()` with `[(value)]`, `ng-content` slots, a directive with host bindings, `inject()`, pipes from `@angular/common` | Two-way rating loses sync; pipes fail with a JIT error if the linker didn't run |
 | Router | Lazy `loadComponent`, child routes, `:slug` bound to an `input()` through `withComponentInputBinding`, `routerLinkActive` | The detail view shows no feature, or the wrong one |
-| Styles | `styleUrl` files read by ngp, and `ViewEncapsulation` `Emulated`, `None` and `ShadowDom` side by side | Boxes lose their colors; the underline lands on the wrong boxes |
+| Styles | `styleUrl` files through Vite's CSS pipeline, an SCSS component with a partial, a mixin and `@each`, and `ViewEncapsulation` `Emulated`, `None` and `ShadowDom` side by side | Boxes lose their colors; the underline lands on the wrong boxes; the meter's levels stay grey, or a stylesheet edit resets the level to 0 |
 | Not found | A lazy wildcard route | Unknown URLs show a blank page |
 
 Every page except the overview is lazy-loaded, so each one is a separate module that ngp compiles only when you navigate to it.
@@ -26,4 +26,4 @@ Every page except the overview is lazy-loaded, so each one is a separate module 
 
 ## Look and feel
 
-Light and dark themes follow the OS by default. The switch in the sidebar overrides it, and the choice is kept in `localStorage` when the browser allows it. Colors are CSS custom properties in [src/styles.css](src/styles.css). Component styles sit next to each component, mostly as `styleUrl` files so that ngp's resource reading gets exercised. Below 900 px the sidebar becomes a drawer.
+Light and dark themes follow the OS by default. The switch in the sidebar overrides it, and the choice is kept in `localStorage` when the browser allows it. Colors are CSS custom properties in [src/styles.css](src/styles.css). Component styles sit next to each component, mostly as `styleUrl` files so that the plugin's stylesheet handling gets exercised. Below 900 px the sidebar becomes a drawer.

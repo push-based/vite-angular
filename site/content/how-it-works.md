@@ -53,6 +53,12 @@ The comparison is strict, and that's deliberate. It doesn't try to tell a harmle
 
 If one save changes both a component's template and its `.ts` file, and the `.ts` change needs a reload, the page reloads once, without trying the template update first. The new template may use a field the running class doesn't have yet. If the `.ts` change only touched inline templates or styles, both update in place. The plugin waits 50 ms after a template edit to see whether the `.ts` file changed too, so template updates arrive 50 ms later than they would otherwise.
 
+## Component stylesheets
+
+ngp compiles with `externalRuntimeStyles`, so it leaves `styleUrl` files out of the component and lists their paths instead. The plugin hands those files to Vite's CSS pipeline, which runs Sass and PostCSS on them like on any stylesheet, and then applies Angular's view encapsulation to Vite's output with Angular's own code.
+
+In the dev server, each stylesheet is a `<link>` the runtime adds, and an edit reloads only that `<link>`, so the component keeps its state. In builds, each stylesheet is compiled, scoped and inlined into the component's JavaScript. Inline `styles` stay with ngp and can't use Sass. [Component styles](styles) has the details and the differences from the CLI.
+
 ## Type-checking
 
 Compiling a module doesn't check its types. Separately, after startup and after each edit, the plugin asks ngp for a type-check block per component file, and runs TypeScript 7 over your app and those blocks in another process. It maps errors in a block back to your template. [Type-checking](type-checking) has the details.

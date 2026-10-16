@@ -374,3 +374,41 @@ The `ng build` row is the playground copied into a CLI project with an `angular.
 **Why.** ngp's blocks fail `noUnusedLocals` and `noUnusedParameters`: no `_tcbN` function is ever called. The bench turned both options off for the whole program, which also hides unused locals in the app's own code, which `ng build` reports. Dropping the codes only inside blocks is what ngc does, so the app gets the same errors it would get from `ng build`.
 
 **Cost.** None found. If ngp ever emits a block where one of those codes means a real template error, the plugin hides it, as ngc would.
+
+## 32. Send stylesheets through Vite's CSS pipeline, as links in dev and inlined in builds
+
+*16 October 2026*
+
+**Decision.** ngp always compiles with `externalRuntimeStyles`, so `styleUrl` files leave the component as paths in `ɵɵExternalStylesFeature([...])`. A normal-order plugin rewrites that call after Vite's oxc transform ([styles.ts](../packages/vite-plugin-ngp/src/styles.ts)). In the dev server, client and server alike, the paths become URLs, Angular's runtime adds a `<link>` per stylesheet with `?ngcomp=<id>&e=<encapsulation>`, and the plugin scopes the compiled CSS to that id. In `vite build`, client and server alike, the call becomes a feature that prepends `?inline` imports to the component's `styles`, scoped at build time for emulated encapsulation. Scoping is `encapsulateStyle` from `@angular/compiler`, run in a transform between `vite:css` and `vite:css-post`.
+
+**Why.** Without `externalRuntimeStyles`, ngp reads `styleUrl` files from disk and inlines them raw, so a `.scss` file arrives in the browser as uncompiled SCSS, and ngp has no hook to change that. Handing the files to Vite gets every preprocessor, PostCSS and `url()` rewriting for free, and `vite:css` hands the plugin plain CSS. So the plugin never touches Vite's output: no regex over `__vite__css`, the pattern that kept breaking in Analog (analogjs/analog#2492, #2049).
+
+Links in dev are what make in-place style edits possible: a `<link>` can be reloaded alone. In builds they'd cost a request per component and a flash of unstyled content, which is why the CLI inlines in production too. The server follows the browser: in dev it renders `<link>`s, so the browser adopts them on hydration and style edits reach them. Rendering inline `<style>`s on the dev server instead would leave the server's stale rules on the page after the first edit.
+
+Build imports are scoped with the id `__ngpcomp__`, and the feature swaps it for `%COMP%` at runtime. Scoping with `%COMP%` directly failed the playground build: Vite's minifier, lightningcss, rejects `%` in an attribute selector. Which classes are emulated comes from ngp's metadata.
+
+**Cost.** Two paths: a bug in one won't show in the other. The tests run the playground's SCSS component through a dev server and a build to cover both. The rewrite finds `ɵɵExternalStylesFeature([...])` by pattern in ngp's output, after oxc. That output is pinned with Angular, and the tests break if its shape changes, but it is still a pattern over generated code. Inline `styles` stay with ngp and can't be preprocessed. Scoping drops CSS source map adjustments. A stylesheet whose text contains `__ngpcomp__` would have it replaced.
+
+**Revisit when** ngp grows a resource hook (then inline styles could be preprocessed too), or emits something less fragile to find than a printed call.
+
+## 33. Serve dev stylesheets under flat names
+
+*16 October 2026*
+
+**Decision.** In the dev server, a component stylesheet's URL is a name with no directory, `<basename>.ngp-<first 8 hex of sha256(path)>.<ext>`, relative to the page. `resolveId`, ordered before Vite's resolver, maps any request whose last path segment is such a name back to the file, whatever directory it arrives under.
+
+**Why.** Angular's `SharedStylesHost` adopts server-rendered `<link>`s keyed by `href.slice(href.lastIndexOf('/') + 1)`, and looks them up by the URL the runtime would add. With root-relative URLs like `/src/app/card.css`, the two never matched. Every link was added a second time on hydration, and Angular copied the adopted ones into `ShadowDom` roots under the shortened key, as relative URLs that loaded `/card.css`, a file that doesn't exist. The Angular CLI uses flat hashed names for this reason. Relative names resolve against the page, so on `/router/signals` the browser asks for `/router/card.ngp-de07cd19.css`, and resolving by name alone handles that without a `<base href>`.
+
+**Cost.** The mapping from name to file lives in memory and is filled as components compile. A request for a stylesheet before its component has compiled in this server process falls through to Vite and fails. That doesn't happen on a normal page load, because the component's module always loads first. Two files with the same basename get different hashes, so names don't collide, but devtools shows `card.ngp-de07cd19.css` rather than the path.
+
+## 34. Update stylesheets with our own HMR event
+
+*16 October 2026*
+
+**Decision.** On an edit to a component stylesheet, or to a file only component stylesheets import, the plugin invalidates those modules, sends `angular:stylesheet-update` with their names, and returns no modules for them. A listener sets the `href` of every matching `<link>`, in the document and in shadow roots, keeping the query and adding a fresh `t=`. Components with external stylesheets import the listener in the dev server's browser environment.
+
+**Why.** Vite's client handles `css-update` with `cleanUrl(path)`: it drops the query, so the new link loses `ngcomp` and arrives unscoped, and it updates only the first `<link>` that matches. One stylesheet used by two components, or copied into a shadow root, has several. The CLI works around the same client by reloading the page for `ShadowDom` components; this listener covers them. Changing `href` on the same element, rather than adding a new one, keeps `SharedStylesHost` pointing at the element it will remove when the component goes away.
+
+The listener first came from `transformIndexHtml`. An app that serves its page without that hook would have lost style edits silently: no update and no reload. Importing it from the components ties it to the code that needs it.
+
+**Cost.** A few lines of client code and an event of our own to keep working. Setting `href` in place may flash the old rules away before the new ones load. That wasn't visible in the playground, but it wasn't measured either. Vite's `css-update` would avoid that by adding the new link before removing the old one.

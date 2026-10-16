@@ -12,11 +12,12 @@ vite-plugin-ngp is a first version on top of a prototype compiler. This page say
 | Piece | Status |
 |---|---|
 | Per-module compilation | Works, in ngp's optimize mode, from the code Vite hands over |
-| Edits in the dev server | Work. Template edits and inline style edits update in place; other edits reload the page |
 | Adding, renaming and deleting files | Works. New files compile as they would in a fresh build. Deleting a file that's still used is an error until the file is back. Checked by an automated dev-server test |
+| Edits in the dev server | Work. Template, stylesheet and inline style edits update in place; other edits reload the page |
 | Production builds | Work, through the same transform, with the CLI's build optimizer. The playground's JavaScript is within 2% of `ng build`'s for the same app, and the same size gzipped |
 | Linking Angular libraries | Works, in dependency pre-bundling and in builds, with Angular's Babel linker |
 | Component HMR | Works for external templates, and for `.ts` edits that only change a component's inline `template` or `styles`. Other `.ts` edits reload, as under `ng serve`, and so does a template saved together with such a `.ts` edit. Changing `templateUrl` or `styleUrl` reloads too, unlike `ng serve` |
+| Component stylesheets | `styleUrl` files go through Vite's CSS pipeline, so SCSS, Less and PostCSS work, with Angular's view encapsulation. Edits update in place, `ShadowDom` components included. See [Component styles](styles) |
 | Server rendering and hydration | Works in the dev server and in builds, with the `ssr` option. This site is prerendered that way |
 | Vitest with TestBed | Works, with jsdom and zoneless TestBed. A run compiles only the specs it runs and what they import. Watch mode reruns specs after template edits too. See [Testing with Vitest](testing) |
 | [Type-checking](type-checking) | Works, for templates and TypeScript, with TypeScript 7 in a separate process. Errors show in the dev server's terminal and overlay, and fail `vite build`. Planted errors land where `ng build` puts them. Checked on this site and the playground; not measured on a large app |
@@ -25,7 +26,7 @@ vite-plugin-ngp is a first version on top of a prototype compiler. This page say
 
 | Piece | Status |
 |---|---|
-| External stylesheets | Untested. ngp reads `styleUrl` files and inlines them itself. They aren't Vite CSS modules, so preprocessors and CSS HMR don't apply |
+| Preprocessors in inline styles | Missing. Inline `styles` and template `<style>` elements are plain CSS, because ngp compiles them and has no preprocessing hook. There's no `inlineStyleLanguage` |
 | HTTP status codes from SSR | Missing. `render` returns HTML only, so a not-found page answers 200 when a Node server renders it |
 | i18n | Out of scope for now |
 | Vitest beyond jsdom | Untried: happy-dom, browser mode, the `node` environment, coverage. `fakeAsync` needs `zone.js`, which the documented setup leaves out |
@@ -38,6 +39,7 @@ vite-plugin-ngp is a first version on top of a prototype compiler. This page say
 - **File changes are tested on one small app.** Adding, renaming and deleting components and templates is covered by a test on a three-component app, not on a large one. Deleting a component that's still used gives Angular's "is not a known element" error, which names the element, not the missing file. A missing `styleUrl` file isn't reported at all.
 - **Type-checking is whole-program.** Every check runs TypeScript 7 over the whole app. That takes 100–250 ms in the dev server on the repo's 19-component playground. A full check of a 5,000-component app took 18.6 s in benchmarks, and the incremental check the plugin runs hasn't been measured there. See [Type-checking](type-checking#where-its-weak).
 - **SSR runs two analyzers.** The browser and the server each get their own ngp compiler, because only the browser's has HMR code. A dev server with SSR needs about twice the analyzer memory, and analyzes every edit twice.
+- **Component stylesheets take two paths.** The dev server serves them as `<link>`s, and builds inline them into the JavaScript, as the CLI does. Both are tested, but a bug can show in only one.
 - **The build optimizer is a copy of the CLI's.** When `@angular/build` changes its pass, the plugin keeps the old one until someone ports the change. Nothing fails when that happens; only bundle sizes would show it.
 - **The linker is the slow one.** It's the Babel-based linker. The Angular CLI has since moved to a faster oxc-based one, which the plugin can't use yet because it's private to `@angular/build`.
 

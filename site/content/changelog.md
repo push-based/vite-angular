@@ -32,6 +32,10 @@ The first day: from an empty repo to a plugin that compiles, serves, renders, te
 - Templates and TypeScript are type-checked with TypeScript 7 over ngp's type-check blocks, in a separate process, with errors in the terminal and the overlay. New option: `typeCheck`. [Type-checking](type-checking)
 - Angular specs run under Vitest, compiled ahead of time with ngp. [Testing with Vitest](testing)
 
+### Moving from ng build
+
+- New options `fileReplacements`, `budgets` and `polyfills`, in angular.json's shapes. Replacements reach ngp's analyzer too, budgets print the CLI's messages and fail the build on errors, and zone.js apps get `async`/`await` rewritten so change detection still runs after an `await`. Every other build option is mapped to Vite config. [Migrating from ng build](migrating-from-ng-build)
+
 ### Server rendering
 
 - New option `ssr`: pages render on the server in the dev server, and `vite build` builds a server bundle beside the browser one. [Server rendering](server-rendering)

@@ -28,7 +28,13 @@ export interface ProcessedFile {
   diagnostics?: NgpDiagnostic[];
 }
 
+export interface ClassMetadata {
+  className?: string;
+  component?: {templateUrl?: {url: string; resolvedPath: string}};
+}
+
 export interface Analyzer {
+  getMetadataForFile(filePath: string): Promise<{filePath: string; classes: ClassMetadata[]} | null>;
   /** Tells the analyzer a file changed. Resolves to every file whose analysis is now stale. */
   updateFileContent(updates: {filePath: string; content: string}[]): Promise<string[]>;
   getTsFileForTemplate(templatePath: string): Promise<{tsFilePath: string}[] | null>;
@@ -40,6 +46,8 @@ export interface HybridCompiler {
   /** Per-file analysis cache, keyed by the analyzer's file path. */
   readonly fileCache: Map<string, unknown>;
   processFile(filePath: string, content: string): Promise<ProcessedFile>;
+  /** The update module for one component, as TypeScript, or null if HMR is off. */
+  emitHmrUpdateModule(filePath: string, className: string): Promise<string | null>;
 }
 
 export interface HybridCompilerOptions {
@@ -47,20 +55,21 @@ export interface HybridCompilerOptions {
   tcbConfig: unknown;
   rootDir: string;
   supportJitMode: boolean;
+  enableHmr: boolean;
 }
 
 export interface NgpApi {
   createAnalyzer(
     tsconfigPath: string,
-    options: {optimize: boolean; backend: Engine; nativeBinding?: string; wasmBinding?: string},
+    options: {optimize: boolean; enableHmr: boolean; backend: Engine; nativeBinding?: string; wasmBinding?: string},
   ): Promise<Analyzer>;
   HybridCompiler: new (analyzer: Analyzer, options: HybridCompilerOptions) => HybridCompiler;
   buildTypeCheckingConfig(ngOptions: unknown, strictTemplates: boolean): unknown;
 }
 
 /**
- * Loads ngp from a toolchain directory laid out like ng-hybrid-preprocessor-bench's
- * `toolchain/out`: `preprocessor/api.js` and `engines/{native,wasm}/`.
+ * Loads ngp from a toolchain directory as `pnpm toolchain` lays it out in `toolchain/out`:
+ * `preprocessor/api.js` and `engines/{native,wasm}/`.
  */
 export async function loadNgp(toolchainDir: string, engine: Engine) {
   const apiPath = path.join(toolchainDir, 'preprocessor/api.js');
@@ -71,8 +80,8 @@ export async function loadNgp(toolchainDir: string, engine: Engine) {
   for (const file of [apiPath, ...Object.values(binding)]) {
     await fs.access(file).catch(() => {
       throw new Error(
-        `vite-plugin-ngp: ${file} not found. Build ngp with \`pnpm toolchain\` in ` +
-          `ng-hybrid-preprocessor-bench, then point the plugin's \`toolchain\` option or ` +
+        `vite-plugin-ngp: ${file} not found. Build ngp with \`pnpm toolchain\` in the ` +
+          `vite-angular repo root, then point the plugin's \`toolchain\` option or ` +
           `NGP_TOOLCHAIN at its toolchain/out directory.`,
       );
     });

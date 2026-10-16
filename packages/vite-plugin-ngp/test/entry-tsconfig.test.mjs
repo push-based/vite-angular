@@ -13,12 +13,11 @@ import {writeEntryTsconfig} from '../dist/entry-tsconfig.js';
 
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const playground = path.join(repo, 'playground');
-const toolchainDir =
-  process.env.NGP_TOOLCHAIN ?? path.resolve(repo, '../ng-hybrid-preprocessor-bench/toolchain/out');
+const toolchainDir = process.env.NGP_TOOLCHAIN ?? path.join(repo, 'toolchain/out');
 
 async function compileAll(analyzerTsconfig, files) {
   const tsconfig = path.join(playground, 'tsconfig.app.json');
-  const compiler = await NgpCompiler.create({toolchainDir, engine: 'native', tsconfig, analyzerTsconfig});
+  const compiler = await NgpCompiler.create({toolchainDir, engine: 'native', tsconfig, analyzerTsconfig, enableHmr: false});
   const out = new Map();
   try {
     for (const file of files) {
@@ -45,7 +44,11 @@ test('entry-only tsconfig compiles every playground module identically', async (
   const full = await compileAll(path.join(playground, 'tsconfig.app.json'), files);
   const entryOnly = await compileAll(entryTsconfig, files);
 
-  assert.ok([...full.values()].filter(Boolean).length === 4, 'expected ngp to compile the 4 components');
+  for (const file of files) {
+    if ((await fs.readFile(file, 'utf8')).includes('@Component(')) {
+      assert.ok(full.get(file), `expected ngp to compile ${path.relative(playground, file)}`);
+    }
+  }
   for (const file of files) {
     assert.equal(entryOnly.get(file), full.get(file), path.relative(playground, file));
   }

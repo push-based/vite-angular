@@ -10,6 +10,14 @@ export interface CompilerOptions {
   tsconfig: string;
   /** The tsconfig the analyzer reads. See writeEntryTsconfig for why it can differ. */
   analyzerTsconfig: string;
+  /** Emit component HMR code, as the CLI's dev server does. */
+  enableHmr: boolean;
+}
+
+/** One component's HMR update: Angular's id for it, and the update module as TypeScript. */
+export interface HmrUpdate {
+  id: string;
+  code: string;
 }
 
 export interface TransformResult {
@@ -31,6 +39,7 @@ export class NgpCompiler {
   private constructor(
     private readonly analyzer: Analyzer,
     private readonly hybrid: HybridCompiler,
+    private readonly rootDir: string,
   ) {}
 
   static async create(options: CompilerOptions): Promise<NgpCompiler> {
@@ -38,17 +47,20 @@ export class NgpCompiler {
     const ngOptions = readConfiguration(options.tsconfig).options;
     const analyzer = await api.createAnalyzer(options.analyzerTsconfig, {
       optimize: true,
+      enableHmr: options.enableHmr,
       backend: options.engine,
       ...binding,
     });
+    const rootDir = path.dirname(options.tsconfig);
     // No tsconfigPath: with one, ngp rewrites .ngdiag.json after every chunk.
     const hybrid = new api.HybridCompiler(analyzer, {
       optimize: true,
       tcbConfig: api.buildTypeCheckingConfig(ngOptions, false),
-      rootDir: path.dirname(options.tsconfig),
+      rootDir,
       supportJitMode: ngOptions['supportJitMode'] !== false,
+      enableHmr: options.enableHmr,
     });
-    return new NgpCompiler(analyzer, hybrid);
+    return new NgpCompiler(analyzer, hybrid, rootDir);
   }
 
   /** Compiles one module. Resolves to null when ngp leaves it unchanged. */
@@ -100,6 +112,36 @@ export class NgpCompiler {
   async componentForTemplate(templateFile: string): Promise<string | null> {
     const result = await this.analyzer.getTsFileForTemplate(templateFile);
     return result?.[0] ? path.resolve(result[0].tsFilePath) : null;
+  }
+
+  /**
+   * Update modules for the components in `tsFile` that use `templateFile` as their external
+   * template. Resolves to an empty list when no component in the file uses it.
+   */
+  async hmrUpdates(tsFile: string, templateFile: string): Promise<HmrUpdate[]> {
+    await this.updates;
+    const metadata = await this.analyzer.getMetadataForFile(tsFile);
+    const updates: HmrUpdate[] = [];
+    for (const cls of metadata?.classes ?? []) {
+      const template = cls.component?.templateUrl?.resolvedPath;
+      if (!cls.className || !template || path.resolve(template) !== templateFile) {
+        continue;
+      }
+      const code = await this.hybrid.emitHmrUpdateModule(tsFile, cls.className);
+      if (code) {
+        updates.push({id: this.componentId(tsFile, cls.className), code});
+      }
+    }
+    return updates;
+  }
+
+  /**
+   * Angular's HMR id for a component: `encodeURIComponent('<path from rootDir>@<ClassName>')`,
+   * the same id the compiled component's HMR initializer listens for.
+   */
+  componentId(tsFile: string, className: string): string {
+    const relative = path.relative(this.rootDir, tsFile).split(path.sep).join('/');
+    return encodeURIComponent(`${relative}@${className}`);
   }
 
   close(): void {

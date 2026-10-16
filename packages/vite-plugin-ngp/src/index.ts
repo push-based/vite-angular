@@ -1,6 +1,12 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import {transformWithOxc, type EnvironmentModuleNode, type Plugin, type ResolvedConfig} from 'vite';
+import {
+  isRunnableDevEnvironment,
+  transformWithOxc,
+  type EnvironmentModuleNode,
+  type Plugin,
+  type ResolvedConfig,
+} from 'vite';
 import {NgpCompiler} from './compiler.js';
 import {writeEntryTsconfig} from './entry-tsconfig.js';
 import {link, LINKER_MARKER} from './linker.js';
@@ -31,7 +37,17 @@ export interface NgpPluginOptions {
    * in place. Defaults to true. Ignored in builds.
    */
   hmr?: boolean;
+  /**
+   * Server-side rendering. The entry module default-exports
+   * `render(url: string, document: string): Promise<string>`, which turns index.html into the
+   * rendered page. In dev, the plugin renders every page request through it. `vite build` then
+   * builds the client into `dist/client` and the entry into `dist/server`. `true` means the entry
+   * is `src/main.server.ts`. Off by default.
+   */
+  ssr?: boolean | {entry?: string};
 }
+
+type Consumer = 'client' | 'server';
 
 const TS_MODULE = /\.[cm]?ts$/;
 
@@ -41,15 +57,22 @@ export function ngp(options: NgpPluginOptions = {}): Plugin[] {
 
 function compilerPlugin(options: NgpPluginOptions): Plugin {
   let config: ResolvedConfig;
-  let compiler: Promise<NgpCompiler> | null = null;
+  /**
+   * One compiler per consumer. Server environments get their own, compiled without HMR: HMR code
+   * imports update modules from URLs that only a browser can load.
+   */
+  const compilers = new Map<Consumer, Promise<NgpCompiler>>();
   let hmr = false;
+  const ssrOptions = options.ssr === true ? {} : options.ssr || null;
+  const ssrEntry = ssrOptions ? (ssrOptions.entry ?? 'src/main.server.ts') : null;
   /**
    * Latest update module per component, served at `/@ng/component?c=<id>`. Keyed by the decoded
    * id (`src/app/home.ts@Home`), which is what the `c` query parameter decodes to.
    */
   const componentUpdates = new Map<string, string>();
 
-  function getCompiler(): Promise<NgpCompiler> {
+  function getCompiler(consumer: Consumer): Promise<NgpCompiler> {
+    let compiler = compilers.get(consumer);
     compiler ??= (async () => {
       const toolchainDir = options.toolchain ?? process.env['NGP_TOOLCHAIN'];
       if (!toolchainDir) {
@@ -68,16 +91,19 @@ function compilerPlugin(options: NgpPluginOptions): Plugin {
         engine: options.engine ?? 'native',
         tsconfig,
         analyzerTsconfig,
-        enableHmr: hmr,
+        enableHmr: hmr && consumer === 'client',
       });
     })();
+    compilers.set(consumer, compiler);
     return compiler;
   }
 
-  async function closeCompiler() {
-    const current = compiler;
-    compiler = null;
-    (await current?.catch(() => null))?.close();
+  async function closeCompilers() {
+    const current = [...compilers.values()];
+    compilers.clear();
+    for (const compiler of current) {
+      (await compiler.catch(() => null))?.close();
+    }
   }
 
   return {
@@ -95,6 +121,14 @@ function compilerPlugin(options: NgpPluginOptions): Plugin {
           ngHmrMode: String(hmr),
           ...(env.command === 'build' ? {ngDevMode: 'false'} : {}),
         },
+        ...(ssrEntry && {
+          // `vite build` builds every environment: the browser bundle and the server entry.
+          builder: {},
+          environments: {
+            client: {build: {outDir: 'dist/client'}},
+            ssr: {build: {outDir: 'dist/server', rolldownOptions: {input: ssrEntry}}},
+          },
+        }),
       };
     },
 
@@ -104,7 +138,7 @@ function compilerPlugin(options: NgpPluginOptions): Plugin {
       }
       // Server environments externalize node_modules by default, and Node would then load
       // Angular's packages unlinked, which needs the JIT compiler. Bundling them runs the linker.
-      return {define: {ngServerMode: 'true'}, resolve: {noExternal: [/^@angular\//]}};
+      return {define: {ngServerMode: 'true', ngHmrMode: 'false'}, resolve: {noExternal: [/^@angular\//]}};
     },
 
     configResolved(resolved) {
@@ -112,9 +146,38 @@ function compilerPlugin(options: NgpPluginOptions): Plugin {
     },
 
     configureServer(server) {
-      server.httpServer?.once('close', closeCompiler);
+      server.httpServer?.once('close', closeCompilers);
+      // Runs after Vite's own middlewares, once its SPA fallback has rewritten a page request to
+      // /index.html, and before Vite would serve that file as it is.
+      const renderPages = () => {
+        if (!ssrEntry) {
+          return;
+        }
+        server.middlewares.use(async (req, res, next) => {
+          const accept = req.headers.accept ?? '';
+          if (req.method !== 'GET' || !cleanId(req.url ?? '').endsWith('.html') || !accept.includes('text/html')) {
+            return next();
+          }
+          const url = req.originalUrl ?? req.url ?? '/';
+          try {
+            const environment = server.environments.ssr;
+            if (!isRunnableDevEnvironment(environment)) {
+              throw new Error('the ssr environment has no module runner');
+            }
+            const template = await fs.promises.readFile(path.join(config.root, cleanId(req.url!)), 'utf8');
+            const document = await server.transformIndexHtml(url, template, req.originalUrl);
+            const entry = await environment.runner.import<{default: (url: string, document: string) => Promise<string>}>(ssrEntry);
+            const html = await entry.default(url, document);
+            res.setHeader('Content-Type', 'text/html');
+            res.end(html);
+          } catch (error) {
+            server.ssrFixStacktrace(error as Error);
+            next(error);
+          }
+        });
+      };
       if (!hmr) {
-        return;
+        return renderPages;
       }
       // Compiled components import their update module from `<module dir>/@ng/component?c=<id>`,
       // once at startup and again after each angular:component-update. No update means an empty
@@ -133,11 +196,12 @@ function compilerPlugin(options: NgpPluginOptions): Plugin {
         config.logger.warn(`[vite-plugin-ngp] HMR failed for ${decodeURIComponent(data.id ?? '?')}: ${data.message ?? ''}. Reloading.`);
         server.environments.client.hot.send({type: 'full-reload'});
       });
+      return renderPages;
     },
 
     closeBundle() {
       if (config.command === 'build') {
-        return closeCompiler();
+        return closeCompilers();
       }
     },
 
@@ -145,7 +209,7 @@ function compilerPlugin(options: NgpPluginOptions): Plugin {
       filter: {id: {include: TS_MODULE, exclude: [/\.d\.[cm]?ts$/, /\/node_modules\//]}},
       async handler(code, id) {
         const file = cleanId(id);
-        const ngp = await getCompiler();
+        const ngp = await getCompiler(this.environment.config.consumer);
         const result = await ngp.transform(file, code);
         // Freshly compiled code already contains any pending template update.
         const prefix = decodeURIComponent(ngp.componentId(file, ''));
@@ -173,6 +237,8 @@ function compilerPlugin(options: NgpPluginOptions): Plugin {
     // Template edits update the component in place. Every other edit returns the affected modules,
     // and since compiled components don't accept updates, Vite reloads the page.
     async hotUpdate({file, type, read, timestamp}) {
+      // Each environment updates its own compiler, so the server renders the edit too.
+      const compiler = compilers.get(this.environment.config.consumer);
       if (!compiler || type === 'delete' || !(TS_MODULE.test(file) || file.endsWith('.html'))) {
         return;
       }

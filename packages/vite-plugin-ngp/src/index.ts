@@ -88,15 +88,30 @@ interface VitestPluginContext {
   defineCacheKeyGenerator(generator: (context: {id: string}) => string | false | undefined): void;
 }
 
+/** A change to a `.ts` file, as the watcher reported it. */
+interface TsEdit {
+  at: number;
+  content: string | undefined;
+  /** Whether the browser's hotUpdate applied the change in place. */
+  inPlace: Promise<boolean>;
+  settle: (inPlace: boolean) => void;
+}
+
 const TS_MODULE = /\.[cm]?ts$/;
 /** `DEBUG=vite-plugin-ngp` logs every module ngp compiles, with its time. */
 const debug = /(?:^|,)vite-plugin-ngp(?:,|$)/.test(process.env['DEBUG'] ?? '');
 
 /**
- * How far apart two file changes can be and still count as one edit. An editor saving all files,
- * a git checkout or a rename across files writes them within a few milliseconds.
+ * How long a template update waits for the rest of its save. An editor saving all files, a git
+ * checkout or a rename across files writes them within a few milliseconds.
  */
 const EDIT_BATCH_MS = 50;
+
+/**
+ * How long a template update waits for the watcher to report a class change that's already on
+ * disk. FSEvents on macOS can report one save's files about 100 ms apart.
+ */
+const PENDING_EDIT_MS = 1000;
 
 export function ngp(options: NgpPluginOptions = {}): Plugin[] {
   const compiler = compilerPlugin(options);
@@ -134,32 +149,66 @@ function compilerPlugin(
    * can't update them in place: the page has to reload.
    */
   const failed = new Set<string>();
-  /** When each file last changed on disk, as the watcher reported it. */
-  const changedAt = new Map<string, number>();
   /**
-   * Whether each `.ts` file's latest change was applied in place. Created when the watcher reports
-   * the change and settled by the browser's hotUpdate, so a template edited in the same save can
-   * wait for the answer.
+   * Orders the two events below: `++clock` is later than every number handed out before it.
    */
-  const tsEdits = new Map<string, {inPlace: Promise<boolean>; settle: (inPlace: boolean) => void}>();
+  let clock = 0;
+  /** Each `.ts` file as the browser last loaded it: when, and its content on disk. */
+  const loads = new Map<string, {at: number; content: string}>();
+  /**
+   * Each `.ts` file's latest change, as the watcher reported it. `inPlace` settles once the
+   * browser's hotUpdate knows whether the change was applied in place, so a template edited in the
+   * same save can wait for the answer.
+   */
+  const tsEdits = new Map<string, TsEdit>();
+  /** Template updates waiting for the watcher to report a `.ts` change. */
+  const editWaiters = new Map<string, Set<() => void>>();
 
-  /** Whether the `.ts` change that came with a template change was applied in place. */
-  function tsEditInPlace(tsFile: string): Promise<boolean> {
+  /** The latest content the plugin has seen for a `.ts` file, from a load or a change. */
+  function lastSeen(tsFile: string): string | undefined {
     const edit = tsEdits.get(tsFile);
-    // A hotUpdate that never ran, or threw, counts as a reload.
-    const timeout = new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 2000).unref());
-    return edit ? Promise.race([edit.inPlace, timeout]) : Promise.resolve(false);
+    const load = loads.get(tsFile);
+    return edit && (!load || edit.at > load.at) ? edit.content : load?.content;
+  }
+
+  /** Resolves when the watcher reports a change to `tsFile`, or after `ms`. */
+  function nextTsEdit(tsFile: string, ms: number): Promise<void> {
+    return new Promise((resolve) => {
+      const waiters = editWaiters.get(tsFile) ?? new Set();
+      editWaiters.set(tsFile, waiters);
+      const done = () => {
+        waiters.delete(done);
+        clearTimeout(timer);
+        resolve();
+      };
+      const timer = setTimeout(done, ms);
+      waiters.add(done);
+    });
   }
 
   /**
-   * Whether `tsFile` changed in the same edit as `templateFile`, which changed just now. Waits for
-   * the rest of the edit to arrive: Vite handles each file's change on its own, in any order.
+   * Whether the class on the page fits an edited template. `reloading` when the class changed
+   * after the page last loaded it and the change wasn't applied in place: the template may use
+   * members the page's class doesn't have yet, and the class's own change reloads the page. A
+   * change already on disk that the watcher hasn't reported yet is waited for, and `unknown` when
+   * it never comes.
    */
-  async function changedTogether(templateFile: string, tsFile: string): Promise<boolean> {
-    const templateTime = changedAt.get(templateFile) ?? Date.now();
-    await new Promise((resolve) => setTimeout(resolve, EDIT_BATCH_MS));
-    const tsTime = changedAt.get(tsFile);
-    return tsTime !== undefined && Math.abs(tsTime - templateTime) <= EDIT_BATCH_MS;
+  async function pageClass(tsFile: string): Promise<'current' | 'reloading' | 'unknown'> {
+    const disk = await fs.promises.readFile(tsFile, 'utf8').catch(() => undefined);
+    const seen = lastSeen(tsFile);
+    if (disk !== undefined && seen !== undefined && disk !== seen) {
+      await nextTsEdit(tsFile, PENDING_EDIT_MS);
+      if (lastSeen(tsFile) !== disk) {
+        return 'unknown';
+      }
+    }
+    const edit = tsEdits.get(tsFile);
+    if (!edit || edit.at < (loads.get(tsFile)?.at ?? 0)) {
+      return 'current';
+    }
+    // A hotUpdate that never ran, or threw, counts as a reload.
+    const timeout = new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 2000).unref());
+    return (await Promise.race([edit.inPlace, timeout])) ? 'current' : 'reloading';
   }
 
   /** One check over every file the tsconfig includes, plus any other the compiler has compiled. */
@@ -263,10 +312,10 @@ function compilerPlugin(
 
   /**
    * Sends an edited template to the running component, or reloads the page when it can't. An
-   * update module runs against the class already on the page. If the class changed in the same
-   * edit, the new template may use members it doesn't have yet, so the class's own change
-   * reloads the page instead. A `.ts` change that was itself applied in place left the class as
-   * it was, so the template update still goes out.
+   * update module runs against the class already on the page. If the class changed too, the new
+   * template may use members the page's class doesn't have yet, so the class's own change reloads
+   * the page instead. A `.ts` change that was itself applied in place left the class as it was,
+   * so the template update still goes out.
    */
   async function updateTemplate(
     environment: DevEnvironment,
@@ -284,11 +333,17 @@ function compilerPlugin(
         }
       }
     };
-    if ((await changedTogether(file, owner)) && !(await tsEditInPlace(owner))) {
+    await new Promise((resolve) => setTimeout(resolve, EDIT_BATCH_MS));
+    const page = await pageClass(owner);
+    if (page === 'reloading') {
+      // The page reloads for the class change, and then loads this template with it.
       invalidate();
       return;
     }
     try {
+      if (page === 'unknown') {
+        throw new Error(`${path.basename(owner)} changed on disk, and the watcher never reported it`);
+      }
       const updates = await ngp.hmrUpdates(owner, file);
       if (updates.length > 0) {
         await sendUpdates(environment, owner, updates, timestamp);
@@ -511,6 +566,13 @@ function compilerPlugin(
       filter: {id: {include: TS_MODULE, exclude: [/\.d\.[cm]?ts$/, /\/node_modules\//]}},
       async handler(code, id) {
         const file = cleanId(id);
+        if (hmr && this.environment.config.consumer === 'client') {
+          // From disk, not `code`: the watcher's reports are compared with it, and another plugin
+          // may have changed `code` already.
+          const at = ++clock;
+          const content = await fs.promises.readFile(file, 'utf8').catch(() => code);
+          loads.set(file, {at, content});
+        }
         const ngp = await getCompiler(this.environment.config.consumer);
         if (this.environment.name === 'client') {
           failed.add(file);
@@ -547,14 +609,27 @@ function compilerPlugin(
       },
     },
 
-    // Vite calls this for every change before any hotUpdate, so hotUpdate sees the whole edit.
+    // Vite calls this once per environment for every change, before any hotUpdate, so a template
+    // update can see a class change from the same save.
     watchChange(id) {
-      changedAt.set(id, Date.now());
-      if (TS_MODULE.test(id)) {
-        tsEdits.get(id)?.settle(false);
-        let settle!: (inPlace: boolean) => void;
-        const inPlace = new Promise<boolean>((resolve) => (settle = resolve));
-        tsEdits.set(id, {inPlace, settle});
+      if (!hmr || !TS_MODULE.test(id)) {
+        return;
+      }
+      let content: string | undefined;
+      try {
+        content = fs.readFileSync(id, 'utf8');
+      } catch {}
+      // FSEvents on macOS reports some writes twice, about 100 ms apart. A report with nothing new
+      // in it isn't a change, and mustn't replace the outcome of the change it repeats.
+      if (content !== undefined && content === lastSeen(id)) {
+        return;
+      }
+      tsEdits.get(id)?.settle(false);
+      let settle!: (inPlace: boolean) => void;
+      const inPlace = new Promise<boolean>((resolve) => (settle = resolve));
+      tsEdits.set(id, {at: ++clock, content, inPlace, settle});
+      for (const waiter of [...(editWaiters.get(id) ?? [])]) {
+        waiter();
       }
     },
 
@@ -593,11 +668,16 @@ function compilerPlugin(
 
       const {stale, previous} = await ngp.update(file, content, 'watcher');
       const owner = file.endsWith('.html') ? await ngp.componentForTemplate(file) : null;
+      // The watcher reported a write this compiler already has. The report that brought it
+      // handled it.
+      const repeat = previous === content;
 
       if (owner && hmr && this.environment.name === 'client' && !failed.has(owner)) {
         // Decided in the background: Vite runs the other environments' hotUpdate only after this
         // one returns, and the server has to see the new template before the page reloads.
-        void updateTemplate(this.environment, ngp, file, owner, stale, timestamp);
+        if (!repeat) {
+          void updateTemplate(this.environment, ngp, file, owner, stale, timestamp);
+        }
         // Returning [] would make Vite reload: it treats every changed .html file with no modules
         // as a page. A node for the template that Vite has never transformed stops update
         // propagation without a reload, which is what "handled" means here.
@@ -606,11 +686,18 @@ function compilerPlugin(
       }
 
       if (TS_MODULE.test(file) && hmr && this.environment.name === 'client') {
+        if (repeat) {
+          // For a .ts file, no modules means handled.
+          return [];
+        }
         const inPlace =
           previous !== undefined &&
           !failed.has(file) &&
           (await updateInline(this.environment, ngp, file, previous, content, timestamp));
-        tsEdits.get(file)?.settle(inPlace);
+        const edit = tsEdits.get(file);
+        if (edit?.content === content) {
+          edit.settle(inPlace);
+        }
         if (inPlace) {
           // For a .ts file, no modules means handled.
           return [];

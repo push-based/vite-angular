@@ -242,7 +242,7 @@ Each entry records one choice: what we decided, why, what it costs, and when to 
 
 ## 22. Wait 50 ms before template HMR, and reload if the class changed too
 
-*16 October 2026. Narrows 15.*
+*16 October 2026. Narrows 15. Superseded by 35.*
 
 **Decision.** The plugin sends a template update 50 ms after the template changed, not right away. If the component's `.ts` file changed within 50 ms of the template, before or after it, the plugin sends no update and lets the `.ts` change reload the page. The plugin's `watchChange` hook records when each file changed. The client's `hotUpdate` returns at once and decides in the background.
 
@@ -412,3 +412,17 @@ Build imports are scoped with the id `__ngpcomp__`, and the feature swaps it for
 The listener first came from `transformIndexHtml`. An app that serves its page without that hook would have lost style edits silently: no update and no reload. Importing it from the components ties it to the code that needs it.
 
 **Cost.** A few lines of client code and an event of our own to keep working. Setting `href` in place may flash the old rules away before the new ones load. That wasn't visible in the playground, but it wasn't measured either. Vite's `css-update` would avoid that by adding the new link before removing the old one.
+
+## 35. Hold a template update only while the page's class is out of date
+
+*16 October 2026. Supersedes 22.*
+
+**Decision.** A template update still waits 50 ms. Then the plugin holds it back only if the component's `.ts` file changed after the browser last loaded it, and that change wasn't applied in place. The page reloads for that change and loads the template with it. If the `.ts` file on disk differs from every version the plugin has seen, the plugin waits up to a second for the watcher to report it, and reloads if the report never comes. A watcher report whose content the plugin has already seen isn't a change: it records nothing, and sends no update.
+
+**Why.** Decision 22 assumed that the watcher reports one save's files within 50 ms of each other, and each write once. FSEvents on macOS breaks both. The dev-server HMR test failed about once in 20 runs of the suite. In one failure, a single template write was reported twice and sent two updates. In another, `app.ts` was reported 1 ms after the save, and `app.html`, with a second report of `app.ts`, 100 ms later. The repeat counted as an in-place edit, so the template update went out to a page the first report was reloading. A wider window would slow every template edit and still be a guess. Comparing with what the page loaded doesn't depend on timing. The browser's transform of a `.ts` module marks when the page got a class, and the watcher marks when the class changed.
+
+It also fixes the opposite mistake. Under 22, a template reported more than 50 ms after its class was sent as an update, even while the page was still reloading for the class. Now the template waits until the page has loaded the new class, and then goes out against it.
+
+**Cost.** More state to keep right: a load and a change per `.ts` file, ordered by one counter. Each `.ts` change and each browser transform reads the file once more, and each template update reads its component's file. A class change the watcher never reports holds the template for a second, then reloads. The load counts when Vite transforms the module, not when the page runs it, so a page that's slow to run a reloaded module could still receive an update meant for after it. That wasn't seen, and the update module the page imports at startup would correct it.
+
+**Revisit when** chokidar or Vite report each save once and in one batch. Then the repeat handling can go, though the load comparison is still the simpler rule.

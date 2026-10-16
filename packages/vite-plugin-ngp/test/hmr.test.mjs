@@ -87,10 +87,15 @@ async function until(condition) {
   }
 }
 
+/** Long enough for anything else an edit would send. */
+function pause() {
+  return new Promise((resolve) => setTimeout(resolve, SETTLE_MS));
+}
+
 /** Waits for `condition`, then long enough for anything else the edit would send. */
 async function settle(condition) {
   await until(condition);
-  await new Promise((resolve) => setTimeout(resolve, SETTLE_MS));
+  await pause();
 }
 
 /** The update module the plugin serves for a component, as the browser would fetch it. */
@@ -172,6 +177,93 @@ test('a class edit outside the decorator reloads, with no update', async () => {
   sent = [];
   await write('app.ts', COMPONENT('count', 'green').replace('signal(1)', 'signal(2)'));
   await settle(() => reloads().length > 0);
+  assert.equal(updates().length, 0);
+  assert.equal(reloads().length, 1);
+});
+
+// The watcher doesn't report one save's files in order, or each write once. FSEvents on macOS
+// reports some writes twice, and can report two files of one save about 100 ms apart. These
+// tests delay and repeat reports on purpose, so they fail the same way on every platform.
+
+/**
+ * Delays the watcher's change reports for `file` by `ms`, or drops them when `ms` is null, until
+ * the returned function runs.
+ */
+function delayReports(file, ms) {
+  const watcher = server.watcher;
+  const emit = watcher.emit;
+  watcher.emit = function (event, changed, ...rest) {
+    if (path.basename(changed ?? '') === file && (event === 'change' || event === 'all')) {
+      if (ms !== null) {
+        setTimeout(() => emit.call(this, event, changed, ...rest), ms);
+      }
+      return true;
+    }
+    return emit.call(this, event, changed, ...rest);
+  };
+  return () => (watcher.emit = emit);
+}
+
+function reportAgain(file) {
+  server.watcher.emit('change', path.join(root, 'src', file));
+}
+
+test('a template reported twice sends one update', async () => {
+  await server.environments.client.transformRequest('/src/app.ts');
+  sent = [];
+  await write('app.html', TEMPLATE('count', 'Twice'));
+  await settle(() => updates().length > 0);
+  reportAgain('app.html');
+  await pause();
+  assert.equal(updates().length, 1);
+  assert.equal(reloads().length, 0);
+});
+
+test('a template reported before a late class change sends no update', async () => {
+  sent = [];
+  const restore = delayReports('app.ts', 200);
+  try {
+    await write('app.html', TEMPLATE('total'));
+    await write('app.ts', COMPONENT('total', 'green'));
+    await settle(() => reloads().length > 0);
+  } finally {
+    restore();
+  }
+  assert.equal(updates().length, 0);
+  assert.equal(reloads().length, 1);
+});
+
+test('a class change reported again with its template sends no update', async () => {
+  // The page reloaded in the previous test, but hasn't loaded the component again yet.
+  sent = [];
+  await write('app.ts', COMPONENT('count', 'green'));
+  await settle(() => reloads().length > 0);
+  reportAgain('app.ts');
+  await write('app.html', TEMPLATE('count'));
+  await pause();
+  assert.equal(updates().length, 0);
+  assert.equal(reloads().length, 1);
+});
+
+test('a template edited after the page loaded the changed class updates in place', async () => {
+  await server.environments.client.transformRequest('/src/app.ts');
+  sent = [];
+  await write('app.html', TEMPLATE('count', 'Loaded'));
+  await settle(() => updates().length > 0);
+  assert.equal(updates().length, 1);
+  assert.equal(reloads().length, 0);
+});
+
+test('a template whose class changed without a report reloads, with no update', async () => {
+  sent = [];
+  const restore = delayReports('app.ts', null);
+  try {
+    await write('app.ts', COMPONENT('total', 'green'));
+    await write('app.html', TEMPLATE('total'));
+    await settle(() => reloads().length > 0);
+  } finally {
+    restore();
+  }
   assert.equal(updates().length, 0);
   assert.equal(reloads().length, 1);
 });

@@ -23,7 +23,7 @@ The first day: from an empty repo to a plugin that compiles, serves, renders, te
 
 - Component HMR: an external template edit updates the running component in place, keeping its state. [How it works](how-it-works#component-hmr)
 - A `.ts` edit that only changes a component's inline `template` or `styles` updates in place too, with the CLI's rules for what's safe. [How it works](how-it-works#component-hmr)
-- One save that changes a component's class and its template reloads once, instead of applying a template the class can't run yet.
+- One save that changes a component's class and its template reloads once, instead of applying a template the class can't run yet. That holds however far apart, and however often, the watcher reports the two files, as macOS's does. [How it works](how-it-works#component-hmr)
 - Deleted files and missing templates no longer break the dev server.
 
 ### Styles, type-checking and tests

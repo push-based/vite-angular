@@ -1,0 +1,663 @@
+{
+  "environment": {
+    "date": "2026-10-16T21:31:25.423Z",
+    "commit": "705d1c1",
+    "pluginDirty": false,
+    "machine": {
+      "cpu": "Apple M2 Max",
+      "cores": 12,
+      "memoryGB": 32,
+      "os": "Darwin 27.0.0 arm64",
+      "power": "Now drawing from 'AC Power'"
+    },
+    "node": "v26.12.0",
+    "chrome": "Chrome/155.0.8059.84",
+    "versions": {
+      "@angular/core": "22.3.0-next.2",
+      "@angular/compiler-cli": "22.3.0-next.2",
+      "@angular/build": "22.3.0-next.2",
+      "@angular/cli": "22.3.0-next.2",
+      "@analogjs/vite-plugin-angular": "2.8.2-beta.1",
+      "@oxc-angular/vite": "0.0.41",
+      "vite": "8.3.4",
+      "rolldown": "1.2.14",
+      "typescript": "6.0.3",
+      "puppeteer-core": "25.14.0"
+    },
+    "patches": [
+      "@analogjs__vite-plugin-angular@2.8.2-beta.1.patch"
+    ],
+    "ngp": {
+      "toolchain": "/Users/chris/Projects/vite-angular/toolchain/out",
+      "versions": "# Everything the ngp build pins. Change a value here, then rerun `pnpm toolchain`.\n\n# Angular commit ngp is built from. 92e5aa8 is the commit behind 22.3.0-next.2.\nANGULAR_SHA=92e5aa8f154096a756757d0e295cde4299788650\n\n# The npm release built from ANGULAR_SHA. ngp's backend imports compiler-cli's private\n# hybrid_analysis API, so every @angular/* pin in this repo must equal this version.\nANGULAR_NPM_VERSION=22.3.0-next.2\n\n# Rust toolchain for both engines, installed locally by setup-rust.sh.\nRUST_TOOLCHAIN=1.96.0\n\n# Must equal the wasm-bindgen crate version in Angular's Cargo.lock (Cargo.toml pins =0.2.121).\nWASM_BINDGEN_VERSION=0.2.121",
+      "plugin": "33b8ecd"
+    }
+  },
+  "settings": {
+    "runs": 5,
+    "warmup": 1,
+    "edits": 10,
+    "editWarmup": 2,
+    "maxLoad": 6
+  },
+  "results": [
+    {
+      "app": "standalone-5000-s1",
+      "components": 5000,
+      "tool": "ngp",
+      "metric": "dev-cold",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "fcp": 2105.60009765625,
+          "firstPaint": 2105.60009765625,
+          "rendered": 2102,
+          "answered": 326,
+          "documents": 1,
+          "load": [
+            4.04,
+            3.58,
+            4.09
+          ]
+        },
+        {
+          "fcp": 2144.39990234375,
+          "firstPaint": 2144.39990234375,
+          "rendered": 2140,
+          "answered": 324,
+          "documents": 1,
+          "load": [
+            4.83,
+            3.76,
+            4.15
+          ]
+        },
+        {
+          "fcp": 2112.300048828125,
+          "firstPaint": 2112.300048828125,
+          "rendered": 2108,
+          "answered": 324,
+          "documents": 1,
+          "load": [
+            4.76,
+            3.8,
+            4.16
+          ]
+        },
+        {
+          "fcp": 2106.800048828125,
+          "firstPaint": 2106.800048828125,
+          "rendered": 2105,
+          "answered": 296,
+          "documents": 1,
+          "load": [
+            4.79,
+            3.84,
+            4.17
+          ]
+        },
+        {
+          "fcp": 2166.800048828125,
+          "firstPaint": 2166.800048828125,
+          "rendered": 2164,
+          "answered": 327,
+          "documents": 1,
+          "load": [
+            5.41,
+            4.02,
+            4.22
+          ]
+        }
+      ],
+      "fcp": {
+        "n": 5,
+        "median": 2112.300048828125,
+        "min": 2105.60009765625,
+        "max": 2166.800048828125,
+        "madPct": 0.3171874741749895
+      },
+      "rendered": {
+        "n": 5,
+        "median": 2108,
+        "min": 2102,
+        "max": 2164,
+        "madPct": 0.2846299810246679
+      },
+      "answered": {
+        "n": 5,
+        "median": 324,
+        "min": 296,
+        "max": 327,
+        "madPct": 0.6172839506172839
+      }
+    },
+    {
+      "app": "standalone-5000-s1",
+      "components": 5000,
+      "tool": "ngp-notc",
+      "metric": "dev-cold",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "fcp": 1963,
+          "firstPaint": 1963,
+          "rendered": 1959,
+          "answered": 325,
+          "documents": 1,
+          "load": [
+            4.03,
+            3.59,
+            4.09
+          ]
+        },
+        {
+          "fcp": 1924.699951171875,
+          "firstPaint": 1924.699951171875,
+          "rendered": 1922,
+          "answered": 235,
+          "documents": 1,
+          "load": [
+            5.08,
+            3.85,
+            4.17
+          ]
+        },
+        {
+          "fcp": 2013.10009765625,
+          "firstPaint": 2013.10009765625,
+          "rendered": 2012,
+          "answered": 328,
+          "documents": 1,
+          "load": [
+            4.86,
+            3.84,
+            4.17
+          ]
+        },
+        {
+          "fcp": 1964,
+          "firstPaint": 1964,
+          "rendered": 1962,
+          "answered": 296,
+          "documents": 1,
+          "load": [
+            4.67,
+            3.85,
+            4.16
+          ]
+        },
+        {
+          "fcp": 1978.300048828125,
+          "firstPaint": 1978.300048828125,
+          "rendered": 1976,
+          "answered": 237,
+          "documents": 1,
+          "load": [
+            5.73,
+            4.2,
+            4.28
+          ]
+        }
+      ],
+      "fcp": {
+        "n": 5,
+        "median": 1964,
+        "min": 1924.699951171875,
+        "max": 2013.10009765625,
+        "madPct": 0.728108392470723
+      },
+      "rendered": {
+        "n": 5,
+        "median": 1962,
+        "min": 1922,
+        "max": 2012,
+        "madPct": 0.7135575942915392
+      },
+      "answered": {
+        "n": 5,
+        "median": 296,
+        "min": 235,
+        "max": 328,
+        "madPct": 10.81081081081081
+      }
+    },
+    {
+      "app": "standalone-5000-s1",
+      "components": 5000,
+      "tool": "ngp",
+      "metric": "edit-template",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "ms": 100,
+          "mode": "in-place",
+          "load": [
+            5.67,
+            4.22,
+            4.29
+          ]
+        },
+        {
+          "ms": 240,
+          "mode": "in-place",
+          "load": [
+            5.67,
+            4.22,
+            4.29
+          ]
+        },
+        {
+          "ms": 74,
+          "mode": "in-place",
+          "load": [
+            7.54,
+            4.63,
+            4.43
+          ]
+        },
+        {
+          "ms": 181,
+          "mode": "in-place",
+          "load": [
+            7.54,
+            4.63,
+            4.43
+          ]
+        },
+        {
+          "ms": 117,
+          "mode": "in-place",
+          "load": [
+            7.54,
+            4.63,
+            4.43
+          ]
+        },
+        {
+          "ms": 175,
+          "mode": "in-place",
+          "load": [
+            7.54,
+            4.63,
+            4.43
+          ]
+        },
+        {
+          "ms": 72,
+          "mode": "in-place",
+          "load": [
+            7.54,
+            4.63,
+            4.43
+          ]
+        },
+        {
+          "ms": 150,
+          "mode": "in-place",
+          "load": [
+            7.18,
+            4.6,
+            4.42
+          ]
+        },
+        {
+          "ms": 129,
+          "mode": "in-place",
+          "load": [
+            7.18,
+            4.6,
+            4.42
+          ]
+        },
+        {
+          "ms": 175,
+          "mode": "in-place",
+          "load": [
+            7.18,
+            4.6,
+            4.42
+          ]
+        }
+      ],
+      "latency": {
+        "n": 10,
+        "median": 139.5,
+        "min": 72,
+        "max": 240,
+        "madPct": 26.881720430107528
+      },
+      "mode": "in-place",
+      "typeChecks": []
+    },
+    {
+      "app": "standalone-5000-s1",
+      "components": 5000,
+      "tool": "ngp",
+      "metric": "edit-ts",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "ms": 184,
+          "mode": "reload",
+          "load": [
+            6.84,
+            4.57,
+            4.42
+          ]
+        },
+        {
+          "ms": 233,
+          "mode": "reload",
+          "load": [
+            6.84,
+            4.57,
+            4.42
+          ]
+        },
+        {
+          "ms": 206,
+          "mode": "reload",
+          "load": [
+            6.84,
+            4.57,
+            4.42
+          ]
+        },
+        {
+          "ms": 238,
+          "mode": "reload",
+          "load": [
+            6.84,
+            4.57,
+            4.42
+          ]
+        },
+        {
+          "ms": 198,
+          "mode": "reload",
+          "load": [
+            7.5,
+            4.75,
+            4.48
+          ]
+        },
+        {
+          "ms": 130,
+          "mode": "reload",
+          "load": [
+            7.5,
+            4.75,
+            4.48
+          ]
+        },
+        {
+          "ms": 221,
+          "mode": "reload",
+          "load": [
+            7.5,
+            4.75,
+            4.48
+          ]
+        },
+        {
+          "ms": 207,
+          "mode": "reload",
+          "load": [
+            7.5,
+            4.75,
+            4.48
+          ]
+        },
+        {
+          "ms": 128,
+          "mode": "reload",
+          "load": [
+            7.5,
+            4.75,
+            4.48
+          ]
+        },
+        {
+          "ms": 201,
+          "mode": "reload",
+          "load": [
+            7.14,
+            4.72,
+            4.47
+          ]
+        }
+      ],
+      "latency": {
+        "n": 10,
+        "median": 203.5,
+        "min": 128,
+        "max": 238,
+        "madPct": 9.090909090909092
+      },
+      "mode": "reload",
+      "typeChecks": []
+    },
+    {
+      "app": "standalone-5000-s1",
+      "components": 5000,
+      "tool": "ngp-notc",
+      "metric": "edit-template",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "ms": 176,
+          "mode": "in-place",
+          "load": [
+            7.77,
+            4.89,
+            4.53
+          ]
+        },
+        {
+          "ms": 177,
+          "mode": "in-place",
+          "load": [
+            7.77,
+            4.89,
+            4.53
+          ]
+        },
+        {
+          "ms": 175,
+          "mode": "in-place",
+          "load": [
+            7.77,
+            4.89,
+            4.53
+          ]
+        },
+        {
+          "ms": 83,
+          "mode": "in-place",
+          "load": [
+            7.3,
+            4.84,
+            4.51
+          ]
+        },
+        {
+          "ms": 74,
+          "mode": "in-place",
+          "load": [
+            7.3,
+            4.84,
+            4.51
+          ]
+        },
+        {
+          "ms": 177,
+          "mode": "in-place",
+          "load": [
+            7.3,
+            4.84,
+            4.51
+          ]
+        },
+        {
+          "ms": 177,
+          "mode": "in-place",
+          "load": [
+            7.3,
+            4.84,
+            4.51
+          ]
+        },
+        {
+          "ms": 175,
+          "mode": "in-place",
+          "load": [
+            7.3,
+            4.84,
+            4.51
+          ]
+        },
+        {
+          "ms": 173,
+          "mode": "in-place",
+          "load": [
+            6.8,
+            4.77,
+            4.49
+          ]
+        },
+        {
+          "ms": 173,
+          "mode": "in-place",
+          "load": [
+            6.8,
+            4.77,
+            4.49
+          ]
+        }
+      ],
+      "latency": {
+        "n": 10,
+        "median": 175,
+        "min": 74,
+        "max": 177,
+        "madPct": 1.1428571428571428
+      },
+      "mode": "in-place",
+      "typeChecks": []
+    },
+    {
+      "app": "standalone-5000-s1",
+      "components": 5000,
+      "tool": "ngp-notc",
+      "metric": "edit-ts",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "ms": 191,
+          "mode": "reload",
+          "load": [
+            6.33,
+            4.71,
+            4.47
+          ]
+        },
+        {
+          "ms": 186,
+          "mode": "reload",
+          "load": [
+            6.33,
+            4.71,
+            4.47
+          ]
+        },
+        {
+          "ms": 189,
+          "mode": "reload",
+          "load": [
+            6.33,
+            4.71,
+            4.47
+          ]
+        },
+        {
+          "ms": 190,
+          "mode": "reload",
+          "load": [
+            6.33,
+            4.71,
+            4.47
+          ]
+        },
+        {
+          "ms": 191,
+          "mode": "reload",
+          "load": [
+            6.33,
+            4.71,
+            4.47
+          ]
+        },
+        {
+          "ms": 189,
+          "mode": "reload",
+          "load": [
+            6.07,
+            4.68,
+            4.46
+          ]
+        },
+        {
+          "ms": 190,
+          "mode": "reload",
+          "load": [
+            6.07,
+            4.68,
+            4.46
+          ]
+        },
+        {
+          "ms": 190,
+          "mode": "reload",
+          "load": [
+            6.07,
+            4.68,
+            4.46
+          ]
+        },
+        {
+          "ms": 190,
+          "mode": "reload",
+          "load": [
+            6.07,
+            4.68,
+            4.46
+          ]
+        },
+        {
+          "ms": 187,
+          "mode": "reload",
+          "load": [
+            6.07,
+            4.68,
+            4.46
+          ]
+        }
+      ],
+      "latency": {
+        "n": 10,
+        "median": 190,
+        "min": 186,
+        "max": 191,
+        "madPct": 0.5263157894736842
+      },
+      "mode": "reload",
+      "typeChecks": []
+    }
+  ]
+}

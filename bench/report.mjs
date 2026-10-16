@@ -103,8 +103,8 @@ for (const f of envs) {
   const e = f.environment;
   const loads = f.results.flatMap((r) => (r.samples ?? []).map((s) => s.load?.[0]).filter((l) => l != null));
   const loadRange = loads.length ? `${Math.min(...loads).toFixed(1)}–${Math.max(...loads).toFixed(1)}` : 'n/a';
-  out += `- \`${path.basename(f.file)}\`: ${e.date.slice(0, 16).replace('T', ' ')} UTC, commit \`${e.commit}\`${e.dirty ? ' (uncommitted changes)' : ''}, ${e.machine.cpu}, ${e.machine.cores} cores, ${e.machine.memoryGB} GB, ${e.machine.os}, ${e.machine.power ?? ''}. Node ${e.node}, Chrome ${e.chrome}. ${f.settings.warmup} warm-up and ${f.settings.runs} measured runs per start or build, ${f.settings.editWarmup} warm-up and ${f.settings.edits} measured edits. 1-minute load average during samples: ${loadRange}.\n`;
-  out += `  Versions: ${Object.entries(e.versions).map(([k, v]) => `${k} ${v}`).join(', ')}. Patches: ${e.patches.join(', ') || 'none'}. ngp plugin at \`${e.ngp.plugin}\`.\n`;
+  out += `- \`${path.basename(f.file)}\`: ${e.date.slice(0, 16).replace('T', ' ')} UTC, plugin at \`${e.ngp.plugin}\`${e.pluginDirty ? ' (uncommitted changes)' : ''}, repo at \`${e.commit}\`, ${e.machine.cpu}, ${e.machine.cores} cores, ${e.machine.memoryGB} GB, ${e.machine.os}, ${e.machine.power ?? ''}. Node ${e.node}, Chrome ${e.chrome}. ${f.settings.warmup} warm-up and ${f.settings.runs} measured runs per start or build, ${f.settings.editWarmup} warm-up and ${f.settings.edits} measured edits. 1-minute load average during samples: ${loadRange}.\n`;
+  out += `  Versions: ${Object.entries(e.versions).map(([k, v]) => `${k} ${v}`).join(', ')}. Patches: ${e.patches.join(', ') || 'none'}.\n`;
 }
 
 if (args.out) fs.writeFileSync(args.out, out);

@@ -28,7 +28,8 @@ export function environment(chromeVersion) {
   return {
     date: new Date().toISOString(),
     commit: sh('git', ['-C', REPO, 'rev-parse', '--short', 'HEAD']),
-    dirty: Boolean(sh('git', ['-C', REPO, 'status', '--porcelain', '--', 'packages', 'bench'])),
+    // Uncommitted changes to the plugin itself. The harness's own files don't change a number.
+    pluginDirty: Boolean(sh('git', ['-C', REPO, 'status', '--porcelain', '--untracked-files=no', '--', 'packages'])),
     machine: {
       cpu: os.cpus()[0]?.model,
       cores: os.cpus().length,

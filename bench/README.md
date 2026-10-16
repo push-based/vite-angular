@@ -81,8 +81,10 @@ Where the setup isn't what a user would get from `npm install`, and why:
 
 ## Noise, and what it can't tell you
 
-- **It runs on a laptop, next to other work.** The published numbers come from a 12-core M2 Max on battery or mains (each result file says which), while other sessions on the same machine were building and testing. `--max-load` keeps samples out of the worst spikes, not out of all of them. Each sample records the load average when it started. Compare tools within a run, not runs across days.
+- **It runs on a laptop, next to other work.** The published numbers come from a 12-core M2 Max on mains power, while other sessions on the same machine were building and testing. `--max-load` keeps samples out of the worst spikes, not out of all of them. Each sample records the load average when it started. Compare tools within a run, not runs across days.
 - **The OS file cache is always warm.** Cold means every tool's own caches are gone, not the operating system's. A first start after a reboot would be slower for everyone.
 - **Headless Chrome on the same machine.** The browser competes with the dev server for the same cores, as it does on a developer's laptop.
 - **Edits are timed with the type-check running.** ngp's and the CLI's dev servers type-check after each edit, in the background. Back-to-back edits can overlap with the previous check.
+- **Vite's watcher on macOS adds 10–115 ms to each edit.** A bare Vite server, no plugins, saw a write after either about 10–35 ms or about 113 ms, unpredictably. So every Vite toolchain's edit times are bimodal. The report shows each edit series' fastest sample next to its median for that reason.
+- **Runs drift.** vite-plugin-ngp's cold start at 5,000 components measured 1.87 s in one run and 2.11 s an hour later. Rounds keep that drift equal across tools within one run.
 - **One edit shape per kind.** A template edit that adds an element, and a class edit that changes a string. Other edits, like adding an import, can cost more.

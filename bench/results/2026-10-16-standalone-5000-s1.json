@@ -1,0 +1,2121 @@
+{
+  "environment": {
+    "date": "2026-10-16T20:51:49.805Z",
+    "commit": "705d1c1",
+    "dirty": true,
+    "machine": {
+      "cpu": "Apple M2 Max",
+      "cores": 12,
+      "memoryGB": 32,
+      "os": "Darwin 27.0.0 arm64",
+      "power": "Now drawing from 'AC Power'"
+    },
+    "node": "v26.12.0",
+    "chrome": "Chrome/155.0.8059.84",
+    "versions": {
+      "@angular/core": "22.3.0-next.2",
+      "@angular/compiler-cli": "22.3.0-next.2",
+      "@angular/build": "22.3.0-next.2",
+      "@angular/cli": "22.3.0-next.2",
+      "@analogjs/vite-plugin-angular": "2.8.2-beta.1",
+      "@oxc-angular/vite": "0.0.41",
+      "vite": "8.3.4",
+      "rolldown": "1.2.14",
+      "typescript": "6.0.3",
+      "puppeteer-core": "25.14.0"
+    },
+    "patches": [
+      "@analogjs__vite-plugin-angular@2.8.2-beta.1.patch"
+    ],
+    "ngp": {
+      "toolchain": "/Users/chris/Projects/vite-angular/toolchain/out",
+      "versions": "# Everything the ngp build pins. Change a value here, then rerun `pnpm toolchain`.\n\n# Angular commit ngp is built from. 92e5aa8 is the commit behind 22.3.0-next.2.\nANGULAR_SHA=92e5aa8f154096a756757d0e295cde4299788650\n\n# The npm release built from ANGULAR_SHA. ngp's backend imports compiler-cli's private\n# hybrid_analysis API, so every @angular/* pin in this repo must equal this version.\nANGULAR_NPM_VERSION=22.3.0-next.2\n\n# Rust toolchain for both engines, installed locally by setup-rust.sh.\nRUST_TOOLCHAIN=1.96.0\n\n# Must equal the wasm-bindgen crate version in Angular's Cargo.lock (Cargo.toml pins =0.2.121).\nWASM_BINDGEN_VERSION=0.2.121",
+      "plugin": "33b8ecd"
+    }
+  },
+  "settings": {
+    "runs": 5,
+    "warmup": 1,
+    "edits": 10,
+    "editWarmup": 2,
+    "maxLoad": 6
+  },
+  "results": [
+    {
+      "app": "standalone-5000-s1",
+      "components": 5000,
+      "tool": "ngp",
+      "metric": "dev-cold",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "fcp": 1861.10009765625,
+          "firstPaint": 1861.10009765625,
+          "rendered": 1860,
+          "answered": 279,
+          "documents": 1,
+          "load": [
+            4.97,
+            4.72,
+            5.18
+          ]
+        },
+        {
+          "fcp": 1863,
+          "firstPaint": 1863,
+          "rendered": 1859,
+          "answered": 278,
+          "documents": 1,
+          "load": [
+            4.58,
+            4.68,
+            5.14
+          ]
+        },
+        {
+          "fcp": 1919.699951171875,
+          "firstPaint": 1919.699951171875,
+          "rendered": 1916,
+          "answered": 365,
+          "documents": 1,
+          "load": [
+            4.51,
+            4.65,
+            5.1
+          ]
+        },
+        {
+          "fcp": 1873.39990234375,
+          "firstPaint": 1873.39990234375,
+          "rendered": 1870,
+          "answered": 328,
+          "documents": 1,
+          "load": [
+            5.85,
+            5,
+            5.2
+          ]
+        },
+        {
+          "fcp": 1875,
+          "firstPaint": 1875,
+          "rendered": 1873,
+          "answered": 288,
+          "documents": 1,
+          "load": [
+            5.01,
+            4.99,
+            5.18
+          ]
+        }
+      ],
+      "fcp": {
+        "n": 5,
+        "median": 1873.39990234375,
+        "min": 1861.10009765625,
+        "max": 1919.699951171875,
+        "madPct": 0.5551352026195271
+      },
+      "rendered": {
+        "n": 5,
+        "median": 1870,
+        "min": 1859,
+        "max": 1916,
+        "madPct": 0.5347593582887701
+      },
+      "answered": {
+        "n": 5,
+        "median": 288,
+        "min": 278,
+        "max": 365,
+        "madPct": 3.4722222222222223
+      }
+    },
+    {
+      "app": "standalone-5000-s1",
+      "components": 5000,
+      "tool": "cli",
+      "metric": "dev-cold",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "fcp": 28748.199951171875,
+          "firstPaint": 28748.199951171875,
+          "rendered": 28748,
+          "answered": 28426,
+          "documents": 1,
+          "load": [
+            5.05,
+            4.75,
+            5.18
+          ]
+        },
+        {
+          "fcp": 28385.39990234375,
+          "firstPaint": 28385.39990234375,
+          "rendered": 28379,
+          "answered": 28054,
+          "documents": 1,
+          "load": [
+            4.57,
+            4.67,
+            5.13
+          ]
+        },
+        {
+          "fcp": 28545.199951171875,
+          "firstPaint": 28545.199951171875,
+          "rendered": 28539,
+          "answered": 28196,
+          "documents": 1,
+          "load": [
+            4.47,
+            4.64,
+            5.09
+          ]
+        },
+        {
+          "fcp": 28747.5,
+          "firstPaint": 28747.5,
+          "rendered": 28746,
+          "answered": 28434,
+          "documents": 1,
+          "load": [
+            5.95,
+            5.1,
+            5.23
+          ]
+        },
+        {
+          "fcp": 28466.199951171875,
+          "firstPaint": 28466.199951171875,
+          "rendered": 28465,
+          "answered": 28142,
+          "documents": 1,
+          "load": [
+            4.93,
+            4.97,
+            5.17
+          ]
+        }
+      ],
+      "fcp": {
+        "n": 5,
+        "median": 28545.199951171875,
+        "min": 28385.39990234375,
+        "max": 28748.199951171875,
+        "madPct": 0.5598140811816757
+      },
+      "rendered": {
+        "n": 5,
+        "median": 28539,
+        "min": 28379,
+        "max": 28748,
+        "madPct": 0.5606363222257262
+      },
+      "answered": {
+        "n": 5,
+        "median": 28196,
+        "min": 28054,
+        "max": 28434,
+        "madPct": 0.5036175344020428
+      }
+    },
+    {
+      "app": "standalone-5000-s1",
+      "components": 5000,
+      "tool": "analog",
+      "metric": "dev-cold",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "fcp": 6441.699951171875,
+          "firstPaint": 6441.699951171875,
+          "rendered": 6441,
+          "answered": 5490,
+          "documents": 1,
+          "load": [
+            4.86,
+            4.74,
+            5.16
+          ]
+        },
+        {
+          "fcp": 6550.199951171875,
+          "firstPaint": 6550.199951171875,
+          "rendered": 6547,
+          "answered": 5508,
+          "documents": 1,
+          "load": [
+            4.58,
+            4.67,
+            5.11
+          ]
+        },
+        {
+          "fcp": 6647.39990234375,
+          "firstPaint": 6647.39990234375,
+          "rendered": 6647,
+          "answered": 5662,
+          "documents": 1,
+          "load": [
+            5.62,
+            4.91,
+            5.17
+          ]
+        },
+        {
+          "fcp": 6550.199951171875,
+          "firstPaint": 6550.199951171875,
+          "rendered": 6547,
+          "answered": 5611,
+          "documents": 1,
+          "load": [
+            5.4,
+            5.06,
+            5.21
+          ]
+        },
+        {
+          "fcp": 6481.699951171875,
+          "firstPaint": 6481.699951171875,
+          "rendered": 6480,
+          "answered": 5449,
+          "documents": 1,
+          "load": [
+            5.63,
+            5.2,
+            5.25
+          ]
+        }
+      ],
+      "fcp": {
+        "n": 5,
+        "median": 6550.199951171875,
+        "min": 6441.699951171875,
+        "max": 6647.39990234375,
+        "madPct": 1.0457696026171672
+      },
+      "rendered": {
+        "n": 5,
+        "median": 6547,
+        "min": 6441,
+        "max": 6647,
+        "madPct": 1.0233694822055903
+      },
+      "answered": {
+        "n": 5,
+        "median": 5508,
+        "min": 5449,
+        "max": 5662,
+        "madPct": 1.0711692084241105
+      }
+    },
+    {
+      "app": "standalone-5000-s1",
+      "components": 5000,
+      "tool": "oxc",
+      "metric": "dev-cold",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "fcp": 1143.60009765625,
+          "firstPaint": 1143.60009765625,
+          "rendered": 1143,
+          "answered": 170,
+          "documents": 1,
+          "load": [
+            4.58,
+            4.68,
+            5.14
+          ]
+        },
+        {
+          "fcp": 1127.39990234375,
+          "firstPaint": 1127.39990234375,
+          "rendered": 1124,
+          "answered": 170,
+          "documents": 1,
+          "load": [
+            4.64,
+            4.68,
+            5.11
+          ]
+        },
+        {
+          "fcp": 1127.800048828125,
+          "firstPaint": 1127.800048828125,
+          "rendered": 1129,
+          "answered": 172,
+          "documents": 1,
+          "load": [
+            5.49,
+            4.9,
+            5.16
+          ]
+        },
+        {
+          "fcp": 1177.5,
+          "firstPaint": 1177.5,
+          "rendered": 1176,
+          "answered": 170,
+          "documents": 1,
+          "load": [
+            5.01,
+            4.99,
+            5.18
+          ]
+        },
+        {
+          "fcp": 1124.300048828125,
+          "firstPaint": 1124.300048828125,
+          "rendered": 1125,
+          "answered": 168,
+          "documents": 1,
+          "load": [
+            5.9,
+            5.34,
+            5.3
+          ]
+        }
+      ],
+      "fcp": {
+        "n": 5,
+        "median": 1127.800048828125,
+        "min": 1124.300048828125,
+        "max": 1177.5,
+        "madPct": 0.3103386991015634
+      },
+      "rendered": {
+        "n": 5,
+        "median": 1129,
+        "min": 1124,
+        "max": 1176,
+        "madPct": 0.4428697962798937
+      },
+      "answered": {
+        "n": 5,
+        "median": 170,
+        "min": 168,
+        "max": 172,
+        "madPct": 0
+      }
+    },
+    {
+      "app": "standalone-5000-s1",
+      "components": 5000,
+      "tool": "ngp",
+      "metric": "dev-warm",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "fcp": 702.5,
+          "firstPaint": 702.5,
+          "rendered": 697,
+          "answered": 301,
+          "documents": 1,
+          "load": [
+            4.78,
+            5.09,
+            5.2
+          ]
+        },
+        {
+          "fcp": 688.699951171875,
+          "firstPaint": 688.699951171875,
+          "rendered": 685,
+          "answered": 296,
+          "documents": 1,
+          "load": [
+            5.08,
+            5.05,
+            5.18
+          ]
+        },
+        {
+          "fcp": 697,
+          "firstPaint": 697,
+          "rendered": 692,
+          "answered": 298,
+          "documents": 1,
+          "load": [
+            4.05,
+            4.78,
+            5.07
+          ]
+        },
+        {
+          "fcp": 697.5,
+          "firstPaint": 697.5,
+          "rendered": 695,
+          "answered": 277,
+          "documents": 1,
+          "load": [
+            3.85,
+            4.62,
+            4.99
+          ]
+        },
+        {
+          "fcp": 695.10009765625,
+          "firstPaint": 695.10009765625,
+          "rendered": 694,
+          "answered": 302,
+          "documents": 1,
+          "load": [
+            4.42,
+            4.66,
+            4.98
+          ]
+        }
+      ],
+      "fcp": {
+        "n": 5,
+        "median": 697,
+        "min": 688.699951171875,
+        "max": 702.5,
+        "madPct": 0.27258283267575323
+      },
+      "rendered": {
+        "n": 5,
+        "median": 694,
+        "min": 685,
+        "max": 697,
+        "madPct": 0.2881844380403458
+      },
+      "answered": {
+        "n": 5,
+        "median": 298,
+        "min": 277,
+        "max": 302,
+        "madPct": 1.0067114093959733
+      }
+    },
+    {
+      "app": "standalone-5000-s1",
+      "components": 5000,
+      "tool": "cli",
+      "metric": "dev-warm",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "fcp": 28096.5,
+          "firstPaint": 28096.5,
+          "rendered": 28091,
+          "answered": 27873,
+          "documents": 1,
+          "load": [
+            4.56,
+            5.04,
+            5.19
+          ]
+        },
+        {
+          "fcp": 27905.39990234375,
+          "firstPaint": 27905.39990234375,
+          "rendered": 27905,
+          "answered": 27681,
+          "documents": 1,
+          "load": [
+            4.97,
+            5.03,
+            5.17
+          ]
+        },
+        {
+          "fcp": 28000.10009765625,
+          "firstPaint": 28000.10009765625,
+          "rendered": 27997,
+          "answered": 27798,
+          "documents": 1,
+          "load": [
+            4.05,
+            4.76,
+            5.06
+          ]
+        },
+        {
+          "fcp": 28128.800048828125,
+          "firstPaint": 28128.800048828125,
+          "rendered": 28125,
+          "answered": 27936,
+          "documents": 1,
+          "load": [
+            3.86,
+            4.61,
+            4.99
+          ]
+        },
+        {
+          "fcp": 27983.89990234375,
+          "firstPaint": 27983.89990234375,
+          "rendered": 27984,
+          "answered": 27790,
+          "documents": 1,
+          "load": [
+            4.31,
+            4.63,
+            4.97
+          ]
+        }
+      ],
+      "fcp": {
+        "n": 5,
+        "median": 28000.10009765625,
+        "min": 27905.39990234375,
+        "max": 28128.800048828125,
+        "madPct": 0.3382137741729962
+      },
+      "rendered": {
+        "n": 5,
+        "median": 27997,
+        "min": 27905,
+        "max": 28125,
+        "madPct": 0.3286066364253313
+      },
+      "answered": {
+        "n": 5,
+        "median": 27798,
+        "min": 27681,
+        "max": 27936,
+        "madPct": 0.26980358299158214
+      }
+    },
+    {
+      "app": "standalone-5000-s1",
+      "components": 5000,
+      "tool": "analog",
+      "metric": "dev-warm",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "fcp": 5684,
+          "firstPaint": 5684,
+          "rendered": 5682,
+          "answered": 5403,
+          "documents": 1,
+          "load": [
+            4.13,
+            4.88,
+            5.12
+          ]
+        },
+        {
+          "fcp": 5833.199951171875,
+          "firstPaint": 5833.199951171875,
+          "rendered": 5833,
+          "answered": 5549,
+          "documents": 1,
+          "load": [
+            4.25,
+            4.84,
+            5.09
+          ]
+        },
+        {
+          "fcp": 5661.89990234375,
+          "firstPaint": 5661.89990234375,
+          "rendered": 5660,
+          "answered": 5379,
+          "documents": 1,
+          "load": [
+            3.64,
+            4.61,
+            4.99
+          ]
+        },
+        {
+          "fcp": 5763,
+          "firstPaint": 5763,
+          "rendered": 5763,
+          "answered": 5483,
+          "documents": 1,
+          "load": [
+            4.59,
+            4.7,
+            5
+          ]
+        },
+        {
+          "fcp": 5808.39990234375,
+          "firstPaint": 5808.39990234375,
+          "rendered": 5805,
+          "answered": 5522,
+          "documents": 1,
+          "load": [
+            4.55,
+            4.64,
+            4.96
+          ]
+        }
+      ],
+      "fcp": {
+        "n": 5,
+        "median": 5763,
+        "min": 5661.89990234375,
+        "max": 5833.199951171875,
+        "madPct": 1.2181147175407774
+      },
+      "rendered": {
+        "n": 5,
+        "median": 5763,
+        "min": 5660,
+        "max": 5833,
+        "madPct": 1.2146451500954365
+      },
+      "answered": {
+        "n": 5,
+        "median": 5483,
+        "min": 5379,
+        "max": 5549,
+        "madPct": 1.203720590917381
+      }
+    },
+    {
+      "app": "standalone-5000-s1",
+      "components": 5000,
+      "tool": "oxc",
+      "metric": "dev-warm",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "fcp": 329.10009765625,
+          "firstPaint": 329.10009765625,
+          "rendered": 327,
+          "answered": 123,
+          "documents": 1,
+          "load": [
+            5.08,
+            5.05,
+            5.18
+          ]
+        },
+        {
+          "fcp": 348.39990234375,
+          "firstPaint": 348.39990234375,
+          "rendered": 346,
+          "answered": 156,
+          "documents": 1,
+          "load": [
+            4.23,
+            4.82,
+            5.08
+          ]
+        },
+        {
+          "fcp": 350.89990234375,
+          "firstPaint": 350.89990234375,
+          "rendered": 348,
+          "answered": 154,
+          "documents": 1,
+          "load": [
+            3.85,
+            4.62,
+            4.99
+          ]
+        },
+        {
+          "fcp": 345.199951171875,
+          "firstPaint": 345.199951171875,
+          "rendered": 345,
+          "answered": 155,
+          "documents": 1,
+          "load": [
+            4.46,
+            4.67,
+            4.99
+          ]
+        },
+        {
+          "fcp": 328.300048828125,
+          "firstPaint": 328.300048828125,
+          "rendered": 326,
+          "answered": 122,
+          "documents": 1,
+          "load": [
+            4.31,
+            4.58,
+            4.94
+          ]
+        }
+      ],
+      "fcp": {
+        "n": 5,
+        "median": 345.199951171875,
+        "min": 328.300048828125,
+        "max": 350.89990234375,
+        "madPct": 1.65120277466001
+      },
+      "rendered": {
+        "n": 5,
+        "median": 345,
+        "min": 326,
+        "max": 348,
+        "madPct": 0.8695652173913043
+      },
+      "answered": {
+        "n": 5,
+        "median": 154,
+        "min": 122,
+        "max": 156,
+        "madPct": 1.2987012987012987
+      }
+    },
+    {
+      "app": "standalone-5000-s1",
+      "components": 5000,
+      "tool": "ngp",
+      "metric": "edit-template",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "ms": 177,
+          "mode": "in-place",
+          "load": [
+            4.52,
+            4.62,
+            4.95
+          ]
+        },
+        {
+          "ms": 312,
+          "mode": "in-place",
+          "load": [
+            4.52,
+            4.62,
+            4.95
+          ]
+        },
+        {
+          "ms": 74,
+          "mode": "in-place",
+          "load": [
+            4.52,
+            4.62,
+            4.95
+          ]
+        },
+        {
+          "ms": 183,
+          "mode": "in-place",
+          "load": [
+            5.36,
+            4.8,
+            5.01
+          ]
+        },
+        {
+          "ms": 133,
+          "mode": "in-place",
+          "load": [
+            5.36,
+            4.8,
+            5.01
+          ]
+        },
+        {
+          "ms": 226,
+          "mode": "in-place",
+          "load": [
+            5.36,
+            4.8,
+            5.01
+          ]
+        },
+        {
+          "ms": 97,
+          "mode": "in-place",
+          "load": [
+            5.36,
+            4.8,
+            5.01
+          ]
+        },
+        {
+          "ms": 81,
+          "mode": "in-place",
+          "load": [
+            5.36,
+            4.8,
+            5.01
+          ]
+        },
+        {
+          "ms": 111,
+          "mode": "in-place",
+          "load": [
+            5.36,
+            4.8,
+            5.01
+          ]
+        },
+        {
+          "ms": 174,
+          "mode": "in-place",
+          "load": [
+            6.05,
+            4.95,
+            5.06
+          ]
+        }
+      ],
+      "latency": {
+        "n": 10,
+        "median": 153.5,
+        "min": 74,
+        "max": 312,
+        "madPct": 32.24755700325733
+      },
+      "mode": "in-place",
+      "typeChecks": []
+    },
+    {
+      "app": "standalone-5000-s1",
+      "components": 5000,
+      "tool": "ngp",
+      "metric": "edit-ts",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "ms": 301,
+          "mode": "reload",
+          "load": [
+            5.81,
+            4.92,
+            5.05
+          ]
+        },
+        {
+          "ms": 295,
+          "mode": "reload",
+          "load": [
+            5.81,
+            4.92,
+            5.05
+          ]
+        },
+        {
+          "ms": 189,
+          "mode": "reload",
+          "load": [
+            5.81,
+            4.92,
+            5.05
+          ]
+        },
+        {
+          "ms": 234,
+          "mode": "reload",
+          "load": [
+            5.81,
+            4.92,
+            5.05
+          ]
+        },
+        {
+          "ms": 181,
+          "mode": "reload",
+          "load": [
+            5.81,
+            4.92,
+            5.05
+          ]
+        },
+        {
+          "ms": 131,
+          "mode": "reload",
+          "load": [
+            5.5,
+            4.87,
+            5.03
+          ]
+        },
+        {
+          "ms": 233,
+          "mode": "reload",
+          "load": [
+            5.5,
+            4.87,
+            5.03
+          ]
+        },
+        {
+          "ms": 180,
+          "mode": "reload",
+          "load": [
+            5.5,
+            4.87,
+            5.03
+          ]
+        },
+        {
+          "ms": 286,
+          "mode": "reload",
+          "load": [
+            5.5,
+            4.87,
+            5.03
+          ]
+        },
+        {
+          "ms": 178,
+          "mode": "reload",
+          "load": [
+            5.5,
+            4.87,
+            5.03
+          ]
+        }
+      ],
+      "latency": {
+        "n": 10,
+        "median": 211,
+        "min": 131,
+        "max": 301,
+        "madPct": 15.165876777251185
+      },
+      "mode": "reload",
+      "typeChecks": []
+    },
+    {
+      "app": "standalone-5000-s1",
+      "components": 5000,
+      "tool": "cli",
+      "metric": "edit-template",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "ms": 1867,
+          "mode": "in-place",
+          "load": [
+            5.02,
+            4.82,
+            5
+          ]
+        },
+        {
+          "ms": 2072,
+          "mode": "in-place",
+          "load": [
+            4.86,
+            4.79,
+            4.99
+          ]
+        },
+        {
+          "ms": 1867,
+          "mode": "in-place",
+          "load": [
+            4.55,
+            4.73,
+            4.97
+          ]
+        },
+        {
+          "ms": 1844,
+          "mode": "in-place",
+          "load": [
+            4.55,
+            4.73,
+            4.97
+          ]
+        },
+        {
+          "ms": 1817,
+          "mode": "in-place",
+          "load": [
+            4.51,
+            4.71,
+            4.96
+          ]
+        },
+        {
+          "ms": 1807,
+          "mode": "in-place",
+          "load": [
+            4.51,
+            4.71,
+            4.96
+          ]
+        },
+        {
+          "ms": 1799,
+          "mode": "in-place",
+          "load": [
+            5.35,
+            4.88,
+            5.02
+          ]
+        },
+        {
+          "ms": 1762,
+          "mode": "in-place",
+          "load": [
+            5.35,
+            4.88,
+            5.02
+          ]
+        },
+        {
+          "ms": 1775,
+          "mode": "in-place",
+          "load": [
+            5.4,
+            4.9,
+            5.03
+          ]
+        },
+        {
+          "ms": 1805,
+          "mode": "in-place",
+          "load": [
+            5.4,
+            4.9,
+            5.03
+          ]
+        }
+      ],
+      "latency": {
+        "n": 10,
+        "median": 1812,
+        "min": 1762,
+        "max": 2072,
+        "madPct": 1.903973509933775
+      },
+      "mode": "in-place",
+      "typeChecks": []
+    },
+    {
+      "app": "standalone-5000-s1",
+      "components": 5000,
+      "tool": "cli",
+      "metric": "edit-ts",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "ms": 1889,
+          "mode": "reload",
+          "load": [
+            6.07,
+            5.07,
+            5.08
+          ]
+        },
+        {
+          "ms": 1930,
+          "mode": "reload",
+          "load": [
+            6.14,
+            5.1,
+            5.09
+          ]
+        },
+        {
+          "ms": 1962,
+          "mode": "reload",
+          "load": [
+            6.14,
+            5.1,
+            5.09
+          ]
+        },
+        {
+          "ms": 2047,
+          "mode": "reload",
+          "load": [
+            6.45,
+            5.18,
+            5.12
+          ]
+        },
+        {
+          "ms": 1929,
+          "mode": "reload",
+          "load": [
+            6.45,
+            5.18,
+            5.12
+          ]
+        },
+        {
+          "ms": 1924,
+          "mode": "reload",
+          "load": [
+            6.57,
+            5.23,
+            5.14
+          ]
+        },
+        {
+          "ms": 1937,
+          "mode": "reload",
+          "load": [
+            6.57,
+            5.23,
+            5.14
+          ]
+        },
+        {
+          "ms": 1893,
+          "mode": "reload",
+          "load": [
+            6.29,
+            5.19,
+            5.13
+          ]
+        },
+        {
+          "ms": 1921,
+          "mode": "reload",
+          "load": [
+            5.86,
+            5.12,
+            5.1
+          ]
+        },
+        {
+          "ms": 1917,
+          "mode": "reload",
+          "load": [
+            5.86,
+            5.12,
+            5.1
+          ]
+        }
+      ],
+      "latency": {
+        "n": 10,
+        "median": 1926.5,
+        "min": 1889,
+        "max": 2047,
+        "madPct": 0.5190760446405398
+      },
+      "mode": "reload",
+      "typeChecks": []
+    },
+    {
+      "app": "standalone-5000-s1",
+      "components": 5000,
+      "tool": "analog",
+      "metric": "edit-template",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "ms": 2987,
+          "mode": "reload",
+          "load": [
+            5.05,
+            4.98,
+            5.05
+          ]
+        },
+        {
+          "ms": 2700,
+          "mode": "reload",
+          "load": [
+            4.81,
+            4.93,
+            5.03
+          ]
+        },
+        {
+          "ms": 2856,
+          "mode": "reload",
+          "load": [
+            4.81,
+            4.93,
+            5.03
+          ]
+        },
+        {
+          "ms": 2695,
+          "mode": "reload",
+          "load": [
+            4.74,
+            4.92,
+            5.03
+          ]
+        },
+        {
+          "ms": 2694,
+          "mode": "reload",
+          "load": [
+            4.92,
+            4.95,
+            5.04
+          ]
+        },
+        {
+          "ms": 3016,
+          "mode": "reload",
+          "load": [
+            4.92,
+            4.95,
+            5.04
+          ]
+        },
+        {
+          "ms": 2817,
+          "mode": "reload",
+          "load": [
+            5.17,
+            5,
+            5.06
+          ]
+        },
+        {
+          "ms": 2696,
+          "mode": "reload",
+          "load": [
+            4.91,
+            4.95,
+            5.04
+          ]
+        },
+        {
+          "ms": 2981,
+          "mode": "reload",
+          "load": [
+            4.76,
+            4.92,
+            5.03
+          ]
+        },
+        {
+          "ms": 2671,
+          "mode": "reload",
+          "load": [
+            4.76,
+            4.92,
+            5.03
+          ]
+        }
+      ],
+      "latency": {
+        "n": 10,
+        "median": 2758.5,
+        "min": 2671,
+        "max": 3016,
+        "madPct": 2.755120536523473
+      },
+      "mode": "reload",
+      "typeChecks": []
+    },
+    {
+      "app": "standalone-5000-s1",
+      "components": 5000,
+      "tool": "analog",
+      "metric": "edit-ts",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "ms": 2902,
+          "mode": "reload",
+          "load": [
+            4.68,
+            4.89,
+            5.01
+          ]
+        },
+        {
+          "ms": 2684,
+          "mode": "reload",
+          "load": [
+            4.78,
+            4.91,
+            5.02
+          ]
+        },
+        {
+          "ms": 2965,
+          "mode": "reload",
+          "load": [
+            4.78,
+            4.91,
+            5.02
+          ]
+        },
+        {
+          "ms": 2671,
+          "mode": "reload",
+          "load": [
+            4.64,
+            4.87,
+            5.01
+          ]
+        },
+        {
+          "ms": 2899,
+          "mode": "reload",
+          "load": [
+            4.51,
+            4.84,
+            4.99
+          ]
+        },
+        {
+          "ms": 2702,
+          "mode": "reload",
+          "load": [
+            4.39,
+            4.81,
+            4.98
+          ]
+        },
+        {
+          "ms": 2549,
+          "mode": "reload",
+          "load": [
+            4.39,
+            4.81,
+            4.98
+          ]
+        },
+        {
+          "ms": 2884,
+          "mode": "reload",
+          "load": [
+            4.84,
+            4.9,
+            5.01
+          ]
+        },
+        {
+          "ms": 2550,
+          "mode": "reload",
+          "load": [
+            4.69,
+            4.87,
+            5
+          ]
+        },
+        {
+          "ms": 2938,
+          "mode": "reload",
+          "load": [
+            4.69,
+            4.87,
+            5
+          ]
+        }
+      ],
+      "latency": {
+        "n": 10,
+        "median": 2793,
+        "min": 2549,
+        "max": 2965,
+        "madPct": 4.135338345864661
+      },
+      "mode": "reload",
+      "typeChecks": []
+    },
+    {
+      "app": "standalone-5000-s1",
+      "components": 5000,
+      "tool": "oxc",
+      "metric": "edit-template",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "ms": 19,
+          "mode": "in-place",
+          "load": [
+            4.42,
+            4.8,
+            4.98
+          ]
+        },
+        {
+          "ms": 120,
+          "mode": "in-place",
+          "load": [
+            4.47,
+            4.81,
+            4.98
+          ]
+        },
+        {
+          "ms": 120,
+          "mode": "in-place",
+          "load": [
+            4.47,
+            4.81,
+            4.98
+          ]
+        },
+        {
+          "ms": 117,
+          "mode": "in-place",
+          "load": [
+            4.47,
+            4.81,
+            4.98
+          ]
+        },
+        {
+          "ms": 116,
+          "mode": "in-place",
+          "load": [
+            4.47,
+            4.81,
+            4.98
+          ]
+        },
+        {
+          "ms": 111,
+          "mode": "in-place",
+          "load": [
+            4.47,
+            4.81,
+            4.98
+          ]
+        },
+        {
+          "ms": 117,
+          "mode": "in-place",
+          "load": [
+            4.47,
+            4.81,
+            4.98
+          ]
+        },
+        {
+          "ms": 120,
+          "mode": "in-place",
+          "load": [
+            4.27,
+            4.76,
+            4.96
+          ]
+        },
+        {
+          "ms": 68,
+          "mode": "in-place",
+          "load": [
+            4.27,
+            4.76,
+            4.96
+          ]
+        },
+        {
+          "ms": 118,
+          "mode": "in-place",
+          "load": [
+            4.27,
+            4.76,
+            4.96
+          ]
+        }
+      ],
+      "latency": {
+        "n": 10,
+        "median": 117,
+        "min": 19,
+        "max": 120,
+        "madPct": 2.5641025641025643
+      },
+      "mode": "in-place",
+      "typeChecks": []
+    },
+    {
+      "app": "standalone-5000-s1",
+      "components": 5000,
+      "tool": "oxc",
+      "metric": "edit-ts",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "ms": 86,
+          "mode": "reload",
+          "load": [
+            4.09,
+            4.71,
+            4.94
+          ]
+        },
+        {
+          "ms": 183,
+          "mode": "reload",
+          "load": [
+            4.09,
+            4.71,
+            4.94
+          ]
+        },
+        {
+          "ms": 156,
+          "mode": "reload",
+          "load": [
+            4.09,
+            4.71,
+            4.94
+          ]
+        },
+        {
+          "ms": 182,
+          "mode": "reload",
+          "load": [
+            4.09,
+            4.71,
+            4.94
+          ]
+        },
+        {
+          "ms": 181,
+          "mode": "reload",
+          "load": [
+            3.84,
+            4.65,
+            4.92
+          ]
+        },
+        {
+          "ms": 188,
+          "mode": "reload",
+          "load": [
+            3.84,
+            4.65,
+            4.92
+          ]
+        },
+        {
+          "ms": 179,
+          "mode": "reload",
+          "load": [
+            3.84,
+            4.65,
+            4.92
+          ]
+        },
+        {
+          "ms": 179,
+          "mode": "reload",
+          "load": [
+            3.84,
+            4.65,
+            4.92
+          ]
+        },
+        {
+          "ms": 83,
+          "mode": "reload",
+          "load": [
+            3.84,
+            4.65,
+            4.92
+          ]
+        },
+        {
+          "ms": 184,
+          "mode": "reload",
+          "load": [
+            3.69,
+            4.61,
+            4.9
+          ]
+        }
+      ],
+      "latency": {
+        "n": 10,
+        "median": 180,
+        "min": 83,
+        "max": 188,
+        "madPct": 1.9444444444444444
+      },
+      "mode": "reload",
+      "typeChecks": []
+    },
+    {
+      "app": "standalone-5000-s1",
+      "components": 5000,
+      "tool": "ngp",
+      "metric": "build",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "ms": 20642.152375000063,
+          "load": [
+            4.15,
+            4.55,
+            4.85
+          ]
+        },
+        {
+          "ms": 20382.23049999983,
+          "load": [
+            4.94,
+            4.62,
+            4.85
+          ]
+        },
+        {
+          "ms": 20209.405374999857,
+          "load": [
+            5.96,
+            5.56,
+            5.21
+          ]
+        },
+        {
+          "ms": 20223.492665999802,
+          "load": [
+            4.69,
+            5.38,
+            5.19
+          ]
+        },
+        {
+          "ms": 20691.53754200018,
+          "load": [
+            4.81,
+            5.32,
+            5.18
+          ]
+        }
+      ],
+      "time": {
+        "n": 5,
+        "median": 20382.23049999983,
+        "min": 20209.405374999857,
+        "max": 20691.53754200018,
+        "madPct": 0.8479205698315273
+      },
+      "boot": {
+        "errors": [],
+        "lazyRoute": "f224"
+      },
+      "sizes": {
+        "total": {
+          "js": {
+            "files": 1884,
+            "raw": 9519459,
+            "gzip": 2397043
+          },
+          "css": {
+            "files": 1,
+            "raw": 39,
+            "gzip": 59
+          }
+        },
+        "initial": {
+          "js": {
+            "files": 2,
+            "raw": 320628,
+            "gzip": 99290
+          },
+          "css": {
+            "files": 1,
+            "raw": 39,
+            "gzip": 59
+          }
+        }
+      }
+    },
+    {
+      "app": "standalone-5000-s1",
+      "components": 5000,
+      "tool": "cli",
+      "metric": "build",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "ms": 29596.973000000115,
+          "load": [
+            4.16,
+            4.53,
+            4.84
+          ]
+        },
+        {
+          "ms": 30584.86204200005,
+          "load": [
+            4.52,
+            4.55,
+            4.81
+          ]
+        },
+        {
+          "ms": 30427.77099999995,
+          "load": [
+            5.94,
+            5.69,
+            5.28
+          ]
+        },
+        {
+          "ms": 30367.075708999997,
+          "load": [
+            5.72,
+            5.54,
+            5.25
+          ]
+        },
+        {
+          "ms": 30677.839959000004,
+          "load": [
+            4.75,
+            5.26,
+            5.16
+          ]
+        }
+      ],
+      "time": {
+        "n": 5,
+        "median": 30427.77099999995,
+        "min": 29596.973000000115,
+        "max": 30677.839959000004,
+        "madPct": 0.516275221080447
+      },
+      "boot": {
+        "errors": [],
+        "lazyRoute": "f224"
+      },
+      "sizes": {
+        "total": {
+          "js": {
+            "files": 2223,
+            "raw": 9298393,
+            "gzip": 2329138
+          },
+          "css": {
+            "files": 1,
+            "raw": 39,
+            "gzip": 59
+          }
+        },
+        "initial": {
+          "js": {
+            "files": 1,
+            "raw": 274738,
+            "gzip": 82804
+          },
+          "css": {
+            "files": 1,
+            "raw": 39,
+            "gzip": 59
+          }
+        }
+      }
+    },
+    {
+      "app": "standalone-5000-s1",
+      "components": 5000,
+      "tool": "analog",
+      "metric": "build",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "ms": 18626.60745799984,
+          "load": [
+            3.69,
+            4.38,
+            4.77
+          ]
+        },
+        {
+          "ms": 19017.498208000092,
+          "load": [
+            5.97,
+            4.98,
+            4.96
+          ]
+        },
+        {
+          "ms": 19020.34412500006,
+          "load": [
+            4.8,
+            5.45,
+            5.21
+          ]
+        },
+        {
+          "ms": 18462.69287499995,
+          "load": [
+            5.13,
+            5.41,
+            5.21
+          ]
+        },
+        {
+          "ms": 18278.43312499998,
+          "load": [
+            5.26,
+            5.37,
+            5.21
+          ]
+        }
+      ],
+      "time": {
+        "n": 5,
+        "median": 18626.60745799984,
+        "min": 18278.43312499998,
+        "max": 19020.34412500006,
+        "madPct": 1.8692310652110815
+      },
+      "boot": {
+        "errors": [],
+        "lazyRoute": "f224"
+      },
+      "sizes": {
+        "total": {
+          "js": {
+            "files": 1894,
+            "raw": 9458575,
+            "gzip": 2379456
+          },
+          "css": {
+            "files": 1,
+            "raw": 39,
+            "gzip": 59
+          }
+        },
+        "initial": {
+          "js": {
+            "files": 2,
+            "raw": 321144,
+            "gzip": 99410
+          },
+          "css": {
+            "files": 1,
+            "raw": 39,
+            "gzip": 59
+          }
+        }
+      }
+    },
+    {
+      "app": "standalone-5000-s1",
+      "components": 5000,
+      "tool": "oxc",
+      "metric": "build",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "ms": 1447.7095830000471,
+          "load": [
+            4.94,
+            4.62,
+            4.85
+          ]
+        },
+        {
+          "ms": 1430.3013750000391,
+          "load": [
+            5.96,
+            5.56,
+            5.21
+          ]
+        },
+        {
+          "ms": 1424.1983330000658,
+          "load": [
+            4.69,
+            5.38,
+            5.19
+          ]
+        },
+        {
+          "ms": 1454.171124999877,
+          "load": [
+            4.81,
+            5.32,
+            5.18
+          ]
+        },
+        {
+          "ms": 1431.811791999964,
+          "load": [
+            4.82,
+            5.27,
+            5.17
+          ]
+        }
+      ],
+      "time": {
+        "n": 5,
+        "median": 1431.811791999964,
+        "min": 1424.1983330000658,
+        "max": 1454.171124999877,
+        "madPct": 0.5317360174317154
+      },
+      "boot": {
+        "errors": [],
+        "lazyRoute": "f224"
+      },
+      "sizes": {
+        "total": {
+          "js": {
+            "files": 892,
+            "raw": 8775860,
+            "gzip": 1541975
+          },
+          "css": {
+            "files": 1,
+            "raw": 39,
+            "gzip": 59
+          }
+        },
+        "initial": {
+          "js": {
+            "files": 1,
+            "raw": 431650,
+            "gzip": 131672
+          },
+          "css": {
+            "files": 1,
+            "raw": 39,
+            "gzip": 59
+          }
+        }
+      }
+    },
+    {
+      "app": "standalone-5000-s1",
+      "components": 5000,
+      "tool": "ngp",
+      "metric": "typecheck",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "error": 1459,
+          "clean": 1439
+        },
+        {
+          "error": 1484,
+          "clean": 1460
+        },
+        {
+          "error": 1372,
+          "clean": 1451
+        },
+        {
+          "error": 1292,
+          "clean": 1424
+        },
+        {
+          "error": 1455,
+          "clean": 1327
+        },
+        {
+          "error": 1460,
+          "clean": 1418
+        },
+        {
+          "error": 1449,
+          "clean": 1346
+        },
+        {
+          "error": 1446,
+          "clean": 1430
+        },
+        {
+          "error": 1355,
+          "clean": 1452
+        },
+        {
+          "error": 1482,
+          "clean": 1395
+        }
+      ],
+      "error": {
+        "n": 10,
+        "median": 1452,
+        "min": 1292,
+        "max": 1484,
+        "madPct": 1.3085399449035813
+      },
+      "clean": {
+        "n": 10,
+        "median": 1427,
+        "min": 1327,
+        "max": 1460,
+        "madPct": 1.7168885774351788
+      }
+    },
+    {
+      "app": "standalone-5000-s1",
+      "components": 5000,
+      "tool": "cli",
+      "metric": "typecheck",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "error": 1622,
+          "clean": 1787
+        },
+        {
+          "error": 1658,
+          "clean": 1862
+        },
+        {
+          "error": 1675,
+          "clean": 1799
+        },
+        {
+          "error": 1715,
+          "clean": 1809
+        },
+        {
+          "error": 1659,
+          "clean": 1793
+        },
+        {
+          "error": 1609,
+          "clean": 1935
+        },
+        {
+          "error": 1674,
+          "clean": 1805
+        },
+        {
+          "error": 1664,
+          "clean": 1798
+        },
+        {
+          "error": 1713,
+          "clean": 1766
+        },
+        {
+          "error": 1623,
+          "clean": 1772
+        }
+      ],
+      "error": {
+        "n": 10,
+        "median": 1661.5,
+        "min": 1609,
+        "max": 1715,
+        "madPct": 1.5648510382184773
+      },
+      "clean": {
+        "n": 10,
+        "median": 1798.5,
+        "min": 1766,
+        "max": 1935,
+        "madPct": 0.6116207951070336
+      }
+    }
+  ]
+}

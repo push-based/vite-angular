@@ -1,4 +1,4 @@
-// Component stylesheets go through Vite's CSS pipeline (styles.ts, decisions 29 to 31
+// Component stylesheets go through Vite's CSS pipeline (styles.ts, decisions 32 to 34
 // in docs/decisions.md). The first tests check the rewrites on their own. The last two run the
 // playground's SCSS component through a real dev server and a real build. Run `pnpm build` first;
 // those two need an ngp toolchain build.

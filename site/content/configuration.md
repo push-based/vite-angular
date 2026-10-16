@@ -32,11 +32,11 @@ export default defineConfig({
 |---|---|---|
 | `toolchain` | `NGP_TOOLCHAIN` | The directory `pnpm toolchain` builds ngp into, holding `preprocessor/` and `engines/`. Without it, or the environment variable, the plugin stops with an error. |
 | `engine` | `'native'` | Which build of ngp's analyzer to load: the native Node addon, or `'wasm'`. There's no automatic fallback. |
-| `tsconfig` | `tsconfig.app.json`, else `tsconfig.json` | The tsconfig your Angular compiler options come from, relative to Vite's root. |
-| `entries` | `src/main.ts`, plus `src/main.server.ts` if it exists | The modules the analyzer starts from. It finds every other file by following imports. |
+| `tsconfig` | `tsconfig.app.json`, else `tsconfig.json`. Under Vitest, `tsconfig.spec.json` first | The tsconfig your Angular compiler options come from, relative to Vite's root. |
+| `entries` | `src/main.ts`, plus `src/main.server.ts` if it exists. Under Vitest, none | The modules the analyzer starts from. It finds every other file by following imports. |
 | `entryOnlyTsconfig` | `true` | Give the analyzer a generated tsconfig that lists only `entries`. |
-| `hmr` | `true` | Component HMR in the dev server, for external templates and for inline `template` and `styles` edits. Builds ignore it. |
-| `ssr` | `false` | Server rendering. `true` uses `src/main.server.ts` as the server entry, and `{entry: 'path'}` names another. See [Server rendering](server-rendering). |
+| `hmr` | `true` | Component HMR in the dev server, for external templates and for inline `template` and `styles` edits. Builds and Vitest ignore it. |
+| `ssr` | `false` | Server rendering. `true` uses `src/main.server.ts` as the server entry, and `{entry: 'path'}` names another. Vitest ignores it. See [Server rendering](server-rendering). |
 
 ## When to change them
 
@@ -60,3 +60,5 @@ You don't configure these, but they're worth knowing when you debug:
 - `resolve.noExternal` in server environments: every `@angular/*` package, plus every package in your `dependencies` that depends on `@angular/core`, so Angular libraries get bundled and linked instead of loaded unlinked by Node. An Angular library under `devDependencies` stays external; add it to `resolve.noExternal` yourself.
 - A dev-server middleware that answers `/@ng/component` requests with component updates.
 - With `ssr`: `builder: {}` and output directories for the `client` and `ssr` environments, and a middleware that renders page requests through your server entry.
+- Under Vitest, instead of all of the above except the linker: `test.server.deps.inline` with every Angular library, from `devDependencies` too, so they get linked; a cache key generator that keeps your app's modules out of Vitest's module cache; and a watcher that sends edits to the analyzer, since Vitest turns Vite's HMR off. See [Testing with Vitest](testing).
+- `DEBUG=vite-plugin-ngp` logs every module ngp compiles, and how long it took, to stderr.

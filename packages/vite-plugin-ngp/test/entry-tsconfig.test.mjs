@@ -53,3 +53,25 @@ test('entry-only tsconfig compiles every playground module identically', async (
     assert.equal(entryOnly.get(file), full.get(file), path.relative(playground, file));
   }
 });
+
+// Under Vitest the analyzer starts with no entries and reads each file when it's first compiled
+// (decision 24). The output has to match a full build anyway, specs included.
+test('an analyzer with no entries compiles every playground module identically', async () => {
+  const files = (await fs.readdir(path.join(playground, 'src'), {recursive: true}))
+    .filter((f) => f.endsWith('.ts'))
+    .map((f) => path.join(playground, 'src', f))
+    .sort();
+  const noEntries = await writeEntryTsconfig({
+    tsconfig: path.join(playground, 'tsconfig.spec.json'),
+    entries: [],
+    outDir: await fs.mkdtemp(path.join(os.tmpdir(), 'vite-plugin-ngp-')),
+  });
+
+  const full = await compileAll(path.join(playground, 'tsconfig.spec.json'), files);
+  const onDemand = await compileAll(noEntries, files);
+
+  assert.ok(full.get(path.join(playground, 'src/app/pages/components/rating.spec.ts')), 'expected ngp to compile the spec host component');
+  for (const file of files) {
+    assert.equal(onDemand.get(file), full.get(file), path.relative(playground, file));
+  }
+});

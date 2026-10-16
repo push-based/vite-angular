@@ -18,6 +18,7 @@ vite-plugin-ngp is a first version on top of a prototype compiler. This page say
 | Linking Angular libraries | Works, in dependency pre-bundling and in builds, with Angular's Babel linker |
 | Component HMR | Works for external templates, and for `.ts` edits that only change a component's inline `template` or `styles`. Other `.ts` edits reload, as under `ng serve`, and so does a template saved together with such a `.ts` edit. Changing `templateUrl` or `styleUrl` reloads too, unlike `ng serve` |
 | Server rendering and hydration | Works in the dev server and in builds, with the `ssr` option. This site is prerendered that way |
+| Vitest with TestBed | Works, with jsdom and zoneless TestBed. A run compiles only the specs it runs and what they import. Watch mode reruns specs after template edits too. See [Testing with Vitest](testing) |
 
 ## What doesn't work yet
 
@@ -26,7 +27,8 @@ vite-plugin-ngp is a first version on top of a prototype compiler. This page say
 | Template type-checking | Missing. Run `tsc` or `tsgo` on its own. ngp can write type-check files for it, and the plugin doesn't use them yet |
 | External stylesheets | Untested. ngp reads `styleUrl` files and inlines them itself. They aren't Vite CSS modules, so preprocessors and CSS HMR don't apply |
 | HTTP status codes from SSR | Missing. `render` returns HTML only, so a not-found page answers 200 when a Node server renders it |
-| i18n, Vitest | Out of scope for now |
+| i18n | Out of scope for now |
+| Vitest beyond jsdom | Untried: happy-dom, browser mode, the `node` environment, coverage. `fakeAsync` needs `zone.js`, which the documented setup leaves out |
 | Windows | Only through WSL 2, because the ngp build needs a Unix shell |
 
 ## Where it's weakest

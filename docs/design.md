@@ -49,6 +49,16 @@ Deleting a template exposed a gap in ngp. A component whose `templateUrl` file d
 - Server environments bundle every Angular library (`resolve.noExternal`) rather than letting Node load it: `@angular/*`, plus every dependency that depends or peer-depends on `@angular/core`, which covers Material, NgRx and the like. That makes the linker run on them, and keeps one copy of `@angular/core`. Without it, rendering failed with `NG0203`.
 - `vite build` builds both environments (`builder: {}`): the browser bundle into `dist/client`, and the entry into `dist/server/main.server.js`. Serving them is the app's job. The playground's [server.mjs](../playground/server.mjs) does it with plain `node:http`.
 
+**Testing with Vitest** ([index.ts](../packages/vite-plugin-ngp/src/index.ts), `testing`). When `VITEST` is set, the plugin compiles specs the way it compiles the app, ahead of time with ngp, and changes five things:
+
+- The analyzer starts with no entries. An empty `files` list works: the analyzer reads a file the first time `processFile` asks for it, and follows its imports from there. Compiling every playground module with no entries gives the same output as with all of them in the program ([test](../packages/vite-plugin-ngp/test/entry-tsconfig.test.mjs)), the spec files included. So a run compiles exactly what its specs import. Filtered to the rating spec, ngp sees 4 files and compiles 3, the spec's host component included. The [test](../packages/vite-plugin-ngp/test/vitest.test.mjs) checks this from the plugin's `DEBUG=vite-plugin-ngp` log ([decision 26](decisions.md)).
+- `test.server.deps.inline` lists every Angular library, `devDependencies` included, as file-path patterns. Vitest would otherwise hand them to Node unlinked. Only `@angular/compiler` stays unlinked, and it should: `@angular/core/testing` imports it, so TestBed overrides can recompile in JIT.
+- A `defineCacheKeyGenerator` callback keeps app modules out of Vitest 5's on-disk module cache. That cache keys a module by its own content, and a compiled component also depends on its template and on the components it imports. Linked libraries stay cached, which halves a warm run: 1.1–1.3 s against 2.1–2.5 s with an empty cache, for the playground's 11 tests on an M2 Max ([decision 27](decisions.md)).
+- Vitest sets `server.hmr: false`, so `hotUpdate` never runs. A `server.watcher` listener sends each edit to the analyzer and invalidates the stale modules in every environment. For a template edit it also calls Vitest's public `watcher.onFileChange` with the owning component, because Vitest's own watcher finds no module for an `.html` file and would rerun nothing.
+- No HMR code and no SSR. `ngDevMode` stays on, so ngp's `ɵsetClassMetadata` calls run and `TestBed.overrideComponent` works. `supportTestBed` is on by default in `HybridCompiler`, and the plugin leaves it on.
+
+The user writes the setup file: `initTestEnvironment` plus an `afterEach` that resets TestBed. Angular registers that reset itself only when `afterEach` is a global, and Vitest's aren't by default ([decision 28](decisions.md)).
+
 One trap is already fixed. The plugin remembers what the analyzer has seen for each file. For a file it hasn't seen yet, a transform compares against disk. A watcher event can't, because disk already holds the edit. So watcher edits to unseen files, which includes every template's first edit, always go to the analyzer.
 
 ## What works, and what doesn't yet
@@ -67,7 +77,8 @@ Verified in the [playground](../playground): `vite build` and `vite preview`, de
 | External styles, encapsulation, preprocessors | Missing. Without `externalRuntimeStyles`, ngp reads `styleUrl` files itself and inlines them, untested here. With it, styles would become Vite modules |
 | Template type-checking | Missing. Planned as a worker running `tsgo` over ngp's `.ngtypecheck.ts` output |
 | Server-side rendering and hydration | Works in dev and in production builds. In the playground, pages hydrate with no components skipped, except the Styles page's `ShadowDom` component, which Angular never hydrates and renders in the browser instead. Server renders take 10–35 ms warm. Every page answers 200, including the not-found page, and there's no prerendering and no `@angular/ssr` (route render modes, `AngularNodeAppEngine`) |
-| i18n, Vitest | Out of scope for now |
+| Vitest with TestBed | Works with jsdom and zoneless TestBed: component, service and routed specs in the [playground](../playground/src), plus TestBed overrides. Watch mode reruns specs after `.ts` and template edits. happy-dom, browser mode, the `node` environment and coverage are untried |
+| i18n | Out of scope for now |
 
 ## Where it's weak
 
@@ -76,6 +87,7 @@ Verified in the [playground](../playground): `vite build` and `vite preview`, de
 - **File changes are tested on one small app.** The test app has three components. Nobody has added or deleted a file in a large app, deleted a whole directory, or moved files with a tool that writes them seconds apart. Deleting a component that's still used fails with ngp's "'app-greeting' is not a known element", which names the element but not the missing file; Vite's own "Failed to resolve import" would, but ngp runs first. A missing `styleUrl` file isn't checked at all.
 - **SSR runs two analyzers.** The browser and server compilers each hold their own ngp analyzer, so a dev server with SSR needs about twice the analyzer memory, and every edit is analyzed twice. One analyzer serving both would need a way to compile with and without HMR from the same state.
 - **SSR has no status codes.** `render(url, document)` returns HTML only, so the not-found page answers 200. Angular's way to set the status is `@angular/ssr`'s request and response tokens, which this plugin doesn't wire up.
+- **Tests compile the app's code on every run.** Keeping app modules out of Vitest's cache makes the cache safe, and costs 2–20 ms per module per run in the playground. A full run on a large app pays that for every component it imports. Caching them safely would need a key that covers each module's templates, styles and imported components, which the analyzer knows and Vitest's key callback can't ask for synchronously.
 - **No speed numbers of our own yet.** Bundle sizes are measured on the playground, but every dev-server timing comes from the bench's spikes, not from this plugin running a real dev server.
 - **The build optimizer is a copy.** It's the CLI's pass, ported by hand. When the CLI changes its pass, the plugin's copy stays as it is until someone ports the change, and nothing fails to say so. Bundle size is the only signal.
 

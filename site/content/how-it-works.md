@@ -59,6 +59,7 @@ Angular libraries, Angular's own packages included, ship partially compiled: `ɵ
 
 - in development, inside Vite's dependency pre-bundling, which runs outside the normal plugin pipeline;
 - in production builds and server bundles, in the normal transform. On the server, the plugin bundles every Angular library it finds in your `dependencies`, so the linker sees them too.
+- under Vitest, in the normal transform. The plugin has Vitest inline every Angular library instead of leaving it to Node, so the linker sees them. See [Testing with Vitest](testing).
 
 Without a linker, the browser would need Angular's JIT compiler to finish compiling libraries at startup. In the playground, linking cut the production bundle from 1,197 kB to 589 kB.
 
@@ -71,7 +72,7 @@ The plugin defines the same globals the Angular CLI does, so the minifier can dr
 | `ngJitMode` | `false` everywhere, since the linker makes every library ahead-of-time compiled |
 | `ngDevMode` | `false` in builds |
 | `ngServerMode` | `false` in the browser, `true` in server environments |
-| `ngHmrMode` | `true` in the dev server's browser environment |
+| `ngHmrMode` | `true` in the dev server's browser environment, `false` under Vitest |
 
 These took the playground's bundle from 589 kB to 386 kB, and stopped production builds from logging "Angular is running in development mode".
 

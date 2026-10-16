@@ -305,3 +305,39 @@ The `ng build` row is the playground copied into a CLI project with an `angular.
 **Cost.** One more private analyzer call, `invalidateFiles`, typed by hand. The NG2008 check reads the analyzer's metadata after every component compile. That cost isn't measured, but the analyzer has the metadata cached by then. The check is the plugin's, not Angular's, so its message can differ from ngc's in edge cases. Missing `styleUrl` files aren't checked.
 
 **Revisit when** ngp reports a missing template itself, or drops its overlay on `updateFileContent` for a file that's gone.
+
+## 26. Compile specs on demand under Vitest, with no analyzer entries
+
+*16 October 2026*
+
+**Decision.** When `VITEST` is set, `entries` defaults to none, the analyzer's generated tsconfig lists no files, and `tsconfig.spec.json` comes first. Vitest asks for each spec, and ngp compiles it and whatever it imports as Vitest requests them. HMR and SSR are off.
+
+**Why.** Analog compiles the whole program before the first spec runs, so a run filtered to one spec still pays for every component (analogjs/analog#2325, #2589). ngp's analyzer reads a file the first time `processFile` asks for it, even one no entry reaches. Compiling every playground module with no entries gives the same output as with every file in the program ([test](../packages/vite-plugin-ngp/test/entry-tsconfig.test.mjs)). Spec files need no special handling either, which decision 4 had left open: nothing imports them, and they compile anyway. Filtered to the rating spec, ngp compiles 3 of the playground's 29 modules.
+
+**Cost.** Same output with no entries is checked only on the playground's 33 files. Optimize mode's whole-program queries see only the files read so far, so a difference would show up in components whose output depends on files the spec doesn't import. None did here. Detecting Vitest from `VITEST` means `vite --mode test` doesn't count as a test run, which is intended.
+
+**Revisit when** a spec compiles differently under Vitest than in the dev server.
+
+## 27. Inline Angular libraries under Vitest, and keep app modules out of its module cache
+
+*16 October 2026*
+
+**Decision.** Under Vitest, the plugin adds `test.server.deps.inline`: every `@angular/*` package and every Angular library in `dependencies` or `devDependencies`, as file-path patterns. It registers a `defineCacheKeyGenerator` callback that returns `false` for the app's `.ts` modules, so Vitest 5's on-disk module cache never stores them. Linked libraries stay in it.
+
+**Why.** Vitest leaves `node_modules` to Node by default, which would load Angular's packages partially compiled. Inlining sends them through the linker and keeps one copy of `@angular/core`. Vitest's cache keys a module by its own content, but a compiled component also depends on its template, its styles and the components it imports, so an edited `.html` file would have come back as the old component. Caching linked libraries is what makes a warm run fast: the playground's 11 tests take 1.1–1.3 s warm against 2.1–2.5 s with an empty cache.
+
+**Cost.** App modules are compiled again on every run, 2–20 ms each in the playground. String patterns were the obvious choice and were wrong: Vitest matches them by substring, so `@ngrx/store` would also inline `@ngrx/store-devtools`. Inlined libraries go through Vite's transform on a cold run, which is slower than Node loading them.
+
+**Revisit when** Vitest's key callback can be async, or ngp can say which files a module's output depends on. Then app modules could be cached too, keyed on those files.
+
+## 28. The app writes the TestBed setup file
+
+*16 October 2026*
+
+**Decision.** The plugin doesn't inject a setup file. The documented recipe is a five-line `src/test-setup.ts` that calls `initTestEnvironment` and resets TestBed in `afterEach`, listed in `test.setupFiles`.
+
+**Why.** Apps add providers and teardown options there, and a file they own is easier to change than an option that wraps one. The `afterEach` line is the one trap: Angular registers that reset only when `afterEach` is a global, and Vitest's globals are off by default. Without it, the second test in a file fails with "the test module has already been instantiated".
+
+**Cost.** Every app copies the same file, and an app that forgets the `afterEach` gets a confusing error. The plugin could export a ready-made setup module instead, at the cost of hiding which test environment runs.
+
+**Revisit when** apps start copying the file with changes nobody needs, or Angular's own Vitest builder settles on a setup the plugin could reuse.

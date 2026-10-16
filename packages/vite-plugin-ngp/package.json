@@ -33,6 +33,7 @@
     "node": ">=26.0.0"
   },
   "dependencies": {
-    "@babel/core": "8.0.7"
+    "@babel/core": "8.0.7",
+    "magic-string": "1.4.3"
   }
 }

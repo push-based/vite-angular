@@ -12,6 +12,7 @@ import {findAngularLibraries, packagePattern} from './angular-libraries.js';
 import {NgpCompiler, type HmrUpdate} from './compiler.js';
 import {writeEntryTsconfig} from './entry-tsconfig.js';
 import {link, LINKER_MARKER} from './linker.js';
+import {isSideEffectFree, optimize, OPTIMIZER_CANDIDATE} from './optimizer.js';
 import type {Engine} from './ngp-api.js';
 
 export interface NgpPluginOptions {
@@ -60,7 +61,7 @@ const TS_MODULE = /\.[cm]?ts$/;
 const EDIT_BATCH_MS = 50;
 
 export function ngp(options: NgpPluginOptions = {}): Plugin[] {
-  return [compilerPlugin(options), linkerPlugin()];
+  return [compilerPlugin(options), linkerPlugin(), optimizerPlugin()];
 }
 
 function compilerPlugin(options: NgpPluginOptions): Plugin {
@@ -442,6 +443,28 @@ function linkerPlugin(): Plugin {
     },
     // Production builds, and dependencies Vite serves without pre-bundling.
     transform: {filter, handler: (code, id) => link(code, id) as never},
+  };
+}
+
+/**
+ * Angular's build optimizer, in `vite build` only: marks Angular's definitions and top-level code
+ * pure, so Rolldown can drop what the app doesn't use. Runs after the linker for libraries, and
+ * after Vite has stripped TypeScript for the app's own modules.
+ */
+function optimizerPlugin(): Plugin {
+  return {
+    name: 'vite-plugin-ngp:optimizer',
+    apply: 'build',
+    config() {
+      // What the CLI passes to esbuild as `pure`.
+      return {build: {rolldownOptions: {treeshake: {manualPureFunctions: ['forwardRef']}}}};
+    },
+    transform: {
+      filter: {id: /\.[cm]?[jt]s$/, code: OPTIMIZER_CANDIDATE},
+      handler(code, id) {
+        return optimize(code, id, {sideEffectFree: isSideEffectFree(cleanId(id))}) as never;
+      },
+    },
   };
 }
 

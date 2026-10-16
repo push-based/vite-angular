@@ -36,8 +36,9 @@ export interface NgpPluginOptions {
    */
   entryOnlyTsconfig?: boolean;
   /**
-   * Component HMR in the dev server: edits to an external template update the running component
-   * in place. Defaults to true. Ignored in builds.
+   * Component HMR in the dev server: edits to an external template, and `.ts` edits that only
+   * change a component's inline `template` or `styles`, update the running component in place.
+   * Defaults to true. Ignored in builds.
    */
   hmr?: boolean;
   /**

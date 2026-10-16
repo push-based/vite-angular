@@ -48,7 +48,7 @@ export default defineConfig({
 
 **`ssr: true`** renders every page on the server in the dev server, and makes `vite build` build two bundles: `dist/client` for the browser and `dist/server/main.server.js` for the server. The entry's default export must be `render(url, document)`.
 
-**`hmr: false`** makes every edit reload the page. Use it if an in-place update ever leaves a component in a broken state, and [report it](https://github.com/push-based/vite-angular/issues).
+**`hmr: false`** makes every edit reload the page. Use it if an in-place update ever leaves a component in a broken state, and tell the maintainers at [PushBased](https://push-based.io/) what you edited.
 
 ## What the plugin sets for you
 

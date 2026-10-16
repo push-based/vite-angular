@@ -32,7 +32,7 @@ The `pages` workflow deploys it. Check it went green with `gh run list --workflo
 
 ## Writing docs
 
-Write docs in [Clarity](https://clarity.addy.ie/) style: for one reader you can picture, specific enough to be wrong, with a position and where it's weak. Don't publish numbers that weren't measured, and say where a number came from. Keep every color, space and radius on the site to the PushBased tokens in `site/src/styles/tokens.css`.
+Write docs in [Clarity](https://clarity.addy.ie/) style: for one reader you can picture, specific enough to be wrong, with a position and where it's weak. Don't publish numbers that weren't measured, and say where a number came from. The site is public and the repos are private: never publish machine paths, and keep links into private GitHub repos few and labeled as private. Keep every color, space and radius on the site to the PushBased tokens in `site/src/styles/tokens.css`.
 
 ## Commits
 

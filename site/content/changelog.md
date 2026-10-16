@@ -36,6 +36,12 @@ The first day: from an empty repo to a plugin that compiles, serves, renders, te
 
 - New options `fileReplacements`, `budgets` and `polyfills`, in angular.json's shapes. Replacements reach ngp's analyzer too, budgets print the CLI's messages and fail the build on errors, and zone.js apps get `async`/`await` rewritten so change detection still runs after an `await`. Every other build option is mapped to Vite config. [Migrating from ng build](migrating-from-ng-build)
 
+### Internationalization
+
+- New option `i18n`: Angular's `i18n` attributes and `$localize`, with a dev server in one locale and a `vite build` that writes one translated folder per locale, server bundles included. [Internationalization](i18n)
+- `ngp-extract-i18n` writes the app's messages as XLIFF 1.2 or 2.0, XMB, JSON or ARB, like `ng extract-i18n`. [Internationalization](i18n#extract-the-messages)
+- The compiler reads `enableI18nLegacyMessageIdFormat` and `i18nNormalizeLineEndingsInICUs` from `angularCompilerOptions`, and the plugin defines `ngI18nClosureMode`, so message ids match `ng build`'s. [Internationalization](i18n#mark-text-for-translation)
+
 ### Server rendering
 
 - New option `ssr`: pages render on the server in the dev server, and `vite build` builds a server bundle beside the browser one. [Server rendering](server-rendering)

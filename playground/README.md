@@ -8,7 +8,7 @@ Run it from the repo root with `pnpm dev`, or build it with `pnpm playground:bui
 
 | Page | What it exercises | What breaks visibly if the plugin gets it wrong |
 |---|---|---|
-| Overview | An eager route, `VERSION`, `isDevMode()`, `afterNextRender` | The dev-checks and HMR indicators show the wrong state |
+| Overview | An eager route, `VERSION`, `isDevMode()`, `afterNextRender`; i18n text, a plural ICU, `$localize` in TypeScript, and `DatePipe` with the locale's data | The dev-checks and HMR indicators show the wrong state; a German build shows English text, or an English date |
 | Signals | `signal`, `computed`, `linkedSignal`, `effect`, `@let`, a custom pure pipe | The counter, the todo filter or the effect log stops updating |
 | Control flow | `@if`/`@else if`, `@switch`, `@for` with `$index`/`$first`/`$last`/`$even`, `@empty`, `@defer (on viewport)` with `@placeholder` and `@loading` | Blocks render in the wrong branch; the chart never loads, or `sparkline` gets no chunk of its own in a production build |
 | Components | `input()`, `output()`, `model()` with `[(value)]`, `ng-content` slots, a directive with host bindings, `inject()`, pipes from `@angular/common` | Two-way rating loses sync; pipes fail with a JIT error if the linker didn't run |
@@ -18,10 +18,26 @@ Run it from the repo root with `pnpm dev`, or build it with `pnpm playground:bui
 
 Every page except the overview is lazy-loaded, so each one is a separate module that ngp compiles only when you navigate to it.
 
+## Languages
+
+The sidebar, the Overview page and the theme switch are translated into German. `vite build` writes `dist/client/en-US` and `dist/client/de` (and the same below `dist/server`), and the sidebar links between them. `pnpm dev` serves English. For German:
+
+```bash
+NGP_LOCALE=de pnpm dev
+```
+
+After changing marked text, extract the messages, then add the new ones to `src/locale/messages.de.xlf`:
+
+```bash
+pnpm --filter playground extract-i18n
+```
+
 ## Things the playground taught us
 
 - **Angular copies component styles into every shadow root.** A rule from a `ViewEncapsulation.None` component reaches a `ShadowDom` component too. Global stylesheets don't. The Styles page shows both.
 - **Angular never hydrates `ShadowDom` components.** With server rendering on, every page renders on the server and hydrates without mismatches. The one exception is the `ShadowDom` box on the Styles page: Angular skips hydrating it and renders it again in the browser. It ends up correct, with no errors.
+- **Hydrating i18n text needs `withI18nSupport()`.** Without it, Angular hydrated no component at all once the shell had `i18n` blocks, and said nothing about why: "hydrated 0 component(s)", no warning.
+- **An ICU inside `@if` inside `@for` fails i18n hydration.** The browser threw "expected matching nodeType" for the "+N more" plural on each Overview card, in English too. Angular's own compiler emits the same instructions as ngp there, so the fault is in Angular's runtime. The plural moved above the cards, outside control flow, where it hydrates.
 - **Editing a component's `.ts` and `.html` at the same time costs a failed HMR attempt.** The template update is applied against the old class before the `.ts` change arrives, the runtime reports `angular:invalidate`, and the plugin falls back to a full reload. The result is correct, just slower than a single reload.
 
 ## Look and feel

@@ -1,3 +1,4 @@
+import {createHash} from 'node:crypto';
 import * as fs from 'node:fs';
 import {createRequire} from 'node:module';
 import * as path from 'node:path';
@@ -198,6 +199,21 @@ export function i18nPlugin(options: I18nOptions, getEntries: (root: string) => s
       }
       this.environment.hot.send({type: 'full-reload'});
       return [];
+    },
+
+    // Every locale's copy of a chunk has the chunk's name, so its hash must change when a
+    // translation does, or a browser caching `assets/` would keep the old text. As the CLI does.
+    augmentChunkHash() {
+      if (command !== 'build' || extracting()) {
+        return;
+      }
+      const hash = createHash('sha256');
+      for (const locale of locales) {
+        for (const file of locale.files) {
+          hash.update(fs.readFileSync(file));
+        }
+      }
+      return hash.digest('hex');
     },
 
     closeBundle() {

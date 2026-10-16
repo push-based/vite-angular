@@ -40,6 +40,7 @@ export default defineConfig({
 | `entries` | `string[]` | `src/main.ts`, plus `src/main.server.ts` if it exists. Under Vitest, none | The modules the analyzer starts from. It finds every other file by following imports. |
 | `entryOnlyTsconfig` | `boolean` | `true` | Give the analyzer a generated tsconfig that lists only `entries`. |
 | `hmr` | `boolean` | `true` | Component HMR in the dev server, for external templates and for inline `template` and `styles` edits. Builds and Vitest ignore it. |
+| `i18n` | `{sourceLocale?, locales?, devLocale?, missingTranslation?}` | off | Angular i18n. `vite build` writes one translated folder per locale, and the dev server serves `devLocale`. See [Internationalization](i18n). |
 | `ssr` | `boolean \| {entry?: string}` | `false` | Server rendering. `true` uses `src/main.server.ts` as the server entry, and `{entry: 'path'}` names another. Vitest ignores it. See [Server rendering](server-rendering). |
 | `typeCheck` | `boolean` | `true`, except under Vitest | Type-check templates and TypeScript with TypeScript 7, in a separate process. The dev server reports errors in the terminal and the overlay, and `vite build` fails on them. See [Type-checking](type-checking). |
 | `fileReplacements` | `{replace: string; with: string}[]` | `[]` | angular.json's `fileReplacements`, relative to Vite's root. Every import of `replace` gets the content of `with`, in Vite and in ngp's analyzer, in dev and in builds. |
@@ -93,13 +94,15 @@ ngp({polyfills: ['zone.js']});
 
 On the server, `zone.js` becomes `zone.js/node`. A zoneless app, which is what `ng new` creates since Angular 21, leaves this empty. See [Polyfills and zone.js](migrating-from-ng-build#polyfills-and-zone-js).
 
+**`i18n`** is for apps with translated text. `locales` maps each locale code to its translation file, for example `{de: 'src/locale/messages.de.xlf'}`. Leave it out while the app has a single language: without it, a `$localize` message needs `@angular/localize/init` imported by the app, as with the CLI.
+
 **`hmr: false`** makes every edit reload the page. Use it if an in-place update ever leaves a component in a broken state, and tell the maintainers at [PushBased](https://push-based.io/) what you edited.
 
 ## What the plugin sets for you
 
 You don't configure these, but they're worth knowing when you debug:
 
-- `define`: `ngJitMode`, `ngDevMode`, `ngServerMode` and `ngHmrMode`, as [How it works](how-it-works) lists.
+- `define`: `ngJitMode`, `ngDevMode`, `ngServerMode`, `ngHmrMode` and `ngI18nClosureMode`, as [How it works](how-it-works) lists.
 - `optimizeDeps.rolldownOptions.plugins`: Angular's linker, for dependency pre-bundling.
 - `build.rolldownOptions.treeshake.manualPureFunctions`: `forwardRef`, so unused `forwardRef(...)` calls can be dropped, as `ng build` does. The rest of the build optimizer is a transform and needs no configuration.
 - `resolve.noExternal` in server environments: every `@angular/*` package, plus every package in your `dependencies` that depends on `@angular/core`, so Angular libraries get bundled and linked instead of loaded unlinked by Node. An Angular library under `devDependencies` stays external; add it to `resolve.noExternal` yourself.
@@ -111,4 +114,5 @@ You don't configure these, but they're worth knowing when you debug:
 - With `fileReplacements`: a `load` hook that returns the replacement's content for the replaced file, and watches the replacement.
 - With `polyfills`: one import per polyfill at the top of each module in `entries`. With `zone.js`, a `transform` in the dev server and a `renderChunk` in builds that rewrite `async` functions with esbuild.
 - With `budgets`: on the browser build, a `transform` that measures each component stylesheet after `vite:css`, and a `generateBundle` hook that checks the sizes and logs the CLI's messages.
+- With `i18n`, in the dev server: `optimizeDeps.include` with `@angular/localize`, its `init` entry and the dev locale's data, and an import added to the top of each entry module that sets up `$localize`. In `vite build` and `vite preview`: `base: './'` and `build.copyPublicDir: false`, because the plugin writes every file below `<outDir>/<locale>/` itself, including the public directory. `vite preview` gets a middleware that serves each locale's `index.html` and redirects `/` to a locale. See [Internationalization](i18n).
 - `DEBUG=vite-plugin-ngp` logs every module ngp compiles, and how long it took, to stderr.

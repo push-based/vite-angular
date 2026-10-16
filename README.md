@@ -24,11 +24,12 @@ A first version on top of a prototype compiler. Each item below was checked in t
 - Component HMR for external templates and for inline `template` and `styles` edits. Other `.ts` edits reload the page, as under `ng serve`.
 - Server rendering with hydration, in the dev server and in builds (`ssr` option).
 - Template and TypeScript type-checking with TypeScript 7 in a separate process: errors in the dev server's terminal and overlay, and a failed `vite build`.
+- Angular i18n: `ngp-extract-i18n` for messages, and one translated folder per locale from a single `vite build` (`i18n` option).
 - Production builds with Angular's linker and a port of the CLI's build optimizer. The playground's JavaScript comes out within 2% of `ng build`'s for the same app.
 
 **Missing**
 - External stylesheets as Vite CSS modules. ngp inlines `styleUrl` files itself, so preprocessors and CSS HMR don't apply.
-- HTTP status codes from SSR, i18n, Vitest, and Windows outside WSL 2.
+- HTTP status codes from SSR, Vitest, and Windows outside WSL 2.
 
 **Where it's weakest.** Nobody can `npm install` this: ngp isn't published, so the repo builds it from Angular's source, and every `@angular/*` package is pinned to exactly `22.3.0-next.2`. The plugin also uses ngp's API below its intended surface, so any Angular commit can break it. And the headline numbers (164 ms to the first module, about 4 ms per edit at 5,000 components) come from spikes against ngp's API, not from this plugin's dev server. The comparison against `ng serve`, Analog and `@oxc-angular/vite` hasn't been run yet.
 

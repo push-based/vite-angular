@@ -57,7 +57,7 @@ provideClientHydration(withEventReplay())
 
 **In server environments**, the plugin compiles your components with their own ngp compiler, without HMR code, because HMR code imports updates from URLs only a browser can load. It defines `ngServerMode` as `true`. It also bundles every Angular library into the server build and links it: `@angular/*`, plus every package in your `dependencies` that depends on `@angular/core`, such as Angular Material or NgRx. Vite usually leaves `node_modules` for Node to load, and Node would then load those libraries unlinked, which only works with the JIT compiler. An Angular library listed under `devDependencies` isn't found; add it to `resolve.noExternal` yourself.
 
-**In `vite build`**, it builds both environments: the browser bundle into `dist/client`, and your entry into `dist/server/main.server.js`. Serving them is up to you, with any Node server that calls `render` for page requests and serves `dist/client` for everything else.
+**In `vite build`**, it builds both environments: the browser bundle into `dist/client`, and your entry into `dist/server/main.server.js`. Serving them is up to you, with any Node server that calls `render` for page requests and serves `dist/client` for everything else. With the `i18n` option, both folders get one subfolder per locale, such as `dist/server/de/main.server.js`, and your server picks the bundle by the URL's first segment. [Internationalization](i18n#serving-the-locales) has the details.
 
 ## Prerendering for static hosting
 

@@ -484,3 +484,54 @@ It also fixes the opposite mistake. Under 22, a template reported more than 50 m
 **Cost.** Inline `styles` are measured as written, because ngp compiles and ships them that way, so they come out larger than under `ng build`, which minifies them. The budgets plugin depends on running between `vite:css` and the styles plugin: if either moves, the measure silently changes. Lazy chunks are named after their file, which may not match the names `ng build` gave them.
 
 **Revisit when** ngp can minify inline styles, or hands them to Vite.
+## 41. Serve one locale in dev, translated at runtime
+
+*16 October 2026*
+
+**Decision.** With `i18n`, the dev server serves `devLocale` only. A virtual module that every entry imports first loads `@angular/localize/init`, the locale's global data, and its translations through `loadTranslations`. Translation files are parsed on the server with @angular/localize's parsers, and editing one reloads the page.
+
+**Why.** It keeps the dev server's per-module transform untouched: a module compiles to the same code whatever the locale, and template HMR update modules call `$localize` like any other. `ng serve` inlines translations at build time instead, which its whole-program build allows and a per-module server doesn't need.
+
+**Cost.** Dev runs `$localize` at runtime and production doesn't, so a message that breaks only when inlined shows up only in `vite build`. Switching locale means restarting the dev server.
+
+## 42. Extract messages from an in-memory build
+
+*16 October 2026*
+
+**Decision.** `ngp-extract-i18n` builds the browser bundle with `write: false`, no minification and source maps, skips translation, and runs @angular/localize's `MessageExtractor` and serializers over the chunks, with a small in-memory file system. It writes XLIFF 1.2 by default, like `ng extract-i18n`.
+
+**Why.** It's what the CLI's application builder does, and it extracts from what ngp actually emitted, so the ids match what the build will look up, including messages in libraries. Extracting from source files instead would need ngp's output per file, which is TypeScript the extractor can't parse.
+
+**Cost.** Extraction is a full build: under 2 seconds on the playground, longer on a large app. Messages from external templates point at the component's `.ts` file and decorator line, not the `.html` line, because ngp's source map doesn't cover generated template code. Only the browser bundle is read, so a message used only in server code is missed.
+
+## 43. Build once, then write every file once per locale
+
+*16 October 2026*
+
+**Decision.** `vite build` builds and minifies each environment once. A `generateBundle` hook that runs last removes every file from the bundle and emits it again below `<outDir>/<subPath>/` for each locale, translated, with its source map composed and the public directory copied in.
+
+**Why.** The first version set one Rolldown output per locale and translated in `renderChunk`, before minification. Rolldown starts the build again for every output, so every module was transformed once per locale: `app.ts` compiled four times for two locales and two environments. Build time would grow with the number of locales times the app's size. Translating after the build is what the CLI does, and costs a parse and a string edit per chunk. Measured on the playground, average of three runs: 1.8 s without i18n, 2.1 s with two locales.
+
+**Cost.** Translation edits minified code, so it depends on the minifier keeping `$localize` tagged templates and the prelude recognizable ([design](design.md#where-its-weak)). A chunk has the same file name in every locale, as with the CLI. Its hash includes every translation file (`augmentChunkHash`), so editing a translation renames every chunk, in every locale, even where nothing changed. Every locale gets a full copy of the assets and the public directory.
+
+**Revisit when** a project has enough locales that copying assets per locale matters.
+
+## 44. Translate with Vite's parser and @angular/localize's translate, not its Babel plugins
+
+*16 October 2026*
+
+**Decision.** Each chunk is parsed with Vite's `parseAstAsync`, and the `$localize` tagged templates, `$localize.locale` reads and the prelude's placeholder are found once per chunk and reused for every locale. Each message goes through `translate()` from `@angular/localize/tools`, and MagicString writes the result.
+
+**Why.** The Babel plugins `makeEs2015TranslatePlugin` and `makeLocalePlugin` are the public way, and they were the first version. Babel spent 150–400 ms per locale on each 600–800 kB vendor chunk whose only `$localize` use is Angular reading `$localize.locale`. With the per-output design of the first version, the playground's build went from 3.3 s with Babel to 2.2 s with the native parser, against 1.4 s without i18n before the build optimizer landed. `translate()` is the function those plugins call, so translations, missing-translation diagnostics and placeholder reordering behave the same. The CLI's own inliner moved from Babel to oxc for the same reason.
+
+**Cost.** The pass finds `$localize` by name and doesn't check whether it's shadowed, as the CLI's inliner doesn't either. A `$localize.locale` read with a guard the minifier rewrote (`typeof $localize<"u"`) keeps its guard, which is harmless because the prelude defines `$localize`.
+
+## 45. Serve each locale from `<base><subPath>/` with relative URLs
+
+*16 October 2026*
+
+**Decision.** i18n builds and `vite preview` use `base: './'`. Each locale's `index.html` gets `<base href="<base><subPath>/">`, where `<base>` is the user's `base`. `vite preview` gets a middleware that serves each locale's `index.html` for its pages and redirects `/` by `Accept-Language`.
+
+**Why.** One build serves every locale only if its URLs don't name the locale. Relative URLs resolved against `<base href>` do that, and Angular's router reads the same element. The CLI sets the same `<base href>` per locale.
+
+**Cost.** No per-locale `baseHref` override, which the CLI has. A `base` that is a full URL, such as a CDN, is untested.

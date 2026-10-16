@@ -2,7 +2,7 @@
 
 A Vite plugin that compiles Angular one module at a time with ngp, Angular's new Rust-and-TypeScript preprocessor. Vite owns the module graph, and no whole-program compile runs before the first module is served.
 
-> **Status:** a first version. Per-module compilation, edits and production builds work in the playground. Component HMR, the `node_modules` linker, external styles and type-checking are still missing. [docs/design.md](docs/design.md) has the details.
+> **Status:** a first version. Per-module compilation, edits and production builds work in the playground. Angular libraries are linked at build time. Component HMR, external styles and type-checking are still missing. [docs/design.md](docs/design.md) has the details.
 
 ## Layout
 
@@ -10,18 +10,14 @@ A Vite plugin that compiles Angular one module at a time with ngp, Angular's new
 |---|---|
 | [packages/vite-plugin-ngp](packages/vite-plugin-ngp) | The plugin |
 | [playground](playground) | A small standalone Angular app that uses it |
+| [toolchain](toolchain) | Builds ngp from Angular's source |
+| [docs/building.md](docs/building.md) | How to build everything from a fresh clone |
 | [docs/design.md](docs/design.md) | How the plugin works, what's missing, and where it's weak |
 | [docs/decisions.md](docs/decisions.md) | Each design choice, with its reasons and costs |
 
-## Running the playground
+## Building it
 
-ngp isn't on npm, so build it first in [ng-hybrid-preprocessor-bench](https://github.com/push-based/ng-hybrid-preprocessor-bench), checked out next to this repo:
-
-```bash
-cd ../ng-hybrid-preprocessor-bench && pnpm install && pnpm toolchain
-```
-
-Then, in this repo, on Node 26 from `.nvmrc`:
+Angular hasn't published ngp yet, so this repo builds it from Angular's source. One command does that, with no Rust or Bazel needed beforehand. You need macOS or Linux, Node 26, pnpm 10, git, curl and a C compiler. From the repo root:
 
 ```bash
 nvm use
@@ -32,10 +28,14 @@ pnpm install
 ```
 
 ```bash
+pnpm toolchain
+```
+
+```bash
 pnpm dev
 ```
 
-`pnpm dev` builds the plugin and starts Vite on the playground. `pnpm playground:build` runs a production build instead. If the bench repo lives somewhere else, set `NGP_TOOLCHAIN` to its `toolchain/out` directory.
+`pnpm toolchain` builds ngp into `toolchain/out` (about 2 minutes the first time on an M2 Max). `pnpm dev` builds the plugin and starts Vite on the playground at http://localhost:5173. [docs/building.md](docs/building.md) explains each step, how to check the build, how to move to a newer Angular commit, and what to do when something fails.
 
 ## Writing docs
 

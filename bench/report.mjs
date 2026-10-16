@@ -63,6 +63,8 @@ out += table('Dev server: restart to first contentful paint', 'dev-warm', 'fcp',
 out += table('Template edit to DOM', 'edit-template', 'latency', 'Writing an external template until the new element is in the page. "reload" means the page reloaded to show it; otherwise the component updated in place.', modeNote);
 out += table('.ts edit to DOM', 'edit-ts', 'latency', "Changing a signal's initial value in a page component until the new text is in the page. Every tool reloads the page for this.", modeNote);
 out += table('Production build', 'build', 'time', 'Process start to exit, caches deleted first.');
+out += table('Type error reported in the dev server', 'typecheck', 'error', "Planting a template type error until the dev server's terminal names it. Only the tools that type-check in dev.");
+out += table('Type error cleared in the dev server', 'typecheck', 'clean', 'Removing it until the dev server reports the app clean again.');
 
 // Sizes: one table per app.
 const sizeRows = [];

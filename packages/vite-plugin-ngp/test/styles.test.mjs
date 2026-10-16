@@ -79,7 +79,9 @@ test('build: inlines the playground SCSS, scoped, into the client and server bun
   });
   for (const environment of [builder.environments.client, builder.environments.ssr]) {
     const output = await builder.build(environment);
-    const code = [output].flat().flatMap((o) => o.output).map((chunk) => chunk.code ?? '').join('\n');
+    // The playground builds with i18n, which writes each locale's copy of a chunk as an asset.
+    const js = [output].flat().flatMap((o) => o.output).filter((f) => f.fileName.endsWith('.js'));
+    const code = js.map((f) => f.code ?? String(f.source)).join('\n');
     // assert.ok rather than assert.match, which would print the whole bundle on failure.
     const q = '["\'`]';
     assert.ok(/\.meter\[_ngcontent-__ngpcomp__\] \.level-1\.on\[_ngcontent-__ngpcomp__\]\{background:#0ea5e9\}/.test(code), `${environment.name}: scoped SCSS`);

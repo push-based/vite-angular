@@ -40,7 +40,7 @@ export default defineConfig({
 | `entries` | `string[]` | `src/main.ts`, plus `src/main.server.ts` if it exists. Under Vitest, none | The modules the analyzer starts from. It finds every other file by following imports. |
 | `entryOnlyTsconfig` | `boolean` | `true` | Give the analyzer a generated tsconfig that lists only `entries`. |
 | `hmr` | `boolean` | `true` | Component HMR in the dev server, for external templates and for inline `template` and `styles` edits. Builds and Vitest ignore it. |
-| `i18n` | `{sourceLocale?, locales?, devLocale?, missingTranslation?}` | off | Angular i18n. `vite build` writes one translated folder per locale, and the dev server serves `devLocale`. See [Internationalization](i18n). |
+| `i18n` | `I18nOptions` | off | Angular i18n: `sourceLocale`, `locales`, `devLocale` and `missingTranslation`. `vite build` writes one translated folder per locale, and the dev server serves `devLocale`. See [Internationalization](i18n). |
 | `ssr` | `boolean \| {entry?: string}` | `false` | Server rendering. `true` uses `src/main.server.ts` as the server entry, and `{entry: 'path'}` names another. Vitest ignores it. See [Server rendering](server-rendering). |
 | `typeCheck` | `boolean` | `true`, except under Vitest | Type-check templates and TypeScript with TypeScript 7, in a separate process. The dev server reports errors in the terminal and the overlay, and `vite build` fails on them. See [Type-checking](type-checking). |
 | `fileReplacements` | `{replace: string; with: string}[]` | `[]` | angular.json's `fileReplacements`, relative to Vite's root. Every import of `replace` gets the content of `with`, in Vite and in ngp's analyzer, in dev and in builds. |

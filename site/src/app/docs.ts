@@ -12,14 +12,23 @@ export interface Doc {
   headings: DocHeading[];
 }
 
+/**
+ * Sidebar sections, in order. Guide: setup and the core model. Features: one page per capability
+ * (styles, type-checking, Vitest, i18n, ...). Project: status, building ngp, performance.
+ */
+export const SECTIONS = ['Guide', 'Features', 'Project'] as const;
+
 export interface DocEntry {
   path: string;
   label: string;
-  section: 'Guide' | 'Project';
+  section: (typeof SECTIONS)[number];
   load: () => Promise<Doc>;
 }
 
-/** Every docs page, in sidebar order. Routes, the sidebar and the prerender list come from here. */
+/**
+ * Every docs page, in sidebar order within its section. Routes, the sidebar and the prerender list
+ * come from here: adding a page is a content/<path>.md file plus one entry below.
+ */
 export const DOCS: DocEntry[] = [
   {path: 'getting-started', label: 'Getting started', section: 'Guide', load: () => import('../../content/getting-started.md').then((m) => m.default)},
   {path: 'how-it-works', label: 'How it works', section: 'Guide', load: () => import('../../content/how-it-works.md').then((m) => m.default)},
@@ -29,4 +38,3 @@ export const DOCS: DocEntry[] = [
   {path: 'building-ngp', label: 'Building ngp', section: 'Project', load: () => import('../../content/building-ngp.md').then((m) => m.default)},
 ];
 
-export const SECTIONS = ['Guide', 'Project'] as const;

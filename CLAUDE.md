@@ -28,7 +28,7 @@ pnpm site:build
 git push
 ```
 
-The `pages` workflow deploys it. Check it went green with `gh run list --workflow pages --limit 1`. A new docs page goes in [site/src/app/docs.ts](site/src/app/docs.ts), which adds it to the router, the sidebar and the prerender list.
+The `pages` workflow deploys it. Check it went green with `gh run list --workflow pages --limit 1`. A new docs page is `site/content/<path>.md` (with `title` and `description` front matter) plus one entry in `DOCS` in [site/src/app/docs.ts](site/src/app/docs.ts), which adds it to the router, the sidebar and the prerender list. Put a feature's page in the `Features` section. Add your entry yourself; you don't need to ask anyone.
 
 ## Writing docs
 

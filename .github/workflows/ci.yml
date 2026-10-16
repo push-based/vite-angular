@@ -1,0 +1,40 @@
+# Builds ngp from source, then the plugin, its tests and the playground, on a clean machine.
+# This is the check that the build instructions in docs/building.md work.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # Rust, wasm-bindgen and Cargo's build cache all live in toolchain/.cache. Keyed on the
+      # pins, so changing versions.env rebuilds from scratch.
+      - uses: actions/cache@v4
+        with:
+          path: |
+            toolchain/.cache/rust
+            toolchain/.cache/target
+          key: ngp-${{ runner.os }}-${{ hashFiles('toolchain/versions.env') }}
+
+      - run: pnpm toolchain
+
+      - run: pnpm test
+
+      - run: pnpm playground:build

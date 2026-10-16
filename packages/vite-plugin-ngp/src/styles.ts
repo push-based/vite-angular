@@ -16,9 +16,9 @@ import type {NgpCompiler} from './compiler.js';
 //   runtime adds a <link> per stylesheet and appends `?ngcomp=<encapsulation id>&e=<encapsulation>`,
 //   the Angular CLI's protocol. This plugin scopes the compiled CSS to that id, and a style edit
 //   reloads the <link> in place.
-// - Build: each stylesheet is imported as a CSS string (`?inline`), scoped with a placeholder for
-//   emulated encapsulation, and prepended to the component's `styles`. The bundle has no extra
-//   requests, like ngp's own output without externalRuntimeStyles.
+// - Build, and Vitest: each stylesheet is imported as a CSS string (`?inline`), scoped with a
+//   placeholder for emulated encapsulation, and prepended to the component's `styles`. The bundle
+//   has no extra requests, like ngp's own output without externalRuntimeStyles.
 
 /** The file extensions Vite's CSS pipeline handles. Matches Vite's own CSS_LANGS_RE. */
 const CSS_LANGS = /\.(?:css|less|sass|scss|styl|stylus|pcss|postcss|sss)(?:$|\?)/;
@@ -51,18 +51,21 @@ export interface StylesPluginContext {
   getCompiler(consumer: 'client' | 'server'): Promise<NgpCompiler>;
   /** Whether component HMR is on, which also turns on style HMR. */
   hmr(): boolean;
+  /**
+   * Whether stylesheets are served as <link>s: in the dev server, but not under Vitest, where
+   * nothing would load them. Otherwise they're inlined, as in builds.
+   */
+  linkStyles(): boolean;
 }
 
 export function stylesPlugin(context: StylesPluginContext): Plugin {
   let config: ResolvedConfig;
-  let serve = false;
 
   return {
     name: 'vite-plugin-ngp:styles',
 
     configResolved(resolved) {
       config = resolved;
-      serve = resolved.command === 'serve';
     },
 
     resolveId: {
@@ -96,7 +99,7 @@ export function stylesPlugin(context: StylesPluginContext): Plugin {
         if (!code.includes('ɵɵExternalStylesFeature')) {
           return null;
         }
-        if (serve) {
+        if (context.linkStyles()) {
           const listen = context.hmr() && this.environment.config.consumer === 'client';
           return rewriteToUrls(code, stylesheetName, listen ? CLIENT_ID : undefined);
         }

@@ -39,6 +39,10 @@ Without server rendering, stylesheets added by script don't block rendering, so 
 
 Measured on the playground, a chunk with stylesheet files is 3 to 5% smaller than when ngp inlined the files itself, because Vite minifies the CSS. Gzipped, the difference is under 1%.
 
+## Under Vitest
+
+Specs get stylesheets the build way, inlined, because nothing would load a `<link>` in jsdom. Vitest stubs CSS to empty strings by default, so components render unstyled. Set `test.css: true` if a spec checks styles: the scoped SCSS then reaches the page, and `getComputedStyle` sees it. See [Testing with Vitest](testing).
+
 ## Differences from the Angular CLI
 
 | | Angular CLI | vite-plugin-ngp |

@@ -330,7 +330,7 @@ function compilerPlugin(
 
   return {
     name: 'vite-plugin-ngp',
-    api: {getCompiler, hmr: () => hmr},
+    api: {getCompiler, hmr: () => hmr, linkStyles: () => config.command === 'serve' && !testing},
     // Before Vite's own TypeScript transform: ngp returns TypeScript, and Vite strips the types.
     enforce: 'pre',
 

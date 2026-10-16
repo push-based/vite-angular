@@ -1,5 +1,5 @@
-// Component stylesheets go through Vite's CSS pipeline (styles.ts, decision 21 in
-// docs/decisions.md). The first tests check the rewrites on their own. The last two run the
+// Component stylesheets go through Vite's CSS pipeline (styles.ts, decisions 25 to 27
+// in docs/decisions.md). The first tests check the rewrites on their own. The last two run the
 // playground's SCSS component through a real dev server and a real build. Run `pnpm build` first;
 // those two need an ngp toolchain build.
 
@@ -39,6 +39,7 @@ test('dev: points every external stylesheet at a flat name', () => {
   assert.match(code, /ɵɵExternalStylesFeature\(\["b\.ngp-[0-9a-f]{8}\.css"\]\)/);
   assert.doesNotMatch(code, /\/app\//);
   assert.equal(stylesheetName('/app/a.scss'), stylesheetName('/app/a.scss'));
+  assert.match(rewriteToUrls(COMPILED, undefined, '/@ng/styles-hmr').code, /^import "\/@ng\/styles-hmr";\n/);
   assert.notEqual(stylesheetName('/app/a.scss'), stylesheetName('/other/a.scss'));
 });
 
@@ -59,6 +60,8 @@ test('dev server: compiles the playground SCSS and scopes it to the requested id
     const component = await client.transformRequest('/src/app/pages/styles/scss-meter.ts');
     const name = component.code.match(/scss-meter\.ngp-[0-9a-f]{8}\.scss/)?.[0];
     assert.ok(name, 'expected the component to reference its stylesheet by a flat name');
+    // The listener that reloads <link>s on a style edit comes in with the component.
+    assert.match(component.code, /import "\/@id\/__x00__ngp:styles-hmr";/);
     // The browser resolves the name against the page, so it can arrive under any directory.
     const css = await client.transformRequest(`/router/${name}?ngcomp=ng-c7&e=0&direct`);
     assert.match(css.code, /\.meter\[_ngcontent-ng-c7\]\s+\.level-1\.on\[_ngcontent-ng-c7\] \{\s*background: #0ea5e9;/);

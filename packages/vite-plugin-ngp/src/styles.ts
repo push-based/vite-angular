@@ -38,7 +38,10 @@ const SCOPED_QUERY = 'ngp-scoped';
 const ID_PLACEHOLDER = '__ngpcomp__';
 /** A dev stylesheet name, `<basename>.ngp-<hash>.<ext>`, as the last segment of a request path. */
 const STYLESHEET_NAME = /\/([^/?]+\.ngp-[0-9a-f]{8}\.\w+)(\?.*)?$/;
-/** Served to the browser in dev, from index.html. Swaps component <link>s on a style edit. */
+/**
+ * Imported by every component module with external stylesheets in the dev server's browser
+ * environment. Reloads component <link>s on a style edit.
+ */
 const CLIENT_ID = '/@ng/styles-hmr';
 const RESOLVED_CLIENT_ID = '\0ngp:styles-hmr';
 const STYLE_UPDATE_EVENT = 'angular:stylesheet-update';
@@ -79,12 +82,6 @@ export function stylesPlugin(context: StylesPluginContext): Plugin {
       return id === RESOLVED_CLIENT_ID ? CLIENT_CODE : undefined;
     },
 
-    transformIndexHtml() {
-      if (serve && context.hmr()) {
-        return [{tag: 'script', attrs: {type: 'module', src: path.posix.join(config.base, CLIENT_ID)}, injectTo: 'head'}];
-      }
-    },
-
     // A normal-order plugin, so this runs after Vite's oxc transform for components and after
     // `vite:css` for stylesheets, which has compiled SCSS and run PostCSS by then. `vite:css-post`
     // hasn't wrapped the CSS in JavaScript yet, so this sees plain CSS.
@@ -100,7 +97,8 @@ export function stylesPlugin(context: StylesPluginContext): Plugin {
           return null;
         }
         if (serve) {
-          return rewriteToUrls(code, stylesheetName);
+          const listen = context.hmr() && this.environment.config.consumer === 'client';
+          return rewriteToUrls(code, stylesheetName, listen ? CLIENT_ID : undefined);
         }
         const ngp = await context.getCompiler(this.environment.config.consumer);
         return inlineStylesheets(code, await ngp.encapsulations(file));
@@ -180,9 +178,15 @@ export function scopeStylesheet(css: string, params: URLSearchParams): string | 
   return encapsulateStyle(css, componentId);
 }
 
-/** Dev: replaces the absolute paths in every ɵɵExternalStylesFeature call with served names. */
-export function rewriteToUrls(code: string, urlFor: (file: string) => string = stylesheetName) {
+/**
+ * Dev: replaces the absolute paths in every ɵɵExternalStylesFeature call with served names, and
+ * imports `client` if given.
+ */
+export function rewriteToUrls(code: string, urlFor: (file: string) => string = stylesheetName, client?: string) {
   const s = new MagicString(code);
+  if (client) {
+    s.prepend(`import ${JSON.stringify(client)};\n`);
+  }
   for (const call of findFeatureCalls(code)) {
     for (const literal of call.paths) {
       s.overwrite(literal.start, literal.end, JSON.stringify(urlFor(literal.value)));

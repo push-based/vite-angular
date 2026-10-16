@@ -58,6 +58,11 @@ export interface HybridCompiler {
   processFile(filePath: string, content: string): Promise<ProcessedFile>;
   /** The update module for one component, as TypeScript, or null if HMR is off. */
   emitHmrUpdateModule(filePath: string, className: string): Promise<string | null>;
+  /**
+   * The file's type-check block (what the CLI writes as `.ngtypecheck.ts`), or null if the file
+   * has no components or directives to check. Cached in `fileCache`. Optimize mode only.
+   */
+  getTcbForFile(filePath: string): string | null;
 }
 
 export interface HybridCompilerOptions {
@@ -66,6 +71,8 @@ export interface HybridCompilerOptions {
   rootDir: string;
   supportJitMode: boolean;
   enableHmr: boolean;
+  /** Keep whitespace in templates. A component's own `preserveWhitespaces` wins. */
+  preserveWhitespaces?: boolean;
 }
 
 export interface NgpApi {

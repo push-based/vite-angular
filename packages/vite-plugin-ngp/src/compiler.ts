@@ -43,10 +43,19 @@ export class NgpCompiler {
   private readonly known = new Map<string, string>();
   /** Analyzer updates run one at a time, in call order. */
   private updates: Promise<unknown> = Promise.resolve();
+  /** Type-check blocks as last generated, null for files without one. Stale files are dropped. */
+  private readonly tcbs = new Map<string, string | null>();
 
   private constructor(
     private readonly analyzer: Analyzer,
     private readonly hybrid: HybridCompiler,
+    /**
+     * Generates type-check blocks only. It shares the analyzer but parses templates with
+     * whitespace preserved, as ngtsc's type-check parse (`diagNodes`) does. With whitespace
+     * collapsed, every span after a collapsed run points too early: `<h1>\n  {{ titel }}` puts
+     * the error 2 columns before `titel`. ngp marks this TODO(parity) in parseComponentTemplate.
+     */
+    private readonly typeCheckHybrid: HybridCompiler,
     private readonly rootDir: string,
   ) {}
 
@@ -61,14 +70,16 @@ export class NgpCompiler {
     });
     const rootDir = path.dirname(options.tsconfig);
     // No tsconfigPath: with one, ngp rewrites .ngdiag.json after every chunk.
-    const hybrid = new api.HybridCompiler(analyzer, {
+    const hybridOptions = {
       optimize: true,
       tcbConfig: api.buildTypeCheckingConfig(ngOptions, false),
       rootDir,
       supportJitMode: ngOptions['supportJitMode'] !== false,
       enableHmr: options.enableHmr,
-    });
-    return new NgpCompiler(analyzer, hybrid, rootDir);
+    };
+    const hybrid = new api.HybridCompiler(analyzer, hybridOptions);
+    const typeCheckHybrid = new api.HybridCompiler(analyzer, {...hybridOptions, enableHmr: false, preserveWhitespaces: true});
+    return new NgpCompiler(analyzer, hybrid, typeCheckHybrid, rootDir);
   }
 
   /** Compiles one module. Resolves to null when ngp leaves it unchanged. */
@@ -160,8 +171,37 @@ export class NgpCompiler {
     const stale = invalidated.filter((f) => f.endsWith('.ts')).map((f) => path.resolve(f));
     for (const f of [...stale, file]) {
       this.hybrid.fileCache.delete(f);
+      this.typeCheckHybrid.fileCache.delete(f);
+      this.tcbs.delete(f);
     }
     return stale;
+  }
+
+  /**
+   * The type-check block of each file that has one, generated only for files that changed since
+   * the last call. ngp generates blocks synchronously, so this yields to the event loop between
+   * files to keep transforms flowing.
+   */
+  async typeCheckBlocks(files: Iterable<string>): Promise<Map<string, string>> {
+    await this.updates;
+    const blocks = new Map<string, string>();
+    for (const file of files) {
+      let tcb = this.tcbs.get(file);
+      if (tcb === undefined) {
+        await new Promise((resolve) => setImmediate(resolve));
+        tcb = this.typeCheckHybrid.getTcbForFile(file);
+        this.tcbs.set(file, tcb);
+      }
+      if (tcb) {
+        blocks.set(file, tcb);
+      }
+    }
+    return blocks;
+  }
+
+  /** Every file the analyzer has been sent, by a transform or an edit. */
+  knownFiles(): string[] {
+    return [...this.known.keys()];
   }
 
   /** The component file for an external template, or null if no component uses it. */

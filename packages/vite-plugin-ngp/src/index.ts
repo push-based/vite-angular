@@ -17,6 +17,16 @@ import {writeEntryTsconfig} from './entry-tsconfig.js';
 import {link, LINKER_MARKER} from './linker.js';
 import {isSideEffectFree, optimize, OPTIMIZER_CANDIDATE} from './optimizer.js';
 import type {Engine} from './ngp-api.js';
+import {
+  buildReport,
+  OVERLAY_CLIENT,
+  OVERLAY_CLIENT_ID,
+  OVERLAY_CLIENT_URL,
+  startDevTypeCheck,
+  TypeChecker,
+  type CheckScheduler,
+  type TypeCheckResult,
+} from './type-check.js';
 
 export interface NgpPluginOptions {
   /**
@@ -56,6 +66,14 @@ export interface NgpPluginOptions {
    * is `src/main.server.ts`. Off by default.
    */
   ssr?: boolean | {entry?: string};
+  /**
+   * Type-check templates and TypeScript: TypeScript 7 (`tsgo`) checks the app's sources together
+   * with ngp's type-check blocks, in a child process, and errors in a block are reported at their
+   * template location. In dev, errors show in the terminal and Vite's error overlay after each
+   * edit, without holding up transforms or HMR. `vite build` fails on any error. Defaults to true,
+   * except under Vitest.
+   */
+  typeCheck?: boolean;
 }
 
 type Consumer = 'client' | 'server';
@@ -103,6 +121,11 @@ function compilerPlugin(options: NgpPluginOptions): Plugin & {configureVitest(co
    * id (`src/app/home.ts@Home`), which is what the `c` query parameter decodes to.
    */
   const componentUpdates = new Map<string, string>();
+  const typeCheck = options.typeCheck ?? !process.env['VITEST'];
+  let checker: TypeChecker | null = null;
+  let devCheck: CheckScheduler | null = null;
+  let typeCheckOverlay = false;
+  let buildCheck: Promise<TypeCheckResult> | null = null;
   /**
    * Files whose last compile for the browser failed. Their components aren't running, so an edit
    * can't update them in place: the page has to reload.
@@ -134,6 +157,19 @@ function compilerPlugin(options: NgpPluginOptions): Plugin & {configureVitest(co
     await new Promise((resolve) => setTimeout(resolve, EDIT_BATCH_MS));
     const tsTime = changedAt.get(tsFile);
     return tsTime !== undefined && Math.abs(tsTime - templateTime) <= EDIT_BATCH_MS;
+  }
+
+  /** One check over every file the tsconfig includes, plus any other the compiler has compiled. */
+  async function runTypeCheck(): Promise<TypeCheckResult> {
+    checker ??= new TypeChecker({
+      tsconfig: resolveTsconfig(config.root, options.tsconfig),
+      outDir: path.join(config.cacheDir, 'vite-plugin-ngp/type-check'),
+      cwd: config.root,
+    });
+    // The browser's compiler: type-check blocks don't depend on HMR, and it always exists.
+    const ngp = await getCompiler('client');
+    const files = new Set([...checker.programFiles(), ...ngp.knownFiles().filter((f) => TS_MODULE.test(f))]);
+    return checker.check(await ngp.typeCheckBlocks(files));
   }
 
   function getCompiler(consumer: Consumer): Promise<NgpCompiler> {
@@ -358,6 +394,16 @@ function compilerPlugin(options: NgpPluginOptions): Plugin & {configureVitest(co
         return;
       }
       server.httpServer?.once('close', closeCompilers);
+      if (typeCheck) {
+        const viteHmr = server.config.server.hmr;
+        typeCheckOverlay = viteHmr !== false && (typeof viteHmr !== 'object' || viteHmr.overlay !== false);
+        devCheck = startDevTypeCheck({
+          server,
+          run: runTypeCheck,
+          filesChanged: () => checker?.filesChanged(),
+          overlay: typeCheckOverlay,
+        });
+      }
       // Runs after Vite's own middlewares, once its SPA fallback has rewritten a page request to
       // /index.html, and before Vite would serve that file as it is.
       const renderPages = () => {
@@ -410,10 +456,46 @@ function compilerPlugin(options: NgpPluginOptions): Plugin & {configureVitest(co
       return renderPages;
     },
 
+    // Type errors fail the build. The check starts once every module is transformed, and runs
+    // while Rolldown renders and minifies the chunks.
+    buildEnd(error) {
+      if (typeCheck && !error && config.command === 'build' && this.environment.config.consumer === 'client') {
+        buildCheck = runTypeCheck();
+        buildCheck.catch(() => {});
+      }
+    },
+
+    async generateBundle() {
+      if (!buildCheck) {
+        return;
+      }
+      const report = buildReport(await buildCheck, config.root);
+      buildCheck = null;
+      if (report.error) {
+        this.error(report.error);
+      }
+      config.logger.info(report.info);
+    },
+
     closeBundle() {
       // Vitest closes its Vite server through here, with no HTTP server to wait for.
       if (config.command === 'build' || testing) {
         return closeCompilers();
+      }
+    },
+
+    // The dev server's overlay client for type errors.
+    resolveId: {
+      filter: {id: /^\/@ngp\/type-check-client\.js$/},
+      handler: () => OVERLAY_CLIENT_ID,
+    },
+    load: {
+      filter: {id: /^\0vite-plugin-ngp:type-check-client$/},
+      handler: () => OVERLAY_CLIENT,
+    },
+    transformIndexHtml() {
+      if (typeCheckOverlay) {
+        return [{tag: 'script', attrs: {type: 'module', src: OVERLAY_CLIENT_URL}, injectTo: 'head'}];
       }
     },
 
@@ -479,6 +561,9 @@ function compilerPlugin(options: NgpPluginOptions): Plugin & {configureVitest(co
       }
       const ngp = await compiler;
       const graph = this.environment.moduleGraph;
+      if (this.environment.config.consumer === 'client') {
+        devCheck?.schedule();
+      }
       // The event type isn't reliable: macOS's watcher reports some new files as updates, and a
       // file can be gone by the time an update is handled. Whether it can be read decides.
       const content = type === 'delete' ? null : await Promise.resolve().then(read).catch(() => null);

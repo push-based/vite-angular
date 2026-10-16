@@ -4,6 +4,7 @@ import {
   isRunnableDevEnvironment,
   transformWithOxc,
   type DevEnvironment,
+  type EnvironmentModuleGraph,
   type EnvironmentModuleNode,
   type Plugin,
   type ResolvedConfig,
@@ -81,6 +82,11 @@ function compilerPlugin(options: NgpPluginOptions): Plugin {
    * id (`src/app/home.ts@Home`), which is what the `c` query parameter decodes to.
    */
   const componentUpdates = new Map<string, string>();
+  /**
+   * Files whose last compile for the browser failed. Their components aren't running, so an edit
+   * can't update them in place: the page has to reload.
+   */
+  const failed = new Set<string>();
   /** When each file last changed on disk, as the watcher reported it. */
   const changedAt = new Map<string, number>();
   /**
@@ -335,6 +341,9 @@ function compilerPlugin(options: NgpPluginOptions): Plugin {
       async handler(code, id) {
         const file = cleanId(id);
         const ngp = await getCompiler(this.environment.config.consumer);
+        if (this.environment.name === 'client') {
+          failed.add(file);
+        }
         const result = await ngp.transform(file, code);
         // Freshly compiled code already contains any pending template update.
         const prefix = decodeURIComponent(ngp.componentId(file, ''));
@@ -344,6 +353,7 @@ function compilerPlugin(options: NgpPluginOptions): Plugin {
           }
         }
         if (!result) {
+          failed.delete(file);
           return null;
         }
         for (const d of result.diagnostics) {
@@ -355,6 +365,7 @@ function compilerPlugin(options: NgpPluginOptions): Plugin {
             this.warn(log);
           }
         }
+        failed.delete(file);
         return {code: result.code, map: result.map};
       },
     },
@@ -373,19 +384,37 @@ function compilerPlugin(options: NgpPluginOptions): Plugin {
     // Template edits, and .ts edits that only change inline templates or styles, update the
     // component in place. Every other edit returns the affected modules, and since compiled
     // components don't accept updates, Vite reloads the page.
-    async hotUpdate({file, type, read, timestamp}) {
+    async hotUpdate({file, type, read, timestamp, modules}) {
       // Each environment updates its own compiler, so the server renders the edit too.
       const compiler = compilers.get(this.environment.config.consumer);
-      if (!compiler || type === 'delete' || !(TS_MODULE.test(file) || file.endsWith('.html'))) {
+      if (!compiler || !(TS_MODULE.test(file) || file.endsWith('.html'))) {
         return;
       }
       const ngp = await compiler;
-      const content = await read();
+      const graph = this.environment.moduleGraph;
+      // The event type isn't reliable: macOS's watcher reports some new files as updates, and a
+      // file can be gone by the time an update is handled. Whether it can be read decides.
+      const content = type === 'delete' ? null : await Promise.resolve().then(read).catch(() => null);
+
+      if (content === null) {
+        tsEdits.get(file)?.settle(false);
+        const stale = await ngp.remove(file);
+        const prefix = decodeURIComponent(ngp.componentId(file, ''));
+        for (const componentId of componentUpdates.keys()) {
+          if (componentId.startsWith(prefix)) {
+            componentUpdates.delete(componentId);
+          }
+        }
+        // Every importer has to resolve its imports again, and fail now if it still imports the
+        // file, whether or not the analyzer knew about the import.
+        const importers = modulesOf(graph, [file]).flatMap((mod) => [...mod.importers]);
+        return invalidateAll(graph, [...modulesOf(graph, stale), ...importers], modules);
+      }
+
       const {stale, previous} = await ngp.update(file, content, 'watcher');
       const owner = file.endsWith('.html') ? await ngp.componentForTemplate(file) : null;
-      const graph = this.environment.moduleGraph;
 
-      if (owner && hmr && this.environment.name === 'client') {
+      if (owner && hmr && this.environment.name === 'client' && !failed.has(owner)) {
         // Decided in the background: Vite runs the other environments' hotUpdate only after this
         // one returns, and the server has to see the new template before the page reloads.
         void updateTemplate(this.environment, ngp, file, owner, stale, timestamp);
@@ -398,7 +427,9 @@ function compilerPlugin(options: NgpPluginOptions): Plugin {
 
       if (TS_MODULE.test(file) && hmr && this.environment.name === 'client') {
         const inPlace =
-          previous !== undefined && (await updateInline(this.environment, ngp, file, previous, content, timestamp));
+          previous !== undefined &&
+          !failed.has(file) &&
+          (await updateInline(this.environment, ngp, file, previous, content, timestamp));
         tsEdits.get(file)?.settle(inPlace);
         if (inPlace) {
           // For a .ts file, no modules means handled.
@@ -406,20 +437,7 @@ function compilerPlugin(options: NgpPluginOptions): Plugin {
         }
       }
 
-      const affected = new Set<EnvironmentModuleNode>();
-      for (const f of new Set([...stale, ...(owner ? [owner] : [])])) {
-        for (const mod of graph.getModulesByFile(f) ?? []) {
-          graph.invalidateModule(mod);
-          affected.add(mod);
-        }
-      }
-      if (affected.size === 0) {
-        return;
-      }
-      for (const mod of graph.getModulesByFile(file) ?? []) {
-        affected.add(mod);
-      }
-      return [...affected];
+      return invalidateAll(graph, modulesOf(graph, [...stale, ...(owner ? [owner] : [])]), modules);
     },
   };
 }
@@ -467,6 +485,29 @@ function optimizerPlugin(): Plugin {
       },
     },
   };
+}
+
+/**
+ * Invalidates the stale modules, and returns them for Vite to propagate along with the modules
+ * Vite picked itself. Vite's include, for a new file, every module whose import of it failed to
+ * resolve before. With nothing stale, returns undefined and leaves Vite's choice alone.
+ */
+function invalidateAll(
+  graph: EnvironmentModuleGraph,
+  stale: EnvironmentModuleNode[],
+  modules: EnvironmentModuleNode[],
+): EnvironmentModuleNode[] | undefined {
+  if (stale.length === 0) {
+    return;
+  }
+  for (const mod of new Set(stale)) {
+    graph.invalidateModule(mod);
+  }
+  return [...new Set([...stale, ...modules])];
+}
+
+function modulesOf(graph: EnvironmentModuleGraph, files: string[]): EnvironmentModuleNode[] {
+  return files.flatMap((f) => [...(graph.getModulesByFile(f) ?? [])]);
 }
 
 function resolveTsconfig(root: string, configured: string | undefined): string {

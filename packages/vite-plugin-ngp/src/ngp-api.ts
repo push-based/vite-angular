@@ -28,15 +28,25 @@ export interface ProcessedFile {
   diagnostics?: NgpDiagnostic[];
 }
 
+/** ngp's `FileUpdateType` enum, which crosses into Rust as a number. */
+export const FileUpdateType = {Created: 0, Deleted: 1, Changed: 2} as const;
+export type FileUpdateType = (typeof FileUpdateType)[keyof typeof FileUpdateType];
+
 export interface ClassMetadata {
   className?: string;
-  component?: {templateUrl?: {url: string; resolvedPath: string}};
+  component?: {templateUrl?: {url: string; resolvedPath: string; stringLiteralSpan?: {start: number; end: number}}};
 }
 
 export interface Analyzer {
   getMetadataForFile(filePath: string): Promise<{filePath: string; classes: ClassMetadata[]} | null>;
   /** Tells the analyzer a file changed. Resolves to every file whose analysis is now stale. */
   updateFileContent(updates: {filePath: string; content: string}[]): Promise<string[]>;
+  /**
+   * Drops each file from the analyzer's in-memory overlay, so it reads the file from disk again (or
+   * finds it gone). Resolves to every TypeScript file whose analysis is now stale. At 92e5aa8 the
+   * Rust side ignores `updateType` and treats every entry alike.
+   */
+  invalidateFiles(updates: {filePath: string; updateType: FileUpdateType}[]): Promise<string[]>;
   getTsFileForTemplate(templatePath: string): Promise<{tsFilePath: string}[] | null>;
   close(): void;
 }

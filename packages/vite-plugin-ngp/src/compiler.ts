@@ -2,7 +2,7 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import {readConfiguration} from '@angular/compiler-cli';
 import {hmrCandidates} from './hmr-candidates.js';
-import {loadNgp, type Analyzer, type Engine, type HybridCompiler, type NgpDiagnostic} from './ngp-api.js';
+import {FileUpdateType, loadNgp, type Analyzer, type Engine, type HybridCompiler, type NgpDiagnostic} from './ngp-api.js';
 
 export interface CompilerOptions {
   toolchainDir: string;
@@ -81,8 +81,30 @@ export class NgpCompiler {
     return {
       code: processed.magicString.toString(),
       map: processed.magicString.generateMap({hires: 'boundary', source: file, includeContent: true}).toString(),
-      diagnostics: processed.diagnostics ?? [],
+      diagnostics: [...(processed.diagnostics ?? []), ...(await this.missingTemplates(file))],
     };
+  }
+
+  /**
+   * ngp compiles a component whose `templateUrl` file doesn't exist into an empty template, with
+   * no diagnostic, even in a fresh compiler. ngc fails with NG2008, so report it the same way.
+   */
+  private async missingTemplates(file: string): Promise<NgpDiagnostic[]> {
+    const metadata = await this.analyzer.getMetadataForFile(file);
+    const missing: NgpDiagnostic[] = [];
+    for (const cls of metadata?.classes ?? []) {
+      const templateUrl = cls.component?.templateUrl;
+      if (templateUrl && !(await fs.access(templateUrl.resolvedPath).then(() => true, () => false))) {
+        missing.push({
+          filePath: file,
+          category: 1, // ts.DiagnosticCategory.Error
+          code: 2008,
+          messageText: `Could not find template file '${templateUrl.url}'.`,
+          span: templateUrl.stringLiteralSpan,
+        });
+      }
+    }
+    return missing;
   }
 
   /**
@@ -95,7 +117,7 @@ export class NgpCompiler {
    * uses, so dropping the stale files from the cache is enough.
    */
   update(file: string, content: string, origin: 'transform' | 'watcher'): Promise<FileUpdate> {
-    const run = this.updates.then(async () => {
+    return this.enqueue(async () => {
       // A file we haven't seen yet: from a transform, the analyzer has read (or will read) the
       // same disk content, so compare against disk. From the watcher, disk already holds the edit,
       // so the only safe answer is that it changed.
@@ -106,15 +128,40 @@ export class NgpCompiler {
       if (previous === content) {
         return {stale: [], previous};
       }
-      const invalidated = await this.analyzer.updateFileContent([{filePath: file, content}]);
-      const stale = invalidated.filter((f) => f.endsWith('.ts')).map((f) => path.resolve(f));
-      for (const f of [...stale, file]) {
-        this.hybrid.fileCache.delete(f);
-      }
-      return {stale, previous};
+      return {stale: this.dropStale(file, await this.analyzer.updateFileContent([{filePath: file, content}])), previous};
     });
+  }
+
+  /**
+   * Tells the analyzer a file was deleted, and resolves to the TypeScript files whose output may
+   * have changed: for a `.ts` file its importers, for a template the component that uses it.
+   *
+   * update() can't say this. The analyzer keeps every file it's sent in an in-memory overlay
+   * that's never dropped, so it would go on compiling against the deleted content.
+   * invalidateFiles drops the overlay, and the analyzer then finds the file gone from disk.
+   */
+  remove(file: string): Promise<string[]> {
+    return this.enqueue(async () => {
+      this.known.delete(file);
+      const invalidated = await this.analyzer.invalidateFiles([{filePath: file, updateType: FileUpdateType.Deleted}]);
+      return this.dropStale(file, invalidated);
+    });
+  }
+
+  /** Runs analyzer updates one at a time, in call order. */
+  private enqueue<T>(update: () => Promise<T>): Promise<T> {
+    const run = this.updates.then(update);
     this.updates = run.catch(() => {});
     return run;
+  }
+
+  /** Drops the analyzer's stale files from ngp's cache, and returns the TypeScript ones. */
+  private dropStale(file: string, invalidated: string[]): string[] {
+    const stale = invalidated.filter((f) => f.endsWith('.ts')).map((f) => path.resolve(f));
+    for (const f of [...stale, file]) {
+      this.hybrid.fileCache.delete(f);
+    }
+    return stale;
   }
 
   /** The component file for an external template, or null if no component uses it. */

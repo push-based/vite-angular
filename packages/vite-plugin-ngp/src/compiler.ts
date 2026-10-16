@@ -76,6 +76,8 @@ export class NgpCompiler {
       rootDir,
       supportJitMode: ngOptions['supportJitMode'] !== false,
       enableHmr: options.enableHmr,
+      // Stylesheets go through Vite's CSS pipeline instead: see styles.ts.
+      externalRuntimeStyles: true,
     };
     const hybrid = new api.HybridCompiler(analyzer, hybridOptions);
     const typeCheckHybrid = new api.HybridCompiler(analyzer, {...hybridOptions, enableHmr: false, preserveWhitespaces: true});
@@ -249,6 +251,19 @@ export class NgpCompiler {
       updates.push({id: this.componentId(tsFile, className), code});
     }
     return updates;
+  }
+
+  /** Each component's ViewEncapsulation in `tsFile`, by class name. */
+  async encapsulations(tsFile: string): Promise<Map<string, number>> {
+    await this.updates;
+    const metadata = await this.analyzer.getMetadataForFile(tsFile);
+    const result = new Map<string, number>();
+    for (const cls of metadata?.classes ?? []) {
+      if (cls.className && cls.component) {
+        result.set(cls.className, cls.component.encapsulation ?? 0);
+      }
+    }
+    return result;
   }
 
   /**

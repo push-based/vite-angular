@@ -1,0 +1,45 @@
+@use 'scss-palette' as palette;
+
+@mixin pill($height) {
+  height: $height;
+  border-radius: palette.$radius;
+}
+
+:host {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+
+.meter {
+  display: flex;
+  gap: 0.35rem;
+
+  .level {
+    @include pill(0.9rem);
+    width: 2.25rem;
+    background: var(--border);
+    transition: background-color 150ms;
+  }
+
+  @each $level, $color in palette.$levels {
+    .level-#{$level}.on {
+      background: $color;
+    }
+  }
+}
+
+button {
+  @include pill(2.25rem);
+  padding: 0 1rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--accent-2);
+  }
+}

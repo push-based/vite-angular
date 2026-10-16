@@ -26,6 +26,7 @@ import {
   TypeChecker,
   type TypeCheckResult,
 } from './type-check.js';
+import {rewriteToUrls, stylesPlugin, type StylesPluginContext} from './styles.js';
 
 export interface NgpPluginOptions {
   /**
@@ -98,10 +99,13 @@ const debug = /(?:^|,)vite-plugin-ngp(?:,|$)/.test(process.env['DEBUG'] ?? '');
 const EDIT_BATCH_MS = 50;
 
 export function ngp(options: NgpPluginOptions = {}): Plugin[] {
-  return [compilerPlugin(options), linkerPlugin(), optimizerPlugin()];
+  const compiler = compilerPlugin(options);
+  return [compiler, stylesPlugin(compiler.api), linkerPlugin(), optimizerPlugin()];
 }
 
-function compilerPlugin(options: NgpPluginOptions): Plugin & {configureVitest(context: VitestPluginContext): void} {
+function compilerPlugin(
+  options: NgpPluginOptions,
+): Plugin<StylesPluginContext> & {api: StylesPluginContext; configureVitest(context: VitestPluginContext): void} {
   let config: ResolvedConfig;
   let vitest: VitestPluginContext['vitest'] | null = null;
   /**
@@ -242,7 +246,8 @@ function compilerPlugin(options: NgpPluginOptions): Plugin & {configureVitest(co
   /** Stores update modules, invalidates `tsFile` without a reload, and tells the page. */
   async function sendUpdates(environment: DevEnvironment, tsFile: string, updates: HmrUpdate[], timestamp: number) {
     for (const update of updates) {
-      const js = await transformWithOxc(update.code, `${tsFile}.hmr.ts`, {lang: 'ts'});
+      // Update modules name external stylesheets by path too.
+      const js = await transformWithOxc(rewriteToUrls(update.code).code, `${tsFile}.hmr.ts`, {lang: 'ts'});
       componentUpdates.set(decodeURIComponent(update.id), js.code);
     }
     // Invalidate without reloading, so the next full load compiles the new code.
@@ -325,6 +330,7 @@ function compilerPlugin(options: NgpPluginOptions): Plugin & {configureVitest(co
 
   return {
     name: 'vite-plugin-ngp',
+    api: {getCompiler, hmr: () => hmr},
     // Before Vite's own TypeScript transform: ngp returns TypeScript, and Vite strips the types.
     enforce: 'pre',
 

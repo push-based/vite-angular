@@ -34,7 +34,11 @@ export type FileUpdateType = (typeof FileUpdateType)[keyof typeof FileUpdateType
 
 export interface ClassMetadata {
   className?: string;
-  component?: {templateUrl?: {url: string; resolvedPath: string; stringLiteralSpan?: {start: number; end: number}}};
+  component?: {
+    templateUrl?: {url: string; resolvedPath: string; stringLiteralSpan?: {start: number; end: number}};
+    /** ViewEncapsulation as its numeric value. Absent means Emulated. */
+    encapsulation?: number;
+  };
 }
 
 export interface Analyzer {
@@ -73,6 +77,11 @@ export interface HybridCompilerOptions {
   enableHmr: boolean;
   /** Keep whitespace in templates. A component's own `preserveWhitespaces` wins. */
   preserveWhitespaces?: boolean;
+  /**
+   * Leave `styleUrl` files out of the component and emit `ɵɵExternalStylesFeature([paths])`, for
+   * the runtime to load them. Inline styles are compiled in either way.
+   */
+  externalRuntimeStyles: boolean;
 }
 
 export interface NgpApi {

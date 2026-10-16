@@ -1,6 +1,6 @@
-<app-page-header eyebrow="CSS" title="Styles" [covers]="['styleUrl', 'Emulated', 'None', 'ShadowDom', ':host', 'CSS variables']">
-  Each box below is the same template with its own external stylesheet, read by ngp through
-  <code>styleUrl</code>. Only the encapsulation mode differs. Two things to watch: the wavy underline,
+<app-page-header eyebrow="CSS" title="Styles" [covers]="['styleUrl', 'SCSS', 'Emulated', 'None', 'ShadowDom', ':host', 'CSS variables']">
+  Each box below is the same template with its own <code>styleUrl</code> stylesheet, compiled by Vite's
+  CSS pipeline and scoped by the plugin. Only the encapsulation mode differs. Two things to watch: the wavy underline,
   which comes from the unscoped component, and the pill behind <code>.leaky</code>, which comes from the
   app's global stylesheet.
 </app-page-header>
@@ -10,6 +10,16 @@
   <app-enc-none>None</app-enc-none>
   <app-enc-shadow>ShadowDom</app-enc-shadow>
 </div>
+
+<app-card eyebrow="SCSS" class="explain">
+  <h2 card-title>A preprocessed stylesheet</h2>
+  <p class="lead">
+    This component's <code>styleUrl</code> is a <code>.scss</code> file with a partial, a mixin and an
+    <code>&#64;each</code> loop. Vite runs Sass on it, then the plugin scopes the CSS like any other.
+    Set a level, then edit <code>scss-meter.scss</code>: the colors change and the level stays.
+  </p>
+  <app-scss-meter />
+</app-card>
 
 <app-card eyebrow="What you're seeing" class="explain">
   <h2 card-title>Three modes, one template</h2>

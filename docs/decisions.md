@@ -52,7 +52,7 @@ Each entry records one choice: what we decided, why, what it costs, and when to 
 
 ## 5. Load ngp from the bench repo's toolchain build
 
-*16 October 2026*
+*16 October 2026. Superseded by 14.*
 
 **Decision.** The plugin imports ngp from a directory set by the `toolchain` option or `NGP_TOOLCHAIN`. The playground defaults to `../ng-hybrid-preprocessor-bench/toolchain/out`.
 
@@ -147,6 +147,18 @@ Each entry records one choice: what we decided, why, what it costs, and when to 
 **Why.** Without `ngDevMode: false`, a production build ran Angular's dev-mode checks and logged "Angular is running in development mode". With these globals the playground bundle shrank from 589 kB to 386 kB, because the minifier drops the dev-only and JIT branches.
 
 **Cost.** `ngJitMode: false` breaks any code that compiles components at runtime. That's rare in apps, and it's the CLI's default for AOT builds too.
+
+## 14. Build ngp in this repo
+
+*16 October 2026. Supersedes 5.*
+
+**Decision.** `toolchain/` builds ngp from the Angular commit in `versions.env`, into `toolchain/out`, with one command: `pnpm toolchain`. The playground and the tests read it from there, and `NGP_TOOLCHAIN` still overrides it. The scripts are the bench repo's, minus what only the benchmark needs: the sidecar engine, hyperfine, and the patches for phase timings and golden tests. A prerequisite check runs first, and CI runs the whole build on a clean Ubuntu machine for every push.
+
+**Why.** Anyone given this repo should be able to build and run everything from it alone. Depending on a second private repo checked out next to it was a setup step nobody could guess from this repo.
+
+**Cost.** The two repos' build scripts can drift apart, and a first build takes about 2 minutes on a 12-core M2 Max because it installs Rust and compiles both engines. ngp's backend now resolves `@angular/compiler` from this repo's `node_modules`, which removes decision 5's cross-repo dependency.
+
+**Revisit when** Angular publishes ngp. Then `toolchain/` goes away and the plugin depends on `@angular/compiler-cli/preprocessor`.
 
 ## 15. Component HMR for external template edits only
 

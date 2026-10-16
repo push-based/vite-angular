@@ -53,7 +53,7 @@ export class NgpCompiler {
 
   /** Compiles one module. Resolves to null when ngp leaves it unchanged. */
   async transform(file: string, code: string): Promise<TransformResult | null> {
-    await this.update(file, code);
+    await this.update(file, code, 'transform');
     const processed = await this.hybrid.processFile(file, code);
     if (!processed.magicString.hasChanged()) {
       return null;
@@ -73,9 +73,14 @@ export class NgpCompiler {
    * re-streams every file in the program after each edit. Vite re-requests what the page still
    * uses, so dropping the stale files from the cache is enough.
    */
-  update(file: string, content: string): Promise<string[]> {
+  update(file: string, content: string, origin: 'transform' | 'watcher'): Promise<string[]> {
     const run = this.updates.then(async () => {
-      const previous = this.known.get(file) ?? (await fs.readFile(file, 'utf8').catch(() => undefined));
+      // A file we haven't seen yet: from a transform, the analyzer has read (or will read) the
+      // same disk content, so compare against disk. From the watcher, disk already holds the edit,
+      // so the only safe answer is that it changed.
+      const previous =
+        this.known.get(file) ??
+        (origin === 'transform' ? await fs.readFile(file, 'utf8').catch(() => undefined) : undefined);
       this.known.set(file, content);
       if (previous === content) {
         return [];

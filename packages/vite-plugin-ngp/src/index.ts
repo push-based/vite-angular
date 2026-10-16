@@ -100,7 +100,7 @@ export function ngp(options: NgpPluginOptions = {}): Plugin {
         return;
       }
       const ngp = await compiler;
-      const stale = await ngp.update(file, await read());
+      const stale = await ngp.update(file, await read(), 'watcher');
       const owner = file.endsWith('.html') ? await ngp.componentForTemplate(file) : null;
       const affected = new Set<EnvironmentModuleNode>();
       for (const f of new Set([...stale, ...(owner ? [owner] : [])])) {

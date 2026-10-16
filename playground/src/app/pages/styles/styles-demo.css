@@ -1,0 +1,30 @@
+.boxes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 1rem;
+}
+
+.explain {
+  margin-top: 1.25rem;
+}
+
+dl {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  margin: 0;
+}
+
+dt {
+  font-weight: 650;
+}
+
+dd {
+  margin: 0.15rem 0 0;
+  color: var(--text-muted);
+}
+
+.host-leaky {
+  margin-top: 1.25rem;
+  color: var(--text-muted);
+}

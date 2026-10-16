@@ -1,0 +1,27 @@
+@if (feature(); as feature) {
+  <app-card [eyebrow]="'route param · ' + slug()">
+    <h2 card-title class="title">
+      <span class="icon"><app-icon [name]="feature.icon" [size]="20" /></span>
+      {{ feature.title }}
+    </h2>
+    <div class="stack">
+      <p>{{ feature.summary }}</p>
+      <ul class="covers">
+        @for (item of feature.covers; track item) {
+          <li><code>{{ item }}</code></li>
+        }
+      </ul>
+      <a class="btn btn-primary open" [routerLink]="feature.path">Open the {{ feature.title.toLowerCase() }} demo <app-icon name="arrow" [size]="16" /></a>
+    </div>
+    <div card-footer>
+      <a [routerLink]="['..', previous().slug]">← {{ previous().title }}</a>
+      <span class="spacer"></span>
+      <a [routerLink]="['..', next().slug]">{{ next().title }} →</a>
+    </div>
+  </app-card>
+} @else {
+  <app-card eyebrow="route param · {{ slug() }}">
+    <h2 card-title>No feature called “{{ slug() }}”</h2>
+    <p class="muted">The route matched, so this component rendered with whatever the URL said. It just has nothing to show for it.</p>
+  </app-card>
+}

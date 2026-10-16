@@ -1,0 +1,96 @@
+<app-page-header eyebrow="Templates" title="Control flow" [covers]="['@if', '@else if', '@switch', '@for', '@empty', '@defer']">
+  Angular's built-in blocks compile straight to instructions, with no structural directives to
+  import. The deferred chart at the bottom is its own module: it loads only when you scroll to it.
+</app-page-header>
+
+<div class="grid-2">
+  <app-card eyebrow="@if · @else if · @else">
+    <h2 card-title>Thermostat</h2>
+    <label class="slider">
+      <span class="row"><span>Temperature</span><strong>{{ temperature() }} °C</strong></span>
+      <input type="range" min="-10" max="40" [value]="temperature()" (input)="temperature.set(+$any($event.target).value)" />
+    </label>
+    @if (temperature() <= 0) {
+      <p class="status cold">Freezing. Pipes at risk.</p>
+    } @else if (temperature() < 16) {
+      <p class="status cool">Chilly. Grab a sweater.</p>
+    } @else if (temperature() <= 26) {
+      <p class="status ok">Comfortable. Good compiling weather.</p>
+    } @else {
+      <p class="status hot">Hot. The laptop fans agree.</p>
+    }
+  </app-card>
+
+  <app-card eyebrow="@switch">
+    <h2 card-title>Commands</h2>
+    <div class="segmented" role="tablist" aria-label="Command">
+      @for (t of tabs; track t) {
+        <button type="button" role="tab" [attr.aria-selected]="tab() === t" [attr.aria-pressed]="tab() === t" (click)="tab.set(t)">{{ t }}</button>
+      }
+    </div>
+    <div class="terminal" role="tabpanel">
+      @switch (tab()) {
+        @case ('build') {
+          <code><span class="prompt">$</span> pnpm playground:build</code>
+          <p>Production build: same transform, linker on, dev checks compiled out.</p>
+        }
+        @case ('serve') {
+          <code><span class="prompt">$</span> pnpm dev</code>
+          <p>Dev server: modules compile on request; template edits use HMR.</p>
+        }
+        @default {
+          <code><span class="prompt">$</span> pnpm test</code>
+          <p>Checks that the entry-only tsconfig leaves ngp's output unchanged.</p>
+        }
+      }
+    </div>
+  </app-card>
+</div>
+
+<app-card eyebrow="@for · track · $index · $first · $last · @empty" class="spaced" [flush]="true">
+  <h2 card-title>Toolchain popularity <span class="muted">(made-up stars, thousands)</span></h2>
+  <div class="toolbar">
+    <button type="button" class="btn" (click)="shuffle()">Shuffle</button>
+    <button type="button" class="btn" (click)="sort()">Sort</button>
+    <button type="button" class="btn" (click)="clear()">Clear</button>
+    <button type="button" class="btn btn-ghost" (click)="reset()">Reset</button>
+  </div>
+  <ol class="bars">
+    @for (item of items(); track item.name; let i = $index, first = $first, last = $last, even = $even) {
+      <li [class.even]="even">
+        <span class="rank">{{ i + 1 }}</span>
+        <span class="name">
+          {{ item.name }}
+          @if (first) {
+            <span class="tag">first</span>
+          }
+          @if (last) {
+            <span class="tag">last</span>
+          }
+        </span>
+        <span class="bar"><span [style.width.%]="(item.stars / 110) * 100"></span></span>
+        <span class="stars">{{ item.stars }}k</span>
+      </li>
+    } @empty {
+      <li class="empty">The list is empty. That's what &#64;empty is for.</li>
+    }
+  </ol>
+  <div card-footer>
+    <span>{{ items().length }} items, {{ total() }}k stars in total</span>
+  </div>
+</app-card>
+
+<app-card eyebrow="@defer (on viewport) · @placeholder · @loading" class="spaced">
+  <h2 card-title>Deferred chart</h2>
+  @defer (on viewport) {
+    <app-sparkline [values]="series()" label="Random build times" />
+    <div class="row chart-actions">
+      <button type="button" class="btn" (click)="reroll()"><app-icon name="sparkle" [size]="16" /> New data</button>
+      <span class="muted">Loaded on demand: in a production build this chart is a separate chunk.</span>
+    </div>
+  } @placeholder (minimum 300ms) {
+    <div class="placeholder">Scroll here to load the chart</div>
+  } @loading (minimum 400ms) {
+    <div class="placeholder loading">Loading chart…</div>
+  }
+</app-card>

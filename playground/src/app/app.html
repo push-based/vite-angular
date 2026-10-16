@@ -1,7 +1,55 @@
-<nav>
-  <a routerLink="/">Home</a>
-  <a routerLink="/about">About</a>
-</nav>
-<main>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="topbar">
+  <button type="button" class="btn btn-ghost btn-icon" (click)="navOpen.set(!navOpen())" [attr.aria-expanded]="navOpen()" aria-controls="sidebar" aria-label="Menu">
+    <app-icon [name]="navOpen() ? 'close' : 'menu'" />
+  </button>
+  <a class="brand" routerLink="/">
+    <span class="mark" aria-hidden="true"></span>
+    <span>ngp playground</span>
+  </a>
+</header>
+
+<aside id="sidebar" class="sidebar">
+  <a class="brand" routerLink="/">
+    <span class="mark" aria-hidden="true"></span>
+    <span class="brand-text">
+      <strong>ngp playground</strong>
+      <small>vite-plugin-ngp</small>
+    </span>
+  </a>
+
+  <nav aria-label="Demos">
+    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" ariaCurrentWhenActive="page">
+      <app-icon name="home" /> Overview
+    </a>
+    <p class="nav-label">Demos</p>
+    @for (feature of features; track feature.slug) {
+      <a [routerLink]="feature.path" routerLinkActive="active" ariaCurrentWhenActive="page">
+        <app-icon [name]="feature.icon" /> {{ feature.title }}
+      </a>
+    }
+  </nav>
+
+  <div class="sidebar-foot">
+    <div class="theme" role="group" aria-label="Color theme">
+      @for (t of themes; track t.value) {
+        <button type="button" [attr.aria-pressed]="theme.theme() === t.value" [attr.aria-label]="t.label + ' theme'" [title]="t.label" (click)="theme.theme.set(t.value)">
+          <app-icon [name]="t.icon" [size]="16" />
+        </button>
+      }
+    </div>
+    <p class="build">
+      <span title="Angular version">v{{ version }}</span>
+      <span class="badge">{{ mode }}</span>
+    </p>
+  </div>
+</aside>
+
+<div class="scrim" (click)="navOpen.set(false)" aria-hidden="true"></div>
+
+<main id="main" tabindex="-1">
   <router-outlet />
 </main>
+
+<app-toasts />

@@ -1,0 +1,35 @@
+.title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 1.3rem !important;
+}
+
+.icon {
+  display: inline-flex;
+  padding: 0.45rem;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.covers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.open {
+  align-self: flex-start;
+}
+
+.open:hover {
+  text-decoration: none;
+}
+
+.spacer {
+  flex: 1;
+}

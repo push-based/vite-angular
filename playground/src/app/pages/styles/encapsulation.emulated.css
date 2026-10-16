@@ -1,0 +1,20 @@
+:host {
+  display: block;
+}
+
+.box {
+  height: 100%;
+  padding: 1rem;
+  border-radius: 12px;
+  background: var(--accent-2-soft);
+  border: 1px solid color-mix(in srgb, var(--accent-2) 30%, transparent);
+}
+
+.mode {
+  color: var(--accent-2);
+}
+
+.leaky {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+}

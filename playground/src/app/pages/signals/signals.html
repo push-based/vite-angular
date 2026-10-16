@@ -1,0 +1,95 @@
+<app-page-header eyebrow="Reactivity" title="Signals" [covers]="['signal()', 'computed()', 'linkedSignal()', 'effect()', '@let']">
+  State lives in signals, derived values in <code>computed()</code>, and side effects in
+  <code>effect()</code>. Every component here is <code>OnPush</code> and the app runs without zone.js,
+  so these signals are the only thing that updates the page.
+</app-page-header>
+
+<div class="grid-2">
+  <app-card eyebrow="signal · computed · effect">
+    <h2 card-title>Counter</h2>
+
+    <div class="counter">
+      <button type="button" class="btn btn-icon" (click)="count.update((c) => c - step())" aria-label="Decrease">
+        <app-icon name="minus" />
+      </button>
+      <output class="value" aria-live="polite">{{ count() }}</output>
+      <button type="button" class="btn btn-icon btn-primary" (click)="count.update((c) => c + step())" aria-label="Increase">
+        <app-icon name="plus" />
+      </button>
+    </div>
+
+    <label class="step">
+      <span class="row"><span>Step</span><strong>{{ step() }}</strong></span>
+      <input type="range" min="1" max="10" [value]="step()" (input)="step.set(+$any($event.target).value)" />
+    </label>
+
+    <dl class="derived">
+      <div><dt>doubled</dt><dd>{{ doubled() }}</dd></div>
+      <div><dt>parity</dt><dd [attr.data-parity]="parity()">{{ parity() }}</dd></div>
+    </dl>
+
+    <div card-footer>
+      <app-icon name="clock" [size]="14" />
+      <ol class="log">
+        @for (line of log(); track $index) {
+          <li [class.latest]="$first">{{ line }}</li>
+        }
+      </ol>
+    </div>
+  </app-card>
+
+  <app-card eyebrow="signal arrays · linkedSignal" [flush]="true">
+    <h2 card-title>Todos</h2>
+
+    <form class="add" (submit)="$event.preventDefault(); add()">
+      <input
+        class="input"
+        placeholder="What needs compiling?"
+        aria-label="New todo"
+        [value]="draft()"
+        (input)="draft.set($any($event.target).value)"
+      />
+      <button type="submit" class="btn btn-primary" [disabled]="!draft().trim()">Add</button>
+    </form>
+
+    <div class="toolbar">
+      <div class="segmented" role="group" aria-label="Filter todos">
+        @for (f of filters; track f) {
+          <button type="button" [attr.aria-pressed]="filter() === f" (click)="filter.set(f)">{{ f }}</button>
+        }
+      </div>
+      @let left = remaining();
+      <span class="muted">{{ left }} {{ left === 1 ? 'item' : 'items' }} left</span>
+    </div>
+
+    <ul class="todos">
+      @for (todo of visible(); track todo.id) {
+        <li [class.done]="todo.done" [class.selected]="selected() === todo.id" (click)="selected.set(todo.id)">
+          <button
+            type="button"
+            class="check"
+            [attr.aria-pressed]="todo.done"
+            [attr.aria-label]="(todo.done ? 'Mark not done: ' : 'Mark done: ') + todo.title"
+            (click)="toggle(todo.id); $event.stopPropagation()"
+          >
+            @if (todo.done) {
+              <app-icon name="check" [size]="14" />
+            }
+          </button>
+          <span class="title">{{ todo.title }}</span>
+          <time class="when">{{ todo.created | relativeTime: now() }}</time>
+          <button type="button" class="btn btn-ghost btn-icon remove" (click)="remove(todo.id); $event.stopPropagation()" [attr.aria-label]="'Delete ' + todo.title">
+            <app-icon name="trash" [size]="16" />
+          </button>
+        </li>
+      } @empty {
+        <li class="empty">Nothing {{ filter() === 'all' ? 'here' : filter() }} yet.</li>
+      }
+    </ul>
+
+    <div card-footer>
+      <span>Selected: <strong>{{ selected() ?? 'none' }}</strong>, kept by <code>linkedSignal</code> as the filter changes</span>
+      <button type="button" class="btn btn-ghost clear" (click)="clearDone()" [disabled]="todos().length === remaining()">Clear done</button>
+    </div>
+  </app-card>
+</div>

@@ -1,0 +1,63 @@
+<app-page-header eyebrow="Building blocks" title="Components" [covers]="['input()', 'output()', 'model()', 'ng-content', 'host bindings', 'pipes', 'inject()']">
+  Signal-based inputs, outputs and two-way bindings, a directive with host bindings, pipes from
+  <code>&#64;angular/common</code> (which reach the app through the linker), and a service shared through DI.
+</app-page-header>
+
+<div class="grid-2">
+  <app-card eyebrow="model() · [(value)]">
+    <h2 card-title>Two-way rating</h2>
+    <div class="stack">
+      <app-rating [(value)]="rating" />
+      <p class="muted">
+        Parent sees <strong class="mono">{{ rating() }}</strong>: {{ ratingLabel() }}.
+        <button type="button" class="link" (click)="rating.set(0)">Reset from the parent</button>
+      </p>
+    </div>
+  </app-card>
+
+  <app-card eyebrow="output() · [style.--var]">
+    <h2 card-title>Color picker</h2>
+    <div class="stack">
+      <app-swatches [colors]="colors" [selected]="color()" (picked)="pickColor($event)" />
+      <div class="preview" [style.--picked]="color()">
+        <span>{{ color() }}</span>
+      </div>
+    </div>
+  </app-card>
+
+  <app-card eyebrow="@Directive · host bindings">
+    <h2 card-title>Hover highlight</h2>
+    <ul class="hover-list">
+      @for (f of features; track f.name) {
+        <li [appHighlight]="f.color" tabindex="0">
+          <strong>{{ f.name }}</strong>
+          <span class="muted">{{ f.detail }}</span>
+        </li>
+      }
+    </ul>
+  </app-card>
+
+  <app-card eyebrow="@angular/common pipes · custom pipe">
+    <h2 card-title>Pipes</h2>
+    <dl class="pipes">
+      <div><dt><code>currency:'EUR'</code></dt><dd>{{ price() | currency: 'EUR' }}</dd></div>
+      <div><dt><code>percent:'1.0-1'</code></dt><dd>{{ ratio() | percent: '1.0-1' }}</dd></div>
+      <div><dt><code>date:'longDate'</code></dt><dd>{{ released | date: 'longDate' }}</dd></div>
+      <div><dt><code>titlecase</code></dt><dd>{{ phrase() | titlecase }}</dd></div>
+      <div><dt><code>relativeTime</code></dt><dd>{{ released | relativeTime }}</dd></div>
+    </dl>
+  </app-card>
+
+  <app-card eyebrow="ng-content · select" class="span-2">
+    <h2 card-title>Content projection</h2>
+    <p class="muted">
+      Every panel on this site is an <code>&lt;app-card&gt;</code> with three slots: a
+      <code>[card-title]</code>, the default slot, and a <code>[card-footer]</code>. This one fills all three,
+      and the footer below is projected from this page.
+    </p>
+    <div card-footer>
+      <span>Projected footer, styled by the card</span>
+      <button type="button" class="btn btn-primary footer-btn" (click)="notify()">Show a toast</button>
+    </div>
+  </app-card>
+</div>

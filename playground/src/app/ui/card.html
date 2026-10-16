@@ -1,0 +1,10 @@
+<header>
+  @if (eyebrow(); as eyebrow) {
+    <span class="eyebrow">{{ eyebrow }}</span>
+  }
+  <ng-content select="[card-title]" />
+</header>
+<div class="body">
+  <ng-content />
+</div>
+<ng-content select="[card-footer]" />

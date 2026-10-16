@@ -1,0 +1,23 @@
+app-enc-none {
+  display: block;
+}
+
+app-enc-none .box {
+  height: 100%;
+  padding: 1rem;
+  border-radius: 12px;
+  background: var(--warning-soft);
+  border: 1px solid color-mix(in srgb, var(--warning) 30%, transparent);
+}
+
+app-enc-none .mode {
+  color: var(--warning);
+}
+
+/* Not scoped on purpose: with ViewEncapsulation.None this reaches every .leaky on the page. */
+.leaky {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  text-decoration: underline wavy var(--warning);
+  text-underline-offset: 4px;
+}

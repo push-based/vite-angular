@@ -1,0 +1,32 @@
+<app-page-header eyebrow="CSS" title="Styles" [covers]="['styleUrl', 'Emulated', 'None', 'ShadowDom', ':host', 'CSS variables']">
+  Each box below is the same template with its own external stylesheet, read by ngp through
+  <code>styleUrl</code>. Only the encapsulation mode differs. Two things to watch: the wavy underline,
+  which comes from the unscoped component, and the pill behind <code>.leaky</code>, which comes from the
+  app's global stylesheet.
+</app-page-header>
+
+<div class="boxes">
+  <app-enc-emulated>Emulated</app-enc-emulated>
+  <app-enc-none>None</app-enc-none>
+  <app-enc-shadow>ShadowDom</app-enc-shadow>
+</div>
+
+<app-card eyebrow="What you're seeing" class="explain">
+  <h2 card-title>Three modes, one template</h2>
+  <dl>
+    <div>
+      <dt>Emulated</dt>
+      <dd>The default. Angular adds <code>_ngcontent-*</code> attributes and rewrites selectors to match them, so the styles stay in the component. Global rules from <em>None</em> still get in.</dd>
+    </div>
+    <div>
+      <dt>None</dt>
+      <dd>The stylesheet goes to <code>&lt;head&gt;</code> unchanged. Its <code>.leaky</code> rule underlines every <code>.leaky</code> on the page: the Emulated box, this page's own paragraph below, and even the ShadowDom box.</dd>
+    </div>
+    <div>
+      <dt>ShadowDom</dt>
+      <dd>A real shadow root, and the global stylesheet stays out: <code>.leaky</code> has no pill here. The underline still gets in, because Angular copies the styles of the app's other components into every shadow root it creates. CSS custom properties inherit as usual, which is why the theme colors work here too.</dd>
+    </div>
+  </dl>
+</app-card>
+
+<p class="leaky host-leaky">This paragraph belongs to the page itself, and it has class <code>.leaky</code> too.</p>

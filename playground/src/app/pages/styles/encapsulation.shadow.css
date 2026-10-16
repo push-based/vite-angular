@@ -1,0 +1,28 @@
+:host {
+  display: block;
+  font-family: var(--font);
+  color: var(--text);
+}
+
+.box {
+  height: 100%;
+  padding: 1rem;
+  border-radius: 12px;
+  background: var(--success-soft);
+  border: 1px solid color-mix(in srgb, var(--success) 30%, transparent);
+  box-sizing: border-box;
+}
+
+.mode {
+  color: var(--success);
+}
+
+p {
+  margin: 0.5rem 0 0;
+  font-size: 0.9rem;
+}
+
+code {
+  font-family: var(--mono);
+  font-size: 0.86em;
+}

@@ -3,7 +3,18 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>vite-plugin-ngp playground</title>
+    <meta name="description" content="A playground for vite-plugin-ngp: Angular compiled one module at a time by ngp, served by Vite." />
+    <meta name="theme-color" content="#f6f5fb" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0f0d1a" media="(prefers-color-scheme: dark)" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>ngp playground</title>
+    <script>
+      // Apply a stored theme before first paint, so dark mode doesn't flash white.
+      try {
+        const theme = localStorage.getItem('ngp-playground-theme');
+        if (theme === 'light' || theme === 'dark') document.documentElement.dataset.theme = theme;
+      } catch {}
+    </script>
   </head>
   <body>
     <app-root></app-root>

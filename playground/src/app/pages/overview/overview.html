@@ -1,0 +1,64 @@
+<section class="hero">
+  <div class="hero-copy">
+    <span class="pill"><app-icon name="sparkle" [size]="14" /> Compiled per module by ngp</span>
+    <h1>Angular on Vite, <span class="gradient">one module at a time</span>.</h1>
+    <p>
+      This playground runs on <code>vite-plugin-ngp</code>. Every component you see was compiled by
+      Angular's new hybrid preprocessor the moment the browser asked for it, with no whole-program
+      build first. Each page below exercises a different part of the compiler.
+    </p>
+    <div class="row">
+      <a class="btn btn-primary" routerLink="/signals">Start with signals <app-icon name="arrow" [size]="16" /></a>
+      <a class="btn" routerLink="/control-flow">See &#64;defer</a>
+    </div>
+  </div>
+
+  <dl class="facts" aria-label="This build">
+    <div><dt>Angular</dt><dd>{{ angular }}</dd></div>
+    <div><dt>Mode</dt><dd>{{ mode }}</dd></div>
+    <div>
+      <dt>Dev checks</dt>
+      <dd><span class="dot" [class.on]="devMode"></span>{{ devMode ? 'on' : 'off' }}</dd>
+    </div>
+    <div>
+      <dt>HMR</dt>
+      <dd><span class="dot" [class.on]="hmr"></span>{{ hmr ? 'connected' : 'off' }}</dd>
+    </div>
+    <div class="wide"><dt>All modules loaded in</dt><dd>{{ loadedMs() === null ? '…' : loadedMs() + ' ms' }}</dd></div>
+  </dl>
+</section>
+
+<section aria-labelledby="pipeline-title">
+  <h2 id="pipeline-title" class="section-title">How a module gets here</h2>
+  <ol class="pipeline">
+    @for (item of pipeline; track item.step; let i = $index) {
+      <li>
+        <span class="step-icon"><app-icon [name]="item.icon" /></span>
+        <span class="step-index">{{ i + 1 }}</span>
+        <strong>{{ item.step }}</strong>
+        <span class="muted">{{ item.detail }}</span>
+      </li>
+    }
+  </ol>
+</section>
+
+<section aria-labelledby="features-title">
+  <h2 id="features-title" class="section-title">Demos</h2>
+  <div class="features">
+    @for (feature of features; track feature.slug) {
+      <a class="feature" [routerLink]="feature.path">
+        <span class="feature-icon"><app-icon [name]="feature.icon" [size]="20" /></span>
+        <h3>{{ feature.title }}</h3>
+        <p class="muted">{{ feature.summary }}</p>
+        <span class="covers">
+          @for (item of feature.covers.slice(0, 3); track item) {
+            <code>{{ item }}</code>
+          }
+          @if (feature.covers.length > 3) {
+            <span class="more">+{{ feature.covers.length - 3 }}</span>
+          }
+        </span>
+      </a>
+    }
+  </div>
+</section>

@@ -1,0 +1,210 @@
+.counter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  padding: 1rem 0 1.25rem;
+}
+
+.value {
+  min-width: 4ch;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 3.2rem;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  background: var(--gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+
+.step .row {
+  justify-content: space-between;
+}
+
+.step strong {
+  color: var(--text);
+  font-family: var(--mono);
+}
+
+.derived {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin: 1.25rem 0 0;
+}
+
+.derived div {
+  padding: 0.7rem 0.9rem;
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+
+dt {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--text-faint);
+}
+
+dd {
+  margin: 0.1rem 0 0;
+  font-family: var(--mono);
+  font-size: 1.25rem;
+  font-weight: 650;
+}
+
+dd[data-parity='odd'] {
+  color: var(--accent-2);
+}
+
+dd[data-parity='even'] {
+  color: var(--success);
+}
+
+.log {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  min-width: 0;
+}
+
+.log li {
+  opacity: 0.55;
+}
+
+.log li.latest {
+  opacity: 1;
+  color: var(--text);
+}
+
+.add {
+  display: flex;
+  gap: 0.5rem;
+  padding: 1rem 1.25rem 0.75rem;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0 1.25rem 0.75rem;
+  font-size: 0.85rem;
+}
+
+.segmented button {
+  text-transform: capitalize;
+}
+
+.todos {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--border);
+}
+
+.todos li {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem 0.6rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+.todos li:last-child {
+  border-bottom: 0;
+}
+
+.todos li:hover {
+  background: var(--surface-2);
+}
+
+.todos li.selected {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.check {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 7px;
+  background: var(--surface);
+  color: #fff;
+  cursor: pointer;
+}
+
+.check[aria-pressed='true'] {
+  border-color: var(--success);
+  background: var(--success);
+}
+
+.title {
+  flex: 1;
+  min-width: 0;
+}
+
+.done .title {
+  color: var(--text-faint);
+  text-decoration: line-through;
+}
+
+.when {
+  font-size: 0.78rem;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+.remove {
+  color: var(--text-faint);
+  opacity: 0;
+}
+
+li:hover .remove,
+.remove:focus-visible {
+  opacity: 1;
+}
+
+.remove:hover {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.empty {
+  justify-content: center;
+  padding: 2rem 1rem !important;
+  color: var(--text-faint);
+  cursor: default !important;
+}
+
+.clear {
+  margin-left: auto;
+  height: 30px;
+  white-space: nowrap;
+}
+
+@media (hover: none) {
+  .remove {
+    opacity: 1;
+  }
+}

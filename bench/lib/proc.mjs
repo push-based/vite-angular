@@ -15,14 +15,42 @@ const ENV = {
 export function start({cmd, args}, cwd) {
   const child = spawn(cmd, args, {cwd, env: ENV, detached: true, stdio: ['ignore', 'pipe', 'pipe']});
   const lines = [];
+  const stamped = []; // {at, text}, for waitForLine
+  const waiters = new Set();
   const keep = (chunk) => {
-    for (const line of chunk.toString().split('\n')) if (line.trim()) lines.push(line);
+    const at = Date.now();
+    for (const line of chunk.toString().split('\n')) {
+      if (!line.trim()) continue;
+      lines.push(line);
+      stamped.push({at, text: line});
+      for (const w of waiters) w({at, text: line});
+    }
     if (lines.length > 400) lines.splice(0, lines.length - 400);
+    if (stamped.length > 5000) stamped.splice(0, stamped.length - 5000);
   };
   child.stdout.on('data', keep);
   child.stderr.on('data', keep);
   const exited = new Promise((resolve) => child.on('exit', (code, signal) => resolve({code, signal})));
-  return {child, lines, exited, output: () => lines.join('\n')};
+  /** Resolves with the epoch time of the first output line matching `re` written at or after `since`. */
+  const waitForLine = (re, since, timeoutMs) => {
+    const hit = stamped.find((l) => l.at >= since && re.test(l.text));
+    if (hit) return Promise.resolve(hit.at);
+    return new Promise((resolve, reject) => {
+      const w = (l) => {
+        if (l.at >= since && re.test(l.text)) {
+          waiters.delete(w);
+          clearTimeout(timer);
+          resolve(l.at);
+        }
+      };
+      const timer = setTimeout(() => {
+        waiters.delete(w);
+        reject(new Error(`no output matching ${re} in ${timeoutMs} ms`));
+      }, timeoutMs);
+      waiters.add(w);
+    });
+  };
+  return {child, lines, exited, waitForLine, output: () => lines.join('\n')};
 }
 
 /** Stops a process started with start(), and everything it spawned. */

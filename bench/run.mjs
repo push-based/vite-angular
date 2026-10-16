@@ -4,6 +4,8 @@
 //   dev-warm   the same with the tool's caches from the previous start: a restart
 //   edit       write a file, time until the new content is in the DOM; a template edit and a .ts edit
 //   build      production build, caches deleted first, then a boot check and the bundle's size
+//   typecheck  (ngp and the CLI, which type-check in dev) plant a template type error, time until
+//              the dev server reports it; remove it, time until it reports the app clean
 //
 // Every sample passes its gate or isn't counted: the app rendered (every feature link and the
 // first route's heading, or the playground's overview), the page logged no errors, an edit's
@@ -11,7 +13,7 @@
 // before and after.
 //
 // Usage: node run.mjs [--apps standalone-100-s1,...] [--tools ngp,cli,analog,oxc]
-//          [--metrics dev-cold,dev-warm,edit,build] [--runs 5] [--warmup 1] [--edits 10]
+//          [--metrics dev-cold,dev-warm,edit,build,typecheck] [--runs 5] [--warmup 1] [--edits 10]
 //          [--edit-warmup 2] [--max-load 4] [--out results/<name>.json]
 
 import * as fs from 'node:fs';
@@ -247,6 +249,9 @@ async function editSeries(app, tool) {
     await opened?.context.close().catch(() => {});
     await stop(proc);
   }
+  // vite-plugin-ngp logs each background type-check with its duration; keep them.
+  const typeChecks = [...proc.output().matchAll(/type-check: [^(\n]*\((\d+) ms\)/g)].map((m) => Number(m[1]));
+  if (typeChecks.length) console.log(`  ${tool.id} type-checks during the session: ${typeChecks.join(', ')} ms`);
   if (errors.length) console.log(`  ${tool.id} edit: FAILED\n    ${errors.join('\n    ').slice(0, 2000)}`);
   for (const kind of ['template', 'ts']) {
     const s = out[kind];
@@ -257,8 +262,70 @@ async function editSeries(app, tool) {
       samples: s,
       latency: summarize(s.map((x) => x.ms)),
       mode: modes.length === 1 ? modes[0] : modes.join('+'),
+      typeChecks,
     });
   }
+}
+
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * How long a template type error takes to show up in the dev server's terminal, and how long the
+ * fix takes to clear it. Only for the tools that type-check in dev.
+ */
+const TYPECHECK = {
+  // vite-plugin-ngp logs a check when its result changes: the error, then "no errors".
+  ngp: {clean: /type-check: no errors/},
+  // The CLI rebuilds with type-checking; a clean rebuild ends with this line.
+  cli: {clean: /Application bundle generation complete/},
+};
+
+async function typecheckSeries(app, tool) {
+  if (!TYPECHECK[tool.id]) return;
+  const proc = start(tool.dev(app, PORT), app.dir);
+  const file = path.join(app.dir, app.template);
+  const original = fs.readFileSync(file, 'utf8');
+  const out = {error: [], clean: []};
+  const errors = [];
+  let opened;
+  try {
+    await waitForHttp(URL_, proc, 600_000);
+    opened = await openApp(browser, URL_, app.gate);
+    pendingRestores.set(file, original);
+    for (let i = 0; i < EDIT_WARMUP + EDITS; i++) {
+      const missing = `benchMissing${i}`;
+      // The error has to name the planted property, so a stale report can't count.
+      let t0 = Date.now();
+      fs.writeFileSync(file, `${original}\n<p>{{ ${missing} }}</p>\n`);
+      const reported = await proc.waitForLine(new RegExp(missing), t0, 300_000);
+      const errorMs = reported - t0;
+      await sleep(500);
+      t0 = Date.now();
+      fs.writeFileSync(file, original);
+      const cleared = await proc.waitForLine(TYPECHECK[tool.id].clean, t0, 300_000);
+      const cleanMs = cleared - t0;
+      if (i >= EDIT_WARMUP) {
+        out.error.push(errorMs);
+        out.clean.push(cleanMs);
+      }
+      console.log(`  ${tool.id} typecheck ${i < EDIT_WARMUP ? 'warm-up' : `#${i - EDIT_WARMUP + 1}`}: error reported in ${fmt(errorMs)}, cleared in ${fmt(cleanMs)}`);
+      await sleep(1000);
+    }
+  } catch (e) {
+    errors.push(`${e.message}\n${proc.output().slice(-3000)}`);
+    console.log(`  ${tool.id} typecheck: FAILED\n    ${errors[0].slice(0, 2000)}`);
+  } finally {
+    restoreAll();
+    await opened?.context.close().catch(() => {});
+    await stop(proc);
+  }
+  record(app, tool, 'typecheck', {
+    ok: errors.length === 0,
+    errors,
+    samples: out.error.map((ms, i) => ({error: ms, clean: out.clean[i]})),
+    error: summarize(out.error),
+    clean: summarize(out.clean),
+  });
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -337,6 +404,7 @@ try {
       if (metric === 'dev-cold' || metric === 'dev-warm') await devSeries(app, active, metric);
       else if (metric === 'edit') for (const tool of active) await editSeries(app, tool);
       else if (metric === 'build') await buildSeries(app, active);
+      else if (metric === 'typecheck') for (const tool of active) await typecheckSeries(app, tool);
       else throw new Error(`unknown metric ${metric}`);
     }
     const after = hashSources(app.dir);

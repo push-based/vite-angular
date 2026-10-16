@@ -426,3 +426,61 @@ It also fixes the opposite mistake. Under 22, a template reported more than 50 m
 **Cost.** More state to keep right: a load and a change per `.ts` file, ordered by one counter. Each `.ts` change and each browser transform reads the file once more, and each template update reads its component's file. A class change the watcher never reports holds the template for a second, then reloads. The load counts when Vite transforms the module, not when the page runs it, so a page that's slow to run a reloaded module could still receive an update meant for after it. That wasn't seen, and the update module the page imports at startup would correct it.
 
 **Revisit when** chokidar or Vite report each save once and in one batch. Then the repeat handling can go, though the load comparison is still the simpler rule.
+
+## 36. Take `ng build`'s missing options as plugin options, not from angular.json
+
+*16 October 2026*
+
+**Decision.** The plugin takes `fileReplacements`, `budgets` and `polyfills` as options, with the names and shapes angular.json uses for `@angular/build:application`, so they can be copied over unchanged. It never reads angular.json. Every other build option maps to Vite's own config or isn't supported. The site's migration page lists all of them, with the reason for each.
+
+**Why.** These three have no Vite equivalent. `fileReplacements` also has to reach ngp's analyzer, which only the plugin can do. Everything else a typical app sets in angular.json already has a Vite option: `define`, `base` for `baseHref` and `deployUrl`, `public/` for the default `assets`, `build.sourcemap`, `build.outDir`, `build.license` for `extractLicenses`. Reading angular.json would mean interpreting its configurations, its builder-specific defaults and its workspace layout, for a file that a finished migration deletes. Vite already has `mode` for what angular.json calls configurations.
+
+**Cost.** During a migration that keeps `ng build` working, the three options live in two places. Options that apps do use and Vite can't do are left out: critical CSS inlining, subresource integrity, the service worker manifest, prerendering, `autoCsp` and i18n.
+
+**Revisit when** apps want to keep `ng build` and the plugin side by side for long. A helper that turns an angular.json configuration into plugin options would fit then.
+
+## 37. File replacements swap content under the replaced file's id, in Vite and in the analyzer
+
+*16 October 2026*
+
+**Decision.** A replaced file keeps its own module id. The plugin's `load` hook returns the replacement's content for it, and `NgpCompiler.create` sends the same content to the analyzer under the replaced path before anything compiles. Watcher edits to the replacement are sent as edits to the replaced file, edits to the replaced file are ignored, and a transform of the replaced file never updates the analyzer.
+
+**Why.** ngp's analyzer resolves imports on disk and has no hook to redirect them. If only Vite resolved `environment.ts` to `environment.prod.ts`, the analyzer would still read `environment.ts`, and any decorator that reads a value from it would compile against the wrong file. The test fixture's banner does exactly that. Swapping content under one id keeps a single identity for the file in both systems. Transforms are kept out because Vite can read a module just before an edit and transform it after: in testing, that sent the old content to the analyzer and undid the edit in 2 of 13 runs.
+
+**Cost.** The replacement's relative imports resolve from the replaced file's directory, not from its own as under the CLI. Source maps and errors name the replaced file. Editing the replacement reloads the page; it never updates a component in place.
+
+**Revisit when** ngp's analyzer accepts a module resolution hook. Then the plugin can resolve to the replacement in both places, as the CLI does.
+
+## 38. Import polyfills first in each entry module
+
+*16 October 2026*
+
+**Decision.** The plugin prepends one import per polyfill to every module in `entries`, with a source map. In browser environments that's the list as given. In server environments `zone.js` becomes `zone.js/node`, `@angular/localize` polyfills become `@angular/localize/init`, and the rest are dropped, which is what the CLI gives its server bundle. A polyfill with a file extension that exists under Vite's root is imported as that file.
+
+**Why.** zone.js must run before `@angular/core` is evaluated. An entry's first import is evaluated first, in dev, in Rolldown's bundle and in Node, so one mechanism covers all three. The CLI builds polyfills as a separate bundle that index.html loads first, but a server entry has no index.html, and a second `<script>` would have needed its own handling in dev, in the build and in the SSR middleware.
+
+**Cost.** Polyfills sit in the entry chunk instead of a separate `polyfills` file, so a `bundle` budget named `polyfills` measures nothing. Under Vitest, `entries` is empty and no polyfills are added; a zone.js test setup imports `zone.js` and `zone.js/testing` itself.
+
+## 39. Rewrite async/await with esbuild for zone.js apps
+
+*16 October 2026*
+
+**Decision.** When `polyfills` includes `zone.js`, or any file (which might import it), the plugin rewrites `async` functions into generators with esbuild's `transform` and `supported: {'async-await': false, 'optional-catch-binding': false}`, exactly the CLI's setting. Builds rewrite each output chunk in `renderChunk`. The dev server rewrites each served module that contains `async`, pre-bundled dependencies included. esbuild 0.28.2 is a dependency, the version `@angular/build` pins.
+
+**Why.** zone.js patches `Promise`, but a native `await` doesn't go through it, so code after an `await` runs outside Angular's zone and never triggers change detection. In the test fixture, that code ran in `<root>` without the rewrite and in `angular` with it, and in a browser the page stayed on "loading". Rolldown and oxc can lower async functions only by lowering a whole ES version: at `es2016` they also rewrite optional chaining, object spread and class fields, in every module. That's what the CLI's dev server does for pre-bundled dependencies, because Rolldown offers nothing narrower, and it's what this plugin avoids.
+
+**Cost.** A second parser in the build, and one more pass over every chunk with `async` in it: 452 bytes and about 60 ms per build on the 311 kB fixture, which isn't measured on a large app. Native async stack traces are gone in zone.js apps, as they are under the CLI.
+
+**Revisit when** Rolldown or oxc can lower async functions alone.
+
+## 40. Check budgets on Rolldown's output, and measure component stylesheets the CLI's way
+
+*16 October 2026*
+
+**Decision.** Budgets are checked in `generateBundle` of the browser build, with the CLI's calculator and messages ported to [budgets.ts](../packages/vite-plugin-ngp/src/budgets.ts). Only `.js` and `.css` files count, as in the CLI. Initial is every entry chunk, the chunks they import statically, and the CSS those chunks import. A chunk answers to its Rolldown name and to the file name of any app entry it contains, so `main` names the chunk with `src/main.ts`. `anyComponentStyle` takes the list of each component's stylesheets from ngp's metadata. A `styleUrl` file is measured as the CLI measures it: compiled, then minified with esbuild, before view encapsulation adds its selectors. The plugin reads it right after `vite:css` compiles it and before the styles plugin scopes it ([decision 32](decisions.md)). An inline style is measured as written. Warnings are logged; errors are logged and then fail the build.
+
+**Why.** Rolldown's bundle already knows each chunk's size, imports and CSS, which is everything the CLI's stats object held. Component stylesheets end up as strings inside the JavaScript, so no CSS asset exists to measure. Measuring after scoping overstated them: every selector gains `[_ngcontent-__ngpcomp__]`, and the playground's `app.css` came out at 4.44 kB, more than the 4.28 kB file, against 3.34 kB the CLI's way. Same method, same numbers, so a budget copied from angular.json means the same thing. The message text matches the CLI's too, so CI scripts that grep for it keep working.
+
+**Cost.** Inline `styles` are measured as written, because ngp compiles and ships them that way, so they come out larger than under `ng build`, which minifies them. The budgets plugin depends on running between `vite:css` and the styles plugin: if either moves, the measure silently changes. Lazy chunks are named after their file, which may not match the names `ng build` gave them.
+
+**Revisit when** ngp can minify inline styles, or hands them to Vite.

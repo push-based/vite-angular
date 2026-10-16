@@ -38,6 +38,9 @@ export interface ClassMetadata {
     templateUrl?: {url: string; resolvedPath: string; stringLiteralSpan?: {start: number; end: number}};
     /** ViewEncapsulation as its numeric value. Absent means Emulated. */
     encapsulation?: number;
+    /** Inline `styles`, as written. */
+    styles?: string[];
+    styleUrls?: {url: string; resolvedPath: string}[];
   };
 }
 

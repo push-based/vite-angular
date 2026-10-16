@@ -121,4 +121,5 @@ For a production build, run `pnpm vite build`. The output in `dist/` is a static
 
 - [How it works](how-it-works) explains what happens between Vite's request and the compiled module.
 - [Configuration](configuration) lists every option.
+- [Migrating from ng build](migrating-from-ng-build) says where each angular.json build option goes, if you're moving an existing app.
 - [Status and limits](status) says what doesn't work yet. Read it before you try a large app.

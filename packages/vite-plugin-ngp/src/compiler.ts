@@ -13,6 +13,11 @@ export interface CompilerOptions {
   analyzerTsconfig: string;
   /** Emit component HMR code, as the CLI's dev server does. */
   enableHmr: boolean;
+  /**
+   * File replacements, from replaced file to replacement, as absolute paths. The analyzer reads
+   * each replacement's content as the replaced file's, before it compiles anything.
+   */
+  fileReplacements?: Map<string, string>;
 }
 
 /** One component's HMR update: Angular's id for it, and the update module as TypeScript. */
@@ -27,6 +32,9 @@ export interface FileUpdate {
   /** The content the analyzer had before, or undefined if it never saw the file. */
   previous: string | undefined;
 }
+
+/** A component stylesheet: a `styleUrl` file, or an inline style and its size. */
+export type ComponentStyle = {label: string; file: string} | {label: string; size: number};
 
 export interface TransformResult {
   code: string;
@@ -57,6 +65,7 @@ export class NgpCompiler {
      */
     private readonly typeCheckHybrid: HybridCompiler,
     private readonly rootDir: string,
+    private readonly replaced: ReadonlySet<string>,
   ) {}
 
   static async create(options: CompilerOptions): Promise<NgpCompiler> {
@@ -81,7 +90,15 @@ export class NgpCompiler {
     };
     const hybrid = new api.HybridCompiler(analyzer, hybridOptions);
     const typeCheckHybrid = new api.HybridCompiler(analyzer, {...hybridOptions, enableHmr: false, preserveWhitespaces: true});
-    return new NgpCompiler(analyzer, hybrid, typeCheckHybrid, rootDir);
+    const replacements = options.fileReplacements ?? new Map<string, string>();
+    const compiler = new NgpCompiler(analyzer, hybrid, typeCheckHybrid, rootDir, new Set(replacements.keys()));
+    // The analyzer follows imports on disk, so it would read the replaced file. Giving it the
+    // replacement's content under the replaced file's path makes every file that imports it, and
+    // every decorator that reads a value from it, compile against the replacement.
+    for (const [file, replacement] of replacements) {
+      await compiler.update(file, await fs.readFile(replacement, 'utf8'), 'watcher');
+    }
+    return compiler;
   }
 
   /** Compiles one module. Resolves to null when ngp leaves it unchanged. */
@@ -131,6 +148,12 @@ export class NgpCompiler {
    */
   update(file: string, content: string, origin: 'transform' | 'watcher'): Promise<FileUpdate> {
     return this.enqueue(async () => {
+      // A replaced file's content comes from its replacement on disk: once at startup, then from
+      // the watcher. A transform's code can be older than the last watcher edit, when Vite loaded
+      // the module just before it, and sending it would undo that edit.
+      if (origin === 'transform' && this.replaced.has(file)) {
+        return {stale: [], previous: this.known.get(file)};
+      }
       // A file we haven't seen yet: from a transform, the analyzer has read (or will read) the
       // same disk content, so compare against disk. From the watcher, disk already holds the edit,
       // so the only safe answer is that it changed.
@@ -267,12 +290,35 @@ export class NgpCompiler {
   }
 
   /**
+   * Each component stylesheet in `tsFile`: one per `styleUrl` file, with its path, and one per
+   * inline style, with its size in bytes as written. ngp compiles inline styles itself, so they
+   * reach the bundle as written. `styleUrl` files go through Vite's CSS pipeline.
+   */
+  async componentStyles(tsFile: string): Promise<ComponentStyle[]> {
+    await this.updates;
+    const metadata = await this.analyzer.getMetadataForFile(tsFile);
+    const styles: ComponentStyle[] = [];
+    for (const cls of metadata?.classes ?? []) {
+      for (const url of cls.component?.styleUrls ?? []) {
+        styles.push({label: this.relative(url.resolvedPath), file: path.resolve(url.resolvedPath)});
+      }
+      cls.component?.styles?.forEach((css, i) => {
+        styles.push({label: `${this.relative(tsFile)} (${cls.className} inline style ${i + 1})`, size: Buffer.byteLength(css)});
+      });
+    }
+    return styles;
+  }
+
+  private relative(file: string): string {
+    return path.relative(this.rootDir, file).split(path.sep).join('/');
+  }
+
+  /**
    * Angular's HMR id for a component: `encodeURIComponent('<path from rootDir>@<ClassName>')`,
    * the same id the compiled component's HMR initializer listens for.
    */
   componentId(tsFile: string, className: string): string {
-    const relative = path.relative(this.rootDir, tsFile).split(path.sep).join('/');
-    return encodeURIComponent(`${relative}@${className}`);
+    return encodeURIComponent(`${this.relative(tsFile)}@${className}`);
   }
 
   close(): void {

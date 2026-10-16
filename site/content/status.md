@@ -18,6 +18,7 @@ vite-plugin-ngp is a first version on top of a prototype compiler. This page say
 | Linking Angular libraries | Works, in dependency pre-bundling and in builds, with Angular's Babel linker |
 | Component HMR | Works for external templates, and for `.ts` edits that only change a component's inline `template` or `styles`. Other `.ts` edits reload, as under `ng serve`, and so does a template saved together with such a `.ts` edit. Changing `templateUrl` or `styleUrl` reloads too, unlike `ng serve` |
 | Component stylesheets | `styleUrl` files go through Vite's CSS pipeline, so SCSS, Less and PostCSS work, with Angular's view encapsulation. Edits update in place, `ShadowDom` components included. See [Component styles](styles) |
+| Build options from angular.json | `fileReplacements`, `budgets` and `polyfills` work, zone.js apps included. Every other option maps to Vite config; [Migrating from ng build](migrating-from-ng-build) lists each |
 | Server rendering and hydration | Works in the dev server and in builds, with the `ssr` option. This site is prerendered that way |
 | Vitest with TestBed | Works, with jsdom and zoneless TestBed. A run compiles only the specs it runs and what they import. Watch mode reruns specs after template edits too. See [Testing with Vitest](testing) |
 | [Type-checking](type-checking) | Works, for templates and TypeScript, with TypeScript 7 in a separate process. Errors show in the dev server's terminal and overlay, and fail `vite build`. Planted errors land where `ng build` puts them. Checked on this site and the playground; not measured on a large app |
@@ -29,6 +30,7 @@ vite-plugin-ngp is a first version on top of a prototype compiler. This page say
 | Preprocessors in inline styles | Missing. Inline `styles` and template `<style>` elements are plain CSS, because ngp compiles them and has no preprocessing hook. There's no `inlineStyleLanguage` |
 | HTTP status codes from SSR | Missing. `render` returns HTML only, so a not-found page answers 200 when a Node server renders it |
 | i18n | Out of scope for now |
+| Prerendering, the service worker, critical CSS inlining, subresource integrity, `autoCsp` | Not supported. [Migrating from ng build](migrating-from-ng-build#cant-move-yet) lists what an `ng build` app can't bring along |
 | Vitest beyond jsdom | Untried: happy-dom, browser mode, the `node` environment, coverage. `fakeAsync` needs `zone.js`, which the documented setup leaves out |
 | Windows | Only through WSL 2, because the ngp build needs a Unix shell |
 
@@ -41,6 +43,7 @@ vite-plugin-ngp is a first version on top of a prototype compiler. This page say
 - **SSR runs two analyzers.** The browser and the server each get their own ngp compiler, because only the browser's has HMR code. A dev server with SSR needs about twice the analyzer memory, and analyzes every edit twice.
 - **Component stylesheets take two paths.** The dev server serves them as `<link>`s, and builds inline them into the JavaScript, as the CLI does. Both are tested, but a bug can show in only one.
 - **The build optimizer is a copy of the CLI's.** When `@angular/build` changes its pass, the plugin keeps the old one until someone ports the change. Nothing fails when that happens; only bundle sizes would show it.
+- **The `ng build` options copy the CLI's rules.** Budgets, the zone.js check and the server's polyfills are ported by hand from `@angular/build`. If the CLI changes them, the plugin keeps the old ones. Inline `styles` are measured unminified for `anyComponentStyle`, so they come out larger than under `ng build`.
 - **The linker is the slow one.** It's the Babel-based linker. The Angular CLI has since moved to a faster oxc-based one, which the plugin can't use yet because it's private to `@angular/build`.
 
 ## What hasn't been measured

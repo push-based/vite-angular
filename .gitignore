@@ -11,3 +11,6 @@ toolchain/.cache/
 toolchain/out/
 # Fixture apps the HMR test writes and removes
 packages/vite-plugin-ngp/test/.hmr-*/
+
+# Fixture copies made by the plugin tests
+packages/vite-plugin-ngp/test/.tmp/

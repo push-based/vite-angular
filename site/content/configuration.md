@@ -22,6 +22,9 @@ export default defineConfig({
       hmr: true,
       ssr: false,
       typeCheck: true,
+      fileReplacements: [],
+      budgets: [],
+      polyfills: [],
     }),
   ],
 });
@@ -39,6 +42,9 @@ export default defineConfig({
 | `hmr` | `boolean` | `true` | Component HMR in the dev server, for external templates and for inline `template` and `styles` edits. Builds and Vitest ignore it. |
 | `ssr` | `boolean \| {entry?: string}` | `false` | Server rendering. `true` uses `src/main.server.ts` as the server entry, and `{entry: 'path'}` names another. Vitest ignores it. See [Server rendering](server-rendering). |
 | `typeCheck` | `boolean` | `true`, except under Vitest | Type-check templates and TypeScript with TypeScript 7, in a separate process. The dev server reports errors in the terminal and the overlay, and `vite build` fails on them. See [Type-checking](type-checking). |
+| `fileReplacements` | `{replace: string; with: string}[]` | `[]` | angular.json's `fileReplacements`, relative to Vite's root. Every import of `replace` gets the content of `with`, in Vite and in ngp's analyzer, in dev and in builds. |
+| `budgets` | `Budget[]` | `[]` | angular.json's `budgets`: size limits checked after `vite build`, with the CLI's types and messages. An error budget fails the build. |
+| `polyfills` | `string[]` | `[]` | angular.json's `polyfills`: packages or files imported before your app. `zone.js` also makes the plugin rewrite `async`/`await` so zone.js can track it. |
 
 ## When to change them
 
@@ -51,6 +57,41 @@ export default defineConfig({
 **`ssr: true`** renders every page on the server in the dev server, and makes `vite build` build two bundles: `dist/client` for the browser and `dist/server/main.server.js` for the server. The entry's default export must be `render(url, document)`.
 
 **`typeCheck: false`** skips the check in the dev server and in builds. Use it if you already run `tsc` or `ng build` in CI and the dev-server check is too slow on your app, or if your `cacheDir` is outside the project. Builds then succeed with type errors in them.
+**`fileReplacements`** is for environment files. Pick the list by Vite's `mode`, the way angular.json picks it by configuration:
+
+```ts
+export default defineConfig(({mode}) => ({
+  plugins: [
+    ngp({
+      fileReplacements:
+        mode === 'production' ? [{replace: 'src/environments/environment.ts', with: 'src/environments/environment.prod.ts'}] : [],
+    }),
+  ],
+}));
+```
+
+The replacement's relative imports resolve from the replaced file's directory, unlike under the CLI. [Migrating from ng build](migrating-from-ng-build#file-replacements) explains why.
+
+**`budgets`** takes angular.json's array as it is. These are the ones `ng new` generates:
+
+```ts
+ngp({
+  budgets: [
+    {type: 'initial', maximumWarning: '500kB', maximumError: '1MB'},
+    {type: 'anyComponentStyle', maximumWarning: '4kB', maximumError: '8kB'},
+  ],
+});
+```
+
+`styleUrl` files are measured as `ng build` measures them, minified. Inline `styles` are measured as written, so they come out larger. See [Budgets](migrating-from-ng-build#budgets).
+
+**`polyfills`** is only needed for apps that still run on zone.js, and for polyfill packages:
+
+```ts
+ngp({polyfills: ['zone.js']});
+```
+
+On the server, `zone.js` becomes `zone.js/node`. A zoneless app, which is what `ng new` creates since Angular 21, leaves this empty. See [Polyfills and zone.js](migrating-from-ng-build#polyfills-and-zone-js).
 
 **`hmr: false`** makes every edit reload the page. Use it if an in-place update ever leaves a component in a broken state, and tell the maintainers at [PushBased](https://push-based.io/) what you edited.
 
@@ -67,4 +108,7 @@ You don't configure these, but they're worth knowing when you debug:
 - A resolver for component stylesheet names in the dev server, like `card.ngp-de07cd19.css`, and a transform that scopes component stylesheets after Vite's CSS plugin has compiled them. See [Component styles](styles).
 - With `ssr`: `builder: {}` and output directories for the `client` and `ssr` environments, and a middleware that renders page requests through your server entry.
 - Under Vitest, instead of all of the above except the linker: `test.server.deps.inline` with every Angular library, from `devDependencies` too, so they get linked; a cache key generator that keeps your app's modules out of Vitest's module cache; and a watcher that sends edits to the analyzer, since Vitest turns Vite's HMR off. See [Testing with Vitest](testing).
+- With `fileReplacements`: a `load` hook that returns the replacement's content for the replaced file, and watches the replacement.
+- With `polyfills`: one import per polyfill at the top of each module in `entries`. With `zone.js`, a `transform` in the dev server and a `renderChunk` in builds that rewrite `async` functions with esbuild.
+- With `budgets`: on the browser build, a `transform` that measures each component stylesheet after `vite:css`, and a `generateBundle` hook that checks the sizes and logs the CLI's messages.
 - `DEBUG=vite-plugin-ngp` logs every module ngp compiles, and how long it took, to stderr.

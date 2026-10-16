@@ -12,11 +12,13 @@ import {
   type ViteDevServer,
 } from 'vite';
 import {findAngularLibraries, packagePathPattern, packagePattern} from './angular-libraries.js';
-import {NgpCompiler, type HmrUpdate} from './compiler.js';
+import {budgetsPlugin, type Budget} from './budgets.js';
+import {NgpCompiler, type ComponentStyle, type HmrUpdate} from './compiler.js';
 import {writeEntryTsconfig} from './entry-tsconfig.js';
 import {link, LINKER_MARKER} from './linker.js';
 import {isSideEffectFree, optimize, OPTIMIZER_CANDIDATE} from './optimizer.js';
 import type {Engine} from './ngp-api.js';
+import {polyfillsPlugin, usesZone, zoneAsyncPlugin} from './polyfills.js';
 import {
   buildReport,
   OVERLAY_CLIENT,
@@ -27,6 +29,8 @@ import {
   type TypeCheckResult,
 } from './type-check.js';
 import {rewriteToUrls, stylesPlugin, type StylesPluginContext} from './styles.js';
+
+export type {Budget} from './budgets.js';
 
 export interface NgpPluginOptions {
   /**
@@ -74,6 +78,39 @@ export interface NgpPluginOptions {
    * except under Vitest.
    */
   typeCheck?: boolean;
+  /**
+   * Swap source files, like angular.json's `fileReplacements`: every import of `replace` gets the
+   * content of `with`, in Vite and in ngp's analyzer. Paths are relative to Vite's root. Applies in
+   * dev and in builds, so pick the list by `mode` in your Vite config.
+   */
+  fileReplacements?: {replace: string; with: string}[];
+  /**
+   * Size budgets checked after `vite build`, in angular.json's format. A `maximumError` breach
+   * fails the build, a `maximumWarning` breach logs a warning.
+   */
+  budgets?: Budget[];
+  /**
+   * Modules imported before the app, like angular.json's `polyfills`: package names or files
+   * relative to Vite's root. `zone.js` also loads `zone.js/node` on the server, and makes the
+   * plugin rewrite `async`/`await` so zone.js can track it.
+   */
+  polyfills?: string[];
+}
+
+/** What the compiler plugin shares with the other plugins. */
+interface CompilerApi extends StylesPluginContext {
+  /** The entry modules, as absolute paths. */
+  entries(): string[];
+  /** Each component stylesheet in an app module, from the browser compiler's analyzer. */
+  componentStyles(file: string): Promise<ComponentStyle[]>;
+}
+
+/** File replacements, both ways, as absolute paths. Filled in once Vite's root is known. */
+interface Replacements {
+  /** Replaced file to replacement. */
+  byFile: Map<string, string>;
+  /** Replacement to replaced file. */
+  byReplacement: Map<string, string>;
 }
 
 type Consumer = 'client' | 'server';
@@ -114,15 +151,29 @@ const EDIT_BATCH_MS = 50;
 const PENDING_EDIT_MS = 1000;
 
 export function ngp(options: NgpPluginOptions = {}): Plugin[] {
-  const compiler = compilerPlugin(options);
-  return [compiler, stylesPlugin(compiler.api), linkerPlugin(), optimizerPlugin()];
+  const replacements: Replacements = {byFile: new Map(), byReplacement: new Map()};
+  const compiler = compilerPlugin(options, replacements);
+  const polyfills = options.polyfills ?? [];
+  return [
+    compiler,
+    ...(options.fileReplacements?.length ? [fileReplacementsPlugin(options.fileReplacements, replacements)] : []),
+    // Measures component stylesheets before the styles plugin scopes them.
+    ...(options.budgets?.length ? [budgetsPlugin(options.budgets, compiler.api)] : []),
+    stylesPlugin(compiler.api),
+    linkerPlugin(),
+    optimizerPlugin(),
+    ...(polyfills.length > 0 ? [polyfillsPlugin(polyfills, () => compiler.api.entries())] : []),
+    ...(usesZone(polyfills) ? [zoneAsyncPlugin()] : []),
+  ];
 }
 
 function compilerPlugin(
   options: NgpPluginOptions,
-): Plugin<StylesPluginContext> & {api: StylesPluginContext; configureVitest(context: VitestPluginContext): void} {
+  replacements: Replacements,
+): Plugin<CompilerApi> & {api: CompilerApi; configureVitest(context: VitestPluginContext): void} {
   let config: ResolvedConfig;
   let vitest: VitestPluginContext['vitest'] | null = null;
+  let entries: string[] = [];
   /**
    * One compiler per consumer. Server environments get their own, compiled without HMR: HMR code
    * imports update modules from URLs that only a browser can load.
@@ -232,9 +283,6 @@ function compilerPlugin(
         throw new Error('vite-plugin-ngp: set the `toolchain` option or NGP_TOOLCHAIN to an ngp build.');
       }
       const tsconfig = resolveTsconfig(config.root, options.tsconfig, testing);
-      const entries = (options.entries ?? (testing ? [] : ['src/main.ts', 'src/main.server.ts']))
-        .map((e) => path.resolve(config.root, e))
-        .filter((e) => options.entries || fs.existsSync(e));
       const analyzerTsconfig =
         options.entryOnlyTsconfig === false
           ? tsconfig
@@ -245,6 +293,7 @@ function compilerPlugin(
         tsconfig,
         analyzerTsconfig,
         enableHmr: hmr && consumer === 'client',
+        fileReplacements: replacements.byFile,
       });
     })();
     compilers.set(consumer, compiler);
@@ -258,7 +307,7 @@ function compilerPlugin(
    * module, so for a template edit the plugin tells Vitest its component changed.
    */
   async function onTestEdit(server: ViteDevServer, file: string) {
-    if (!(TS_MODULE.test(file) || file.endsWith('.html')) || compilers.size === 0) {
+    if (!(TS_MODULE.test(file) || file.endsWith('.html')) || compilers.size === 0 || replacements.byFile.has(file)) {
       return;
     }
     // Read synchronously, so the update is queued before Vitest's debounced rerun transforms.
@@ -266,7 +315,11 @@ function compilerPlugin(
     let owner: string | null = null;
     for (const [consumer, compiler] of compilers) {
       const ngp = await compiler;
-      const {stale} = await ngp.update(file, content, 'watcher');
+      const replacedFile = replacements.byReplacement.get(file);
+      const {stale} = await ngp.update(replacedFile ?? file, content, 'watcher');
+      if (replacedFile) {
+        stale.push(replacedFile);
+      }
       owner ??= file.endsWith('.html') ? await ngp.componentForTemplate(file) : null;
       for (const environment of Object.values(server.environments)) {
         if (environment.config.consumer !== consumer) {
@@ -385,7 +438,16 @@ function compilerPlugin(
 
   return {
     name: 'vite-plugin-ngp',
-    api: {getCompiler, hmr: () => hmr, linkStyles: () => config.command === 'serve' && !testing},
+    api: {
+      getCompiler,
+      hmr: () => hmr,
+      linkStyles: () => config.command === 'serve' && !testing,
+      entries: () => entries,
+      async componentStyles(file) {
+        const compiler = compilers.get('client');
+        return compiler ? (await compiler).componentStyles(file) : [];
+      },
+    },
     // Before Vite's own TypeScript transform: ngp returns TypeScript, and Vite strips the types.
     enforce: 'pre',
 
@@ -434,6 +496,19 @@ function compilerPlugin(
 
     configResolved(resolved) {
       config = resolved;
+      entries = (options.entries ?? (testing ? [] : ['src/main.ts', 'src/main.server.ts']))
+        .map((e) => path.resolve(config.root, e))
+        .filter((e) => options.entries || fs.existsSync(e));
+      for (const {replace, with: replacement} of options.fileReplacements ?? []) {
+        const from = path.resolve(config.root, replace);
+        const to = path.resolve(config.root, replacement);
+        // The CLI's check and message.
+        if (!fs.existsSync(to)) {
+          throw new Error(`The ${to} path in file replacements does not exist.`);
+        }
+        replacements.byFile.set(from, to);
+        replacements.byReplacement.set(to, from);
+      }
     },
 
     configureVitest(context) {
@@ -639,7 +714,9 @@ function compilerPlugin(
     async hotUpdate({file, type, read, timestamp, modules}) {
       // Each environment updates its own compiler, so the server renders the edit too.
       const compiler = compilers.get(this.environment.config.consumer);
-      if (!compiler || !(TS_MODULE.test(file) || file.endsWith('.html'))) {
+      // The analyzer holds the replacement's content for a replaced file, so an edit to the
+      // replaced file changes nothing.
+      if (!compiler || !(TS_MODULE.test(file) || file.endsWith('.html')) || replacements.byFile.has(file)) {
         return;
       }
       const ngp = await compiler;
@@ -650,6 +727,17 @@ function compilerPlugin(
       // The event type isn't reliable: macOS's watcher reports some new files as updates, and a
       // file can be gone by the time an update is handled. Whether it can be read decides.
       const content = type === 'delete' ? null : await Promise.resolve().then(read).catch(() => null);
+
+      // An edit to a replacement is an edit to the file it replaces. The page reloads: the
+      // analyzer only knows the replaced file's path, so there's no in-place update to make.
+      const replacedFile = replacements.byReplacement.get(file);
+      if (replacedFile) {
+        if (content === null) {
+          return;
+        }
+        const {stale} = await ngp.update(replacedFile, content, 'watcher');
+        return invalidateAll(graph, modulesOf(graph, [...stale, replacedFile]), modules);
+      }
 
       if (content === null) {
         tsEdits.get(file)?.settle(false);
@@ -705,6 +793,30 @@ function compilerPlugin(
       }
 
       return invalidateAll(graph, modulesOf(graph, [...stale, ...(owner ? [owner] : [])]), modules);
+    },
+  };
+}
+
+/**
+ * Gives each replaced file its replacement's content, which is what the analyzer sees too. The
+ * replaced file keeps its own id, so its imports resolve from where it is.
+ */
+function fileReplacementsPlugin(fileReplacements: NonNullable<NgpPluginOptions['fileReplacements']>, replacements: Replacements): Plugin {
+  // Matches files named like a replaced file, so the hook runs for little else.
+  const names = fileReplacements.map((r) => path.basename(r.replace).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  return {
+    name: 'vite-plugin-ngp:file-replacements',
+    enforce: 'pre',
+    load: {
+      filter: {id: new RegExp(`[\\/](?:${names.join('|')})(?:$|\\?)`)},
+      async handler(id) {
+        const replacement = replacements.byFile.get(cleanId(id));
+        if (!replacement) {
+          return null;
+        }
+        this.addWatchFile(replacement);
+        return fs.promises.readFile(replacement, 'utf8');
+      },
     },
   };
 }

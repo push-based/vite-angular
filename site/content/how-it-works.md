@@ -86,6 +86,16 @@ The plugin defines the same globals the Angular CLI does, so the minifier can dr
 
 These took the playground's bundle from 589 kB to 386 kB, and stopped production builds from logging "Angular is running in development mode".
 
+## Build options from angular.json
+
+Three angular.json options need the plugin, not just Vite. The [migration guide](migrating-from-ng-build) covers how to use them; this is what they do inside.
+
+**File replacements reach the analyzer.** ngp's analyzer reads files from disk by following imports, so it would never see a replacement that only Vite knows about. When the plugin starts a compiler, it sends the analyzer each replacement's content under the replaced file's path, before anything compiles. Vite's `load` hook returns the same content for the same path. Both see one file, with the replacement's code, so a component whose template comes from `environment.ts` compiles with the production template. The analyzer only learns about the replacement from the plugin: from the watcher when you edit it, never from a transform, which can carry code read just before your edit.
+
+**Polyfills are the entry's first imports.** The plugin puts one import per polyfill at the top of `src/main.ts` and of your server entry. On the server, `zone.js` becomes `zone.js/node`.
+
+**zone.js apps get their `async` functions rewritten.** Code after a native `await` runs outside zone.js's view, so Angular never runs change detection for it. Like the CLI, the plugin rewrites `async` functions into generators with esbuild for zone.js apps, and leaves every other modern feature alone. Builds rewrite each output chunk once. The dev server rewrites each module that contains `async` as it serves it, dependencies included.
+
 ## The build optimizer
 
 `vite build` runs one more pass over your code and your libraries, which the dev server skips: Angular's build optimizer, the same rewrites `ng build` makes. It has nothing to do with ngp's optimize mode. It exists because the bundler can only drop code it knows is safe to drop, and Angular's compiled output doesn't say. A component's `static ɵcmp = ɵɵdefineComponent(...)` is a function call, so without help Rolldown keeps every component, pipe and service it has seen, whether your app uses it or not.

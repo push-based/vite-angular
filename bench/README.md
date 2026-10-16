@@ -12,6 +12,7 @@ This measures vite-plugin-ngp against the three other ways to run Angular on Vit
 | `.ts` edit | changing a signal's initial value in a page component | the new text in the DOM (every tool reloads the page for this) |
 | Production build | spawning the build, with caches deleted | the process exiting |
 | Bundle size | the build's output | all JavaScript, and the initial part (what `index.html` loads plus its static imports), raw and gzipped |
+| Type error in dev (ngp and the CLI only) | planting `{{ benchMissingN }}` in a template | the dev server's terminal naming `benchMissingN`; then, after removing it, the terminal reporting the app clean |
 
 Starts and builds take 1 warm-up and 5 measured runs by default. Edits take 2 warm-ups and 10 measured edits in one dev-server session. Reported numbers are medians. A result whose median absolute deviation exceeds 5% of its median is marked noisy in the report.
 
@@ -46,7 +47,7 @@ That writes the three generated apps and a copy of the playground to `.work/apps
 NGP_TOOLCHAIN=../toolchain/out node run.mjs --apps standalone-1000-s1 --max-load 6
 ```
 
-Options: `--apps` (`standalone-100-s1`, `standalone-1000-s1`, `standalone-5000-s1`, `playground`), `--tools` (`ngp`, `cli`, `analog`, `oxc`, plus the variants below), `--metrics` (`dev-cold`, `dev-warm`, `edit`, `build`), `--runs`, `--warmup`, `--edits`, `--edit-warmup`, and `--max-load`, which holds each sample until the 1-minute load average is below that number. Results go to `results/<timestamp>.json` unless `--out` says otherwise. A full run of all four apps took about an hour on an M2 Max.
+Options: `--apps` (`standalone-100-s1`, `standalone-1000-s1`, `standalone-5000-s1`, `playground`), `--tools` (`ngp`, `cli`, `analog`, `oxc`, plus the variants below), `--metrics` (`dev-cold`, `dev-warm`, `edit`, `build`, and `typecheck`, which isn't in the default set), `--runs`, `--warmup`, `--edits`, `--edit-warmup`, and `--max-load`, which holds each sample until the 1-minute load average is below that number. Results go to `results/<timestamp>.json` unless `--out` says otherwise. A full run of all four apps took about an hour on an M2 Max.
 
 ```bash
 node report.mjs results/*.json

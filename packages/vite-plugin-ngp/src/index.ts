@@ -7,6 +7,7 @@ import {
   type Plugin,
   type ResolvedConfig,
 } from 'vite';
+import {findAngularLibraries, packagePattern} from './angular-libraries.js';
 import {NgpCompiler} from './compiler.js';
 import {writeEntryTsconfig} from './entry-tsconfig.js';
 import {link, LINKER_MARKER} from './linker.js';
@@ -63,6 +64,7 @@ function compilerPlugin(options: NgpPluginOptions): Plugin {
    */
   const compilers = new Map<Consumer, Promise<NgpCompiler>>();
   let hmr = false;
+  let root = process.cwd();
   const ssrOptions = options.ssr === true ? {} : options.ssr || null;
   const ssrEntry = ssrOptions ? (ssrOptions.entry ?? 'src/main.server.ts') : null;
   /**
@@ -113,8 +115,9 @@ function compilerPlugin(options: NgpPluginOptions): Plugin {
 
     // The same compile-time globals the Angular CLI defines, so Angular can drop dev-only and JIT
     // code. The linker makes every library AOT, so JIT is never needed.
-    config(_, env) {
+    config(userConfig, env) {
       hmr = env.command === 'serve' && options.hmr !== false;
+      root = path.resolve(userConfig.root ?? process.cwd());
       return {
         define: {
           ngJitMode: 'false',
@@ -136,9 +139,11 @@ function compilerPlugin(options: NgpPluginOptions): Plugin {
       if ((environment.consumer ?? (name === 'client' ? 'client' : 'server')) === 'client') {
         return {define: {ngServerMode: 'false'}};
       }
-      // Server environments externalize node_modules by default, and Node would then load
-      // Angular's packages unlinked, which needs the JIT compiler. Bundling them runs the linker.
-      return {define: {ngServerMode: 'true', ngHmrMode: 'false'}, resolve: {noExternal: [/^@angular\//]}};
+      // Server environments externalize node_modules by default, and Node would then load Angular
+      // libraries unlinked, which needs the JIT compiler. Bundling them runs the linker, and keeps
+      // a single copy of @angular/core.
+      const noExternal = [/^@angular\//, ...findAngularLibraries(root).map(packagePattern)];
+      return {define: {ngServerMode: 'true', ngHmrMode: 'false'}, resolve: {noExternal}};
     },
 
     configResolved(resolved) {

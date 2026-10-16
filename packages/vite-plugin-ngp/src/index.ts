@@ -9,7 +9,7 @@ import {
   type ResolvedConfig,
 } from 'vite';
 import {findAngularLibraries, packagePattern} from './angular-libraries.js';
-import {NgpCompiler} from './compiler.js';
+import {NgpCompiler, type HmrUpdate} from './compiler.js';
 import {writeEntryTsconfig} from './entry-tsconfig.js';
 import {link, LINKER_MARKER} from './linker.js';
 import type {Engine} from './ngp-api.js';
@@ -81,6 +81,20 @@ function compilerPlugin(options: NgpPluginOptions): Plugin {
   const componentUpdates = new Map<string, string>();
   /** When each file last changed on disk, as the watcher reported it. */
   const changedAt = new Map<string, number>();
+  /**
+   * Whether each `.ts` file's latest change was applied in place. Created when the watcher reports
+   * the change and settled by the browser's hotUpdate, so a template edited in the same save can
+   * wait for the answer.
+   */
+  const tsEdits = new Map<string, {inPlace: Promise<boolean>; settle: (inPlace: boolean) => void}>();
+
+  /** Whether the `.ts` change that came with a template change was applied in place. */
+  function tsEditInPlace(tsFile: string): Promise<boolean> {
+    const edit = tsEdits.get(tsFile);
+    // A hotUpdate that never ran, or threw, counts as a reload.
+    const timeout = new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 2000).unref());
+    return edit ? Promise.race([edit.inPlace, timeout]) : Promise.resolve(false);
+  }
 
   /**
    * Whether `tsFile` changed in the same edit as `templateFile`, which changed just now. Waits for
@@ -128,11 +142,29 @@ function compilerPlugin(options: NgpPluginOptions): Plugin {
     }
   }
 
+  /** Stores update modules, invalidates `tsFile` without a reload, and tells the page. */
+  async function sendUpdates(environment: DevEnvironment, tsFile: string, updates: HmrUpdate[], timestamp: number) {
+    for (const update of updates) {
+      const js = await transformWithOxc(update.code, `${tsFile}.hmr.ts`, {lang: 'ts'});
+      componentUpdates.set(decodeURIComponent(update.id), js.code);
+    }
+    // Invalidate without reloading, so the next full load compiles the new code.
+    const graph = environment.moduleGraph;
+    for (const mod of graph.getModulesByFile(tsFile) ?? []) {
+      graph.invalidateModule(mod, new Set(), timestamp, true);
+    }
+    for (const update of updates) {
+      environment.hot.send({type: 'custom', event: 'angular:component-update', data: {id: update.id, timestamp}});
+      config.logger.info(`hmr update ${decodeURIComponent(update.id)}`, {timestamp: true});
+    }
+  }
+
   /**
    * Sends an edited template to the running component, or reloads the page when it can't. An
    * update module runs against the class already on the page. If the class changed in the same
    * edit, the new template may use members it doesn't have yet, so the class's own change
-   * reloads the page instead.
+   * reloads the page instead. A `.ts` change that was itself applied in place left the class as
+   * it was, so the template update still goes out.
    */
   async function updateTemplate(
     environment: DevEnvironment,
@@ -150,25 +182,14 @@ function compilerPlugin(options: NgpPluginOptions): Plugin {
         }
       }
     };
-    if (await changedTogether(file, owner)) {
+    if ((await changedTogether(file, owner)) && !(await tsEditInPlace(owner))) {
       invalidate();
       return;
     }
     try {
       const updates = await ngp.hmrUpdates(owner, file);
       if (updates.length > 0) {
-        for (const update of updates) {
-          const js = await transformWithOxc(update.code, `${owner}.hmr.ts`, {lang: 'ts'});
-          componentUpdates.set(decodeURIComponent(update.id), js.code);
-        }
-        // Invalidate without reloading, so the next full load compiles the new template.
-        for (const mod of graph.getModulesByFile(owner) ?? []) {
-          graph.invalidateModule(mod, new Set(), timestamp, true);
-        }
-        for (const update of updates) {
-          environment.hot.send({type: 'custom', event: 'angular:component-update', data: {id: update.id, timestamp}});
-          config.logger.info(`hmr update ${decodeURIComponent(update.id)}`, {timestamp: true});
-        }
+        await sendUpdates(environment, owner, updates, timestamp);
         return;
       }
     } catch (error) {
@@ -176,6 +197,33 @@ function compilerPlugin(options: NgpPluginOptions): Plugin {
     }
     invalidate();
     environment.hot.send({type: 'full-reload'});
+  }
+
+  /**
+   * Applies a `.ts` edit in place if it only changed components' inline `template` or `styles`.
+   * Resolves to false when the edit needs a page reload.
+   */
+  async function updateInline(
+    environment: DevEnvironment,
+    ngp: NgpCompiler,
+    file: string,
+    previous: string,
+    content: string,
+    timestamp: number,
+  ): Promise<boolean> {
+    try {
+      const updates = await ngp.inlineHmrUpdates(file, previous, content);
+      if (!updates) {
+        return false;
+      }
+      // No updates: the edit changed only trivia that no component depends on.
+      await sendUpdates(environment, file, updates, timestamp);
+      return true;
+    } catch (error) {
+      // Vite drops errors thrown from hotUpdate silently. Say so, and reload instead.
+      config.logger.error(`[vite-plugin-ngp] HMR update for ${file} failed, reloading: ${String(error)}`);
+      return false;
+    }
   }
 
   return {
@@ -312,10 +360,17 @@ function compilerPlugin(options: NgpPluginOptions): Plugin {
     // Vite calls this for every change before any hotUpdate, so hotUpdate sees the whole edit.
     watchChange(id) {
       changedAt.set(id, Date.now());
+      if (TS_MODULE.test(id)) {
+        tsEdits.get(id)?.settle(false);
+        let settle!: (inPlace: boolean) => void;
+        const inPlace = new Promise<boolean>((resolve) => (settle = resolve));
+        tsEdits.set(id, {inPlace, settle});
+      }
     },
 
-    // Template edits update the component in place. Every other edit returns the affected modules,
-    // and since compiled components don't accept updates, Vite reloads the page.
+    // Template edits, and .ts edits that only change inline templates or styles, update the
+    // component in place. Every other edit returns the affected modules, and since compiled
+    // components don't accept updates, Vite reloads the page.
     async hotUpdate({file, type, read, timestamp}) {
       // Each environment updates its own compiler, so the server renders the edit too.
       const compiler = compilers.get(this.environment.config.consumer);
@@ -323,7 +378,8 @@ function compilerPlugin(options: NgpPluginOptions): Plugin {
         return;
       }
       const ngp = await compiler;
-      const stale = await ngp.update(file, await read(), 'watcher');
+      const content = await read();
+      const {stale, previous} = await ngp.update(file, content, 'watcher');
       const owner = file.endsWith('.html') ? await ngp.componentForTemplate(file) : null;
       const graph = this.environment.moduleGraph;
 
@@ -336,6 +392,16 @@ function compilerPlugin(options: NgpPluginOptions): Plugin {
         // propagation without a reload, which is what "handled" means here.
         const url = '/' + path.relative(config.root, file).split(path.sep).join('/');
         return [await graph.ensureEntryFromUrl(url, false)];
+      }
+
+      if (TS_MODULE.test(file) && hmr && this.environment.name === 'client') {
+        const inPlace =
+          previous !== undefined && (await updateInline(this.environment, ngp, file, previous, content, timestamp));
+        tsEdits.get(file)?.settle(inPlace);
+        if (inPlace) {
+          // For a .ts file, no modules means handled.
+          return [];
+        }
       }
 
       const affected = new Set<EnvironmentModuleNode>();

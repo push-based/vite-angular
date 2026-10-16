@@ -1,6 +1,7 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import {readConfiguration} from '@angular/compiler-cli';
+import {hmrCandidates} from './hmr-candidates.js';
 import {loadNgp, type Analyzer, type Engine, type HybridCompiler, type NgpDiagnostic} from './ngp-api.js';
 
 export interface CompilerOptions {
@@ -18,6 +19,13 @@ export interface CompilerOptions {
 export interface HmrUpdate {
   id: string;
   code: string;
+}
+
+/** What an edit did: the files whose output may have changed, and the content it replaced. */
+export interface FileUpdate {
+  stale: string[];
+  /** The content the analyzer had before, or undefined if it never saw the file. */
+  previous: string | undefined;
 }
 
 export interface TransformResult {
@@ -79,13 +87,14 @@ export class NgpCompiler {
 
   /**
    * Sends a file's content to the analyzer if it differs from what the analyzer has, and resolves
-   * to the TypeScript files whose output may have changed. Works for templates too.
+   * to the TypeScript files whose output may have changed, and to the content it replaced. Works
+   * for templates too.
    *
    * This skips HybridCompiler.updateFileContent on purpose: that runs analyzeOptimizedDelta, which
    * re-streams every file in the program after each edit. Vite re-requests what the page still
    * uses, so dropping the stale files from the cache is enough.
    */
-  update(file: string, content: string, origin: 'transform' | 'watcher'): Promise<string[]> {
+  update(file: string, content: string, origin: 'transform' | 'watcher'): Promise<FileUpdate> {
     const run = this.updates.then(async () => {
       // A file we haven't seen yet: from a transform, the analyzer has read (or will read) the
       // same disk content, so compare against disk. From the watcher, disk already holds the edit,
@@ -95,14 +104,14 @@ export class NgpCompiler {
         (origin === 'transform' ? await fs.readFile(file, 'utf8').catch(() => undefined) : undefined);
       this.known.set(file, content);
       if (previous === content) {
-        return [];
+        return {stale: [], previous};
       }
       const invalidated = await this.analyzer.updateFileContent([{filePath: file, content}]);
       const stale = invalidated.filter((f) => f.endsWith('.ts')).map((f) => path.resolve(f));
       for (const f of [...stale, file]) {
         this.hybrid.fileCache.delete(f);
       }
-      return stale;
+      return {stale, previous};
     });
     this.updates = run.catch(() => {});
     return run;
@@ -121,16 +130,36 @@ export class NgpCompiler {
   async hmrUpdates(tsFile: string, templateFile: string): Promise<HmrUpdate[]> {
     await this.updates;
     const metadata = await this.analyzer.getMetadataForFile(tsFile);
-    const updates: HmrUpdate[] = [];
-    for (const cls of metadata?.classes ?? []) {
+    const classes = (metadata?.classes ?? []).filter((cls) => {
       const template = cls.component?.templateUrl?.resolvedPath;
-      if (!cls.className || !template || path.resolve(template) !== templateFile) {
-        continue;
+      return template && path.resolve(template) === templateFile;
+    });
+    return (await this.emitUpdates(tsFile, classes.map((cls) => cls.className))) ?? [];
+  }
+
+  /**
+   * Update modules for an edit to a component's `.ts` file that only changed inline `template` or
+   * `styles` values: one per component whose values changed, and none when no component's did.
+   * Resolves to null when the edit changed anything else, which needs a page reload. `previous`
+   * is the file's content before the edit, as `update` returned it.
+   */
+  async inlineHmrUpdates(tsFile: string, previous: string, current: string): Promise<HmrUpdate[] | null> {
+    await this.updates;
+    const metadata = await this.analyzer.getMetadataForFile(tsFile);
+    const components = new Set((metadata?.classes ?? []).filter((cls) => cls.component).map((cls) => cls.className));
+    const changed = hmrCandidates(tsFile, previous, current, (name) => components.has(name));
+    return changed && this.emitUpdates(tsFile, changed);
+  }
+
+  /** Resolves to null if ngp has no update module for one of the classes. */
+  private async emitUpdates(tsFile: string, classNames: (string | undefined)[]): Promise<HmrUpdate[] | null> {
+    const updates: HmrUpdate[] = [];
+    for (const className of classNames) {
+      const code = className && (await this.hybrid.emitHmrUpdateModule(tsFile, className));
+      if (!code) {
+        return null;
       }
-      const code = await this.hybrid.emitHmrUpdateModule(tsFile, cls.className);
-      if (code) {
-        updates.push({id: this.componentId(tsFile, cls.className), code});
-      }
+      updates.push({id: this.componentId(tsFile, className), code});
     }
     return updates;
   }

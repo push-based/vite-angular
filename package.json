@@ -8,7 +8,9 @@
     "build": "pnpm -r --filter ./packages/* build",
     "dev": "pnpm build && pnpm --filter playground dev",
     "playground:build": "pnpm build && pnpm --filter playground build",
-    "test": "pnpm build && NGP_TOOLCHAIN=\"$PWD/toolchain/out\" pnpm --filter vite-plugin-ngp test"
+    "test": "pnpm build && NGP_TOOLCHAIN=\"$PWD/toolchain/out\" pnpm --filter vite-plugin-ngp test",
+    "site:dev": "pnpm build && pnpm --filter site dev",
+    "site:build": "pnpm build && pnpm --filter site build"
   },
   "engines": {
     "node": ">=26.0.0"

@@ -1,0 +1,41 @@
+// Generates the vite-plugin-ngp logo: an Angular-style shield inside a Rust-style gear.
+// Usage: node scripts/logo.mjs > public/logo.svg
+const cx = 128, cy = 128;
+const teeth = 16, rOuter = 124, rRoot = 108, rHole = 94;
+const f = (n) => n.toFixed(2);
+
+// Gear outline: each tooth is a trapezoid, narrower at the tip.
+const pts = [];
+for (let i = 0; i < teeth; i++) {
+  const a = (i / teeth) * 2 * Math.PI;
+  const step = (2 * Math.PI) / teeth;
+  const half = step / 2;
+  for (const [da, r] of [[-half * 0.92, rRoot], [-half * 0.5, rOuter], [half * 0.5, rOuter], [half * 0.92, rRoot]]) {
+    pts.push([cx + r * Math.sin(a + da), cy - r * Math.cos(a + da)]);
+  }
+}
+const gear = 'M' + pts.map(([x, y]) => `${f(x)},${f(y)}`).join('L') + 'Z';
+// The hole, drawn counter-clockwise so evenodd and nonzero both cut it out.
+const hole = `M${cx},${cy - rHole}a${rHole},${rHole} 0 1,0 0.01,0Z`;
+
+// Shield: flat shoulders, tapering to a point, like Angular's mark.
+const shield = 'M128,40 L198,64 L188,170 L128,214 L68,170 L58,64 Z';
+// The "A": outer legs plus crossbar, with a triangular counter.
+const letterA = 'M128,70 L172,176 L150,176 L141,154 L115,154 L106,176 L84,176 Z M128,106 L135,136 L121,136 Z';
+
+process.stdout.write(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="t">
+  <title id="t">vite-plugin-ngp</title>
+  <defs>
+    <linearGradient id="shield" x1="0.15" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#FF003C"/>
+      <stop offset="0.55" stop-color="#C21FB0"/>
+      <stop offset="1" stop-color="#7839EE"/>
+    </linearGradient>
+  </defs>
+  <path fill="#2D0064" fill-rule="evenodd" d="${gear}${hole}"/>
+  <g transform="translate(128 131) scale(0.86) translate(-128 -127)">
+    <path fill="url(#shield)" d="${shield}"/>
+    <path fill="#FFFFFF" fill-rule="evenodd" d="${letterA}"/>
+  </g>
+</svg>
+`);

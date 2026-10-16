@@ -1,0 +1,80 @@
+<section class="hero">
+  <div class="container hero__inner">
+    <div class="hero__copy">
+      <p class="text-subtitle eyebrow">Vite plugin · Angular 22 · ngp</p>
+      <h1 class="text-display-5xl hero__title">Angular on Vite, one module at a time</h1>
+      <p class="text-lead hero__lead">
+        vite-plugin-ngp compiles each Angular file when Vite asks for it, with ngp, the Rust-and-TypeScript
+        preprocessor the Angular team merged in October 2026. Vite owns the module graph. Nothing compiles
+        the whole program before the first module is served.
+      </p>
+      <div class="hero__actions">
+        <a class="pb-btn pb-btn-lg pb-btn-primary" routerLink="/getting-started">Get started</a>
+        <a class="pb-btn pb-btn-lg pb-btn-ghost" routerLink="/how-it-works">How it works</a>
+      </div>
+    </div>
+    <img class="hero__logo" src="logo.svg" alt="" width="240" height="240" />
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <aside class="callout callout--warning" role="note">
+      <strong>A prototype on a prototype.</strong>
+      ngp isn't on npm yet, so you build it from Angular's source first, and every Angular package is pinned
+      to <code>22.3.0-next.2</code>. Use it to try per-module Angular compilation, not to ship production apps.
+      <a routerLink="/status">What works today</a>.
+    </aside>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <p class="text-subtitle eyebrow">Measured</p>
+    <h2 class="text-section-title">What per-module compilation buys you</h2>
+    <div class="facts">
+      @for (fact of facts; track fact.value) {
+        <article class="pb-card fact">
+          <p class="fact__value">{{ fact.value }}</p>
+          <p class="pb-card-body">{{ fact.label }}</p>
+        </article>
+      }
+    </div>
+    <p class="text-caption muted">
+      The first two figures come from spikes against ngp's API on an M2 Max, not from this plugin's dev server.
+      <a routerLink="/status" fragment="what-hasnt-been-measured">What hasn't been measured</a>.
+    </p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container split">
+    <div>
+      <p class="text-subtitle eyebrow">Setup</p>
+      <h2 class="text-section-title">One plugin in your Vite config</h2>
+      <p>
+        Point the plugin at your ngp build, keep your usual <code>index.html</code> and <code>main.ts</code>, and
+        run <code>vite</code>. The same transform runs in production builds and in server rendering: this site is
+        an Angular app compiled by the plugin and prerendered with Angular SSR.
+      </p>
+      <a class="pb-btn pb-btn-tertiary" routerLink="/getting-started">Read the setup guide <span class="pb-arrow" aria-hidden="true">→</span></a>
+    </div>
+    <div class="prose" [innerHTML]="snippet"></div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <p class="text-subtitle eyebrow">How it works</p>
+    <h2 class="text-section-title">Three steps per request</h2>
+    <ol class="steps">
+      @for (step of steps; track step.title; let i = $index) {
+        <li class="pb-card step">
+          <span class="step__number" aria-hidden="true">{{ i + 1 }}</span>
+          <h3 class="pb-card-title">{{ step.title }}</h3>
+          <p class="pb-card-body">{{ step.body }}</p>
+        </li>
+      }
+    </ol>
+  </div>
+</section>

@@ -1,0 +1,44 @@
+<div class="container docs">
+  <nav class="docs-nav" aria-label="Documentation">
+    @for (section of sections; track section.name) {
+      <p class="text-subtitle docs-nav__section">{{ section.name }}</p>
+      <ul>
+        @for (page of section.pages; track page.path) {
+          <li><a [routerLink]="['/', page.path]" routerLinkActive="is-active" ariaCurrentWhenActive="page">{{ page.label }}</a></li>
+        }
+      </ul>
+    }
+  </nav>
+
+  <article class="docs-article">
+    <div class="prose" (click)="onContentClick($event)" [innerHTML]="html()"></div>
+
+    <nav class="pager" aria-label="Pages">
+      @if (neighbours().previous; as previous) {
+        <a class="pager__link" [routerLink]="['/', previous.path]">
+          <span class="text-caption">Previous</span>
+          <span>{{ previous.label }}</span>
+        </a>
+      }
+      @if (neighbours().next; as next) {
+        <a class="pager__link pager__link--next" [routerLink]="['/', next.path]">
+          <span class="text-caption">Next</span>
+          <span>{{ next.label }}</span>
+        </a>
+      }
+    </nav>
+  </article>
+
+  @if (doc().headings.length > 1) {
+    <aside class="toc" aria-label="On this page">
+      <p class="text-subtitle docs-nav__section">On this page</p>
+      <ul>
+        @for (heading of doc().headings; track heading.id) {
+          <li [class.toc__sub]="heading.depth === 3">
+            <a [routerLink]="[]" [fragment]="heading.id">{{ heading.text }}</a>
+          </li>
+        }
+      </ul>
+    </aside>
+  }
+</div>

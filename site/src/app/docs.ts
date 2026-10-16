@@ -1,0 +1,32 @@
+export interface DocHeading {
+  id: string;
+  text: string;
+  depth: number;
+}
+
+/** A page from content/, as the markdown plugin in scripts/markdown.ts compiles it. */
+export interface Doc {
+  title: string;
+  description: string;
+  html: string;
+  headings: DocHeading[];
+}
+
+export interface DocEntry {
+  path: string;
+  label: string;
+  section: 'Guide' | 'Project';
+  load: () => Promise<Doc>;
+}
+
+/** Every docs page, in sidebar order. Routes, the sidebar and the prerender list come from here. */
+export const DOCS: DocEntry[] = [
+  {path: 'getting-started', label: 'Getting started', section: 'Guide', load: () => import('../../content/getting-started.md').then((m) => m.default)},
+  {path: 'how-it-works', label: 'How it works', section: 'Guide', load: () => import('../../content/how-it-works.md').then((m) => m.default)},
+  {path: 'configuration', label: 'Configuration', section: 'Guide', load: () => import('../../content/configuration.md').then((m) => m.default)},
+  {path: 'server-rendering', label: 'Server rendering', section: 'Guide', load: () => import('../../content/server-rendering.md').then((m) => m.default)},
+  {path: 'status', label: 'Status and limits', section: 'Project', load: () => import('../../content/status.md').then((m) => m.default)},
+  {path: 'building-ngp', label: 'Building ngp', section: 'Project', load: () => import('../../content/building-ngp.md').then((m) => m.default)},
+];
+
+export const SECTIONS = ['Guide', 'Project'] as const;

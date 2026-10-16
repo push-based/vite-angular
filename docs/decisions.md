@@ -94,6 +94,8 @@ Each entry records one choice: what we decided, why, what it costs, and when to 
 
 ## 9. JIT fallback in the playground until there's a linker
 
+*Superseded by 12.*
+
 *16 October 2026*
 
 **Decision.** The playground's `main.ts` imports `@angular/compiler`, so the runtime can finish compiling Angular's partially compiled packages in the browser.
@@ -123,3 +125,25 @@ Each entry records one choice: what we decided, why, what it costs, and when to 
 **Why.** We chose to run on the newest Node line. Angular's CLI and ngp both accept it: their `engines` field allows `>=26.0.0`.
 
 **Cost.** The bench repo still pins Node 24, so ngp is built under 24 and run under 26 here. That works because the native engine is an N-API addon, and N-API is stable across Node versions. The plugin test, `vite build` and the dev server all pass on 26.12.0.
+
+## 12. Link libraries with Angular's Babel linker
+
+*16 October 2026. Replaces 9.*
+
+**Decision.** The plugin runs `createEs2015LinkerPlugin` from `@angular/compiler-cli/linker/babel` on every `node_modules` module that contains `ɵɵngDeclare`, except `@angular/core` and `@angular/compiler`. It runs as a Rolldown plugin in `optimizeDeps.rolldownOptions` for dev pre-bundling, and as a `transform` for builds and for deps that aren't pre-bundled. The playground no longer imports `@angular/compiler`.
+
+**Why.** It's Angular's public linker API, and the bench's bundled builds already boot with it. Without a linker, every partially compiled library needs the JIT compiler in the browser. The playground's production bundle went from 1,197 kB to 589 kB.
+
+**Cost.** Babel is slower than the oxc-based linker the CLI moved to (angular/angular-cli#33625). That costs time once per dependency in dev, because Vite caches pre-bundled deps, and once per build. The `@babel/core` dependency adds install weight.
+
+**Revisit when** cold dev start or build time shows linking as a real share. The CLI's oxc linker is in `@angular/build`'s private API.
+
+## 13. Define Angular's compile-time globals
+
+*16 October 2026*
+
+**Decision.** Define `ngJitMode: false` everywhere, `ngDevMode: false` in builds, and `ngServerMode: false` in the client environment, matching what `@angular/build` sets for a browser build.
+
+**Why.** Without `ngDevMode: false`, a production build ran Angular's dev-mode checks and logged "Angular is running in development mode". With these globals the playground bundle shrank from 589 kB to 386 kB, because the minifier drops the dev-only and JIT branches.
+
+**Cost.** `ngJitMode: false` breaks any code that compiles components at runtime. That's rare in apps, and it's the CLI's default for AOT builds too.

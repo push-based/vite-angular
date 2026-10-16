@@ -26,19 +26,23 @@ Four pieces, all in [packages/vite-plugin-ngp/src](../packages/vite-plugin-ngp/s
 
 **Keeping edits cheap** ([entry-tsconfig.ts](../packages/vite-plugin-ngp/src/entry-tsconfig.ts)). After every update, ngp's analyzer reloads its tsconfig and re-expands the `include` globs, walking the whole source tree. That made a one-line edit cost 172 ms at 5,000 components. The plugin writes a tsconfig into Vite's cache directory that extends the user's and lists only the entry points. The analyzer finds every other file by following imports, and the same edit costs about 1 ms. The upstream fix would be to re-resolve entry points only when files are added or deleted. ngp doesn't accept outside contributions, so the workaround stays until Angular fixes it.
 
+**Linking libraries** ([linker.ts](../packages/vite-plugin-ngp/src/linker.ts)). Angular libraries, Angular's own packages included, ship partially compiled: `ɵɵngDeclareComponent(...)` calls that describe a declaration without being its runtime code. Angular's linker rewrites them into the final `ɵɵdefineComponent(...)` code. ngp only compiles the app's own sources, so the plugin runs Angular's Babel linker on any `node_modules` module that contains `ɵɵngDeclare`. It does this in two places: in dev, inside Rolldown's dependency pre-bundling, which runs outside the plugin pipeline, and in the normal transform for production builds and for dependencies Vite doesn't pre-bundle. `@angular/core` and `@angular/compiler` are skipped, because they define those functions without calling them.
+
+**Compile-time globals** ([index.ts](../packages/vite-plugin-ngp/src/index.ts), `config`). The plugin defines the same globals the Angular CLI does: `ngJitMode` false everywhere, `ngDevMode` false in builds, and `ngServerMode` false in the client environment. Without them, a production build still runs Angular's dev-mode checks.
+
 One trap is already fixed. The plugin remembers what the analyzer has seen for each file. For a file it hasn't seen yet, a transform compares against disk. A watcher event can't, because disk already holds the edit. So watcher edits to unseen files, which includes every template's first edit, always go to the analyzer.
 
 ## What works, and what doesn't yet
 
-Verified in the [playground](../playground): `vite build`, dev-server boot with no console errors, signals and control flow, a lazy route, and template and component edits reloading with fresh output.
+Verified in the [playground](../playground): `vite build` and `vite preview`, dev-server boot with no console errors and no JIT compiler loaded, signals and control flow, a lazy route, and template and component edits reloading with fresh output.
 
 | Piece | Status |
 |---|---|
 | Per-module transform, optimize mode | Works |
 | Edit → analyzer update → module invalidation | Works, page reloads |
 | Entry-only analyzer tsconfig | Works. Same output as the full tsconfig for every playground module ([test](../packages/vite-plugin-ngp/test/entry-tsconfig.test.mjs)) |
-| Production build through the same transform | Works, unoptimized |
-| Linker for `node_modules` | Missing. The playground loads `@angular/compiler` so the runtime can JIT Angular's own packages. That compiler ships to the browser: the playground's production bundle is 1.2 MB |
+| Production build through the same transform | Works. The playground's bundle is 386 kB, down from 1,197 kB with the JIT fallback. No build optimizer yet (pure annotations, dead-code passes) |
+| Linker for `node_modules` | Works, in dev pre-bundling and in builds. Babel-based, the same linker the bench's bundles use. The CLI has since moved to an oxc-based linker, which should be faster |
 | Component HMR (`/@ng/component`, `angular:component-update`) | Missing. ngp already emits the client code and the update modules |
 | External styles, encapsulation, preprocessors | Missing. Without `externalRuntimeStyles`, ngp reads `styleUrl` files itself and inlines them, untested here. With it, styles would become Vite modules |
 | Template type-checking | Missing. Planned as a worker running `tsgo` over ngp's `.ngtypecheck.ts` output |

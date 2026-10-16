@@ -157,6 +157,22 @@ nav a.active {
   box-shadow: var(--shadow-sm);
 }
 
+.locales {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0 0.25rem;
+  font-size: 0.8rem;
+}
+.locales a {
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  color: var(--text-muted);
+  text-decoration: none;
+}
+.locales a[aria-current='true'] {
+  background: var(--surface-3);
+  color: var(--text);
+}
 .build {
   display: flex;
   align-items: center;

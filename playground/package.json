@@ -8,12 +8,14 @@
     "preview": "vite preview",
     "start": "node server.mjs",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "extract-i18n": "ngp-extract-i18n --out-file src/locale/messages.xlf"
   },
   "dependencies": {
     "@angular/common": "22.3.0-next.2",
     "@angular/compiler": "22.3.0-next.2",
     "@angular/core": "22.3.0-next.2",
+    "@angular/localize": "22.3.0-next.2",
     "@angular/platform-browser": "22.3.0-next.2",
     "@angular/platform-server": "22.3.0-next.2",
     "@angular/router": "22.3.0-next.2",

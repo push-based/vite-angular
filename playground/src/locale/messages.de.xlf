@@ -1,0 +1,291 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+  <file source-language="en-US" target-language="de" datatype="plaintext" original="ng2.template">
+    <body>
+      <trans-unit id="413116577994876478" datatype="html">
+        <source>Light</source>
+        <target state="translated">Hell</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/app.ts</context>
+          <context context-type="linenumber">31</context>
+        </context-group>
+        <note priority="1" from="description">Color theme</note>
+      </trans-unit>
+      <trans-unit id="29832309535656200" datatype="html">
+        <source>System</source>
+        <target state="translated">System</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/app.ts</context>
+          <context context-type="linenumber">32</context>
+        </context-group>
+        <note priority="1" from="description">Color theme</note>
+      </trans-unit>
+      <trans-unit id="3892161059518616136" datatype="html">
+        <source>Dark</source>
+        <target state="translated">Dunkel</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/app.ts</context>
+          <context context-type="linenumber">33</context>
+        </context-group>
+        <note priority="1" from="description">Color theme</note>
+      </trans-unit>
+      <trans-unit id="2102825898069375693" datatype="html">
+        <source>Menu</source>
+        <target state="translated">Menü</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/app.ts</context>
+          <context context-type="linenumber">45</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6687248545163820015" datatype="html">
+        <source>Demos</source>
+        <target state="translated">Demos</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/app.ts</context>
+          <context context-type="linenumber">45</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/app.ts</context>
+          <context context-type="linenumber">45</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
+          <context context-type="linenumber">45</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1443956405974162192" datatype="html">
+        <source>Color theme</source>
+        <target state="translated">Farbschema</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/app.ts</context>
+          <context context-type="linenumber">45</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2826581353496868063" datatype="html">
+        <source>Language</source>
+        <target state="translated">Sprache</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/app.ts</context>
+          <context context-type="linenumber">45</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="9121296123247183521" datatype="html">
+        <source>Angular version</source>
+        <target state="translated">Angular-Version</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/app.ts</context>
+          <context context-type="linenumber">45</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6780407325174304229" datatype="html">
+        <source>Locale</source>
+        <target state="translated">Gebietsschema</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/app.ts</context>
+          <context context-type="linenumber">45</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
+          <context context-type="linenumber">45</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3411805131914952915" datatype="html">
+        <source>Skip to content</source>
+        <target state="translated">Zum Inhalt springen</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/app.ts</context>
+          <context context-type="linenumber">45</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2614607010577950577" datatype="html">
+        <source>Overview</source>
+        <target state="translated">Übersicht</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/app.ts</context>
+          <context context-type="linenumber">45</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2995078464345608666" datatype="html">
+        <source>Vite asks for a module</source>
+        <target state="translated">Vite fragt ein Modul an</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
+          <context context-type="linenumber">31</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="115145348840462447" datatype="html">
+        <source>Only what the browser imports, when it imports it.</source>
+        <target state="translated">Nur was der Browser importiert, wenn er es importiert.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
+          <context context-type="linenumber">31</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="9159272233897657540" datatype="html">
+        <source>ngp compiles it</source>
+        <target state="translated">ngp kompiliert es</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
+          <context context-type="linenumber">32</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1546178855245626926" datatype="html">
+        <source>Rust analyzer plus Angular&apos;s template compiler, in optimize mode.</source>
+        <target state="translated">Rust-Analyzer plus Angulars Template-Compiler, im Optimize-Modus.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
+          <context context-type="linenumber">32</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2374858720744884988" datatype="html">
+        <source>Vite strips the types</source>
+        <target state="translated">Vite entfernt die Typen</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
+          <context context-type="linenumber">33</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5461576952190546587" datatype="html">
+        <source>ngp returns TypeScript; Vite&apos;s oxc transform does the rest.</source>
+        <target state="translated">ngp liefert TypeScript, Vites oxc-Transform erledigt den Rest.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
+          <context context-type="linenumber">33</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1413573095942195120" datatype="html">
+        <source>Edits update in place</source>
+        <target state="translated">Änderungen greifen sofort</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
+          <context context-type="linenumber">34</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2755635333883506291" datatype="html">
+        <source>Template edits arrive over HMR without a reload.</source>
+        <target state="translated">Template-Änderungen kommen per HMR an, ohne Neuladen.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
+          <context context-type="linenumber">34</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7160265881173958663" datatype="html">
+        <source>This build</source>
+        <target state="translated">Dieser Build</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
+          <context context-type="linenumber">45</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1073370489841373993" datatype="html">
+        <source>Compiled per module by ngp</source>
+        <target state="translated">Modulweise kompiliert von ngp</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
+          <context context-type="linenumber">45</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="overviewHeading" datatype="html">
+        <source>Angular on Vite, <x id="START_TAG_SPAN" ctype="x-span"/>one module at a time<x id="CLOSE_TAG_SPAN" ctype="x-span"/>.</source>
+        <target state="translated">Angular auf Vite, <x id="START_TAG_SPAN" ctype="x-span"/>ein Modul nach dem anderen<x id="CLOSE_TAG_SPAN" ctype="x-span"/>.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
+          <context context-type="linenumber">45</context>
+        </context-group>
+        <note priority="1" from="description">Overview page heading</note>
+      </trans-unit>
+      <trans-unit id="1098059340205672337" datatype="html">
+        <source> This playground runs on <x id="START_TAG_CODE" ctype="x-code"/>vite-plugin-ngp<x id="CLOSE_TAG_CODE" ctype="x-code"/>. Every component you see was compiled by Angular&apos;s new hybrid preprocessor the moment the browser asked for it, with no whole-program build first. Each page below exercises a different part of the compiler. </source>
+        <target state="translated"> Dieser Playground läuft auf <x id="START_TAG_CODE" ctype="x-code"/>vite-plugin-ngp<x id="CLOSE_TAG_CODE" ctype="x-code"/>. Jede Komponente, die du siehst, hat Angulars neuer Hybrid-Präprozessor in dem Moment kompiliert, in dem der Browser sie angefragt hat, ohne vorherigen Build des ganzen Programms. Jede Seite unten prüft einen anderen Teil des Compilers. </target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
+          <context context-type="linenumber">45</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="847126266587362272" datatype="html">
+        <source>Start with signals</source>
+        <target state="translated">Mit Signals anfangen</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
+          <context context-type="linenumber">45</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3766793848982270496" datatype="html">
+        <source>See @defer</source>
+        <target state="translated">@defer ansehen</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
+          <context context-type="linenumber">45</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1713271461473302108" datatype="html">
+        <source>Mode</source>
+        <target state="translated">Modus</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
+          <context context-type="linenumber">45</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="584896290273710256" datatype="html">
+        <source>Dev checks</source>
+        <target state="translated">Dev-Prüfungen</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
+          <context context-type="linenumber">45</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3266045459484508823" datatype="html">
+        <source>All modules loaded in</source>
+        <target state="translated">Alle Module geladen in</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
+          <context context-type="linenumber">45</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6906003299608353649" datatype="html">
+        <source>How a module gets here</source>
+        <target state="translated">Wie ein Modul hierher kommt</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
+          <context context-type="linenumber">45</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4101941266124151376" datatype="html">
+        <source>on</source>
+        <target state="translated">an</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
+          <context context-type="linenumber">45</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6110089012347909146" datatype="html">
+        <source>off</source>
+        <target state="translated">aus</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
+          <context context-type="linenumber">45</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
+          <context context-type="linenumber">45</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2799754130116914133" datatype="html">
+        <source>connected</source>
+        <target state="translated">verbunden</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
+          <context context-type="linenumber">45</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7851122650020448934" datatype="html">
+        <source>{VAR_PLURAL, plural, =1 {+1 more} other {+<x id="INTERPOLATION"/> more}}</source>
+        <target state="translated">{VAR_PLURAL, plural, =1 {+1 weiteres} other {+<x id="INTERPOLATION"/> weitere}}</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/pages/overview/overview.ts</context>
+          <context context-type="linenumber">45</context>
+        </context-group>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>

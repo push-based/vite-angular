@@ -18,6 +18,13 @@ export default defineConfig(({mode}) => ({
         {type: 'initial', maximumWarning: '500kB', maximumError: '1MB'},
         {type: 'anyComponentStyle', maximumWarning: '4kB', maximumError: '8kB'},
       ],
+      // `vite build` writes dist/client/en-US and dist/client/de. The dev server serves one
+      // locale: `NGP_LOCALE=de pnpm dev` for German.
+      i18n: {
+        sourceLocale: 'en-US',
+        locales: {de: 'src/locale/messages.de.xlf'},
+        devLocale: process.env.NGP_LOCALE,
+      },
     }),
   ],
 }));

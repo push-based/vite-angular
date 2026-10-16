@@ -1,7 +1,7 @@
-<a class="skip" href="#main">Skip to content</a>
+<a class="skip" href="#main" i18n>Skip to content</a>
 
 <header class="topbar">
-  <button type="button" class="btn btn-ghost btn-icon" (click)="navOpen.set(!navOpen())" [attr.aria-expanded]="navOpen()" aria-controls="sidebar" aria-label="Menu">
+  <button type="button" class="btn btn-ghost btn-icon" (click)="navOpen.set(!navOpen())" [attr.aria-expanded]="navOpen()" aria-controls="sidebar" aria-label="Menu" i18n-aria-label>
     <app-icon [name]="navOpen() ? 'close' : 'menu'" />
   </button>
   <a class="brand" routerLink="/">
@@ -19,11 +19,11 @@
     </span>
   </a>
 
-  <nav aria-label="Demos">
+  <nav aria-label="Demos" i18n-aria-label>
     <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" ariaCurrentWhenActive="page">
-      <app-icon name="home" /> Overview
+      <app-icon name="home" /> <ng-container i18n>Overview</ng-container>
     </a>
-    <p class="nav-label">Demos</p>
+    <p class="nav-label" i18n>Demos</p>
     @for (feature of features; track feature.slug) {
       <a [routerLink]="feature.path" routerLinkActive="active" ariaCurrentWhenActive="page">
         <app-icon [name]="feature.icon" /> {{ feature.title }}
@@ -32,15 +32,23 @@
   </nav>
 
   <div class="sidebar-foot">
-    <div class="theme" role="group" aria-label="Color theme">
+    <div class="theme" role="group" aria-label="Color theme" i18n-aria-label>
       @for (t of themes; track t.value) {
-        <button type="button" [attr.aria-pressed]="theme.theme() === t.value" [attr.aria-label]="t.label + ' theme'" [title]="t.label" (click)="theme.theme.set(t.value)">
+        <button type="button" [attr.aria-pressed]="theme.theme() === t.value" [attr.aria-label]="t.label" [title]="t.label" (click)="theme.theme.set(t.value)">
           <app-icon [name]="t.icon" [size]="16" />
         </button>
       }
     </div>
+    @if (localized) {
+      <nav class="locales" aria-label="Language" i18n-aria-label>
+        @for (l of locales; track l.code) {
+          <a [href]="'../' + l.code + '/'" [attr.lang]="l.code" [attr.aria-current]="l.code === locale ? 'true' : null">{{ l.label }}</a>
+        }
+      </nav>
+    }
     <p class="build">
-      <span title="Angular version">v{{ version }}</span>
+      <span title="Angular version" i18n-title>v{{ version }}</span>
+      <span title="Locale" i18n-title>{{ locale }}</span>
       <span class="badge">{{ mode }}</span>
     </p>
   </div>

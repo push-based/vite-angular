@@ -12,7 +12,7 @@
     "importHelpers": true,
     "target": "ES2022",
     "module": "preserve",
-    "types": ["vite/client"]
+    "types": ["vite/client", "@angular/localize"]
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,

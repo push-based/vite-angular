@@ -1,36 +1,37 @@
 <section class="hero">
   <div class="hero-copy">
-    <span class="pill"><app-icon name="sparkle" [size]="14" /> Compiled per module by ngp</span>
-    <h1>Angular on Vite, <span class="gradient">one module at a time</span>.</h1>
-    <p>
+    <span class="pill"><app-icon name="sparkle" [size]="14" /> <ng-container i18n>Compiled per module by ngp</ng-container></span>
+    <h1 i18n="Overview page heading@@overviewHeading">Angular on Vite, <span class="gradient">one module at a time</span>.</h1>
+    <p i18n>
       This playground runs on <code>vite-plugin-ngp</code>. Every component you see was compiled by
       Angular's new hybrid preprocessor the moment the browser asked for it, with no whole-program
       build first. Each page below exercises a different part of the compiler.
     </p>
     <div class="row">
-      <a class="btn btn-primary" routerLink="/signals">Start with signals <app-icon name="arrow" [size]="16" /></a>
-      <a class="btn" routerLink="/control-flow">See &#64;defer</a>
+      <a class="btn btn-primary" routerLink="/signals"><ng-container i18n>Start with signals</ng-container> <app-icon name="arrow" [size]="16" /></a>
+      <a class="btn" routerLink="/control-flow" i18n>See &#64;defer</a>
     </div>
   </div>
 
-  <dl class="facts" aria-label="This build">
+  <dl class="facts" aria-label="This build" i18n-aria-label>
     <div><dt>Angular</dt><dd>{{ angular }}</dd></div>
-    <div><dt>Mode</dt><dd>{{ mode }}</dd></div>
+    <div><dt i18n>Mode</dt><dd>{{ mode }}</dd></div>
     <div>
-      <dt>Dev checks</dt>
-      <dd><span class="dot" [class.on]="devMode"></span>{{ devMode ? 'on' : 'off' }}</dd>
+      <dt i18n>Dev checks</dt>
+      <dd><span class="dot" [class.on]="devMode"></span>@if (devMode) {<ng-container i18n>on</ng-container>} @else {<ng-container i18n>off</ng-container>}</dd>
     </div>
     <div>
       <dt>HMR</dt>
-      <dd><span class="dot" [class.on]="hmr"></span>{{ hmr ? 'connected' : 'off' }}</dd>
+      <dd><span class="dot" [class.on]="hmr"></span>@if (hmr) {<ng-container i18n>connected</ng-container>} @else {<ng-container i18n>off</ng-container>}</dd>
     </div>
     <div class="wide"><dt>Environment file</dt><dd>{{ environmentFile }}</dd></div>
-    <div class="wide"><dt>All modules loaded in</dt><dd>{{ loadedMs() === null ? '…' : loadedMs() + ' ms' }}</dd></div>
+    <div class="wide"><dt i18n>Locale</dt><dd>{{ locale }} · {{ today | date: 'fullDate' }}</dd></div>
+    <div class="wide"><dt i18n>All modules loaded in</dt><dd>{{ loadedMs() === null ? '…' : loadedMs() + ' ms' }}</dd></div>
   </dl>
 </section>
 
 <section aria-labelledby="pipeline-title">
-  <h2 id="pipeline-title" class="section-title">How a module gets here</h2>
+  <h2 id="pipeline-title" class="section-title" i18n>How a module gets here</h2>
   <ol class="pipeline">
     @for (item of pipeline; track item.step; let i = $index) {
       <li>
@@ -44,7 +45,7 @@
 </section>
 
 <section aria-labelledby="features-title">
-  <h2 id="features-title" class="section-title">Demos</h2>
+  <h2 id="features-title" class="section-title" i18n>Demos</h2>
   <div class="features">
     @for (feature of features; track feature.slug) {
       <a class="feature" [routerLink]="feature.path">
@@ -56,7 +57,7 @@
             <code>{{ item }}</code>
           }
           @if (feature.covers.length > 3) {
-            <span class="more">+{{ feature.covers.length - 3 }}</span>
+            <span class="more" i18n>{feature.covers.length - 3, plural, =1 {+1 more} other {+{{ feature.covers.length - 3 }} more}}</span>
           }
         </span>
       </a>

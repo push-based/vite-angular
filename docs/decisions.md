@@ -227,3 +227,15 @@ Each entry records one choice: what we decided, why, what it costs, and when to 
 **Why.** Material, NgRx and in-house UI kits ship partially compiled, just like Angular's own packages. With only `/^@angular\//` bundled, Node would load them on the server unlinked, and rendering would need the JIT compiler. A dependency on `@angular/core` is the one thing every Angular library declares.
 
 **Cost.** Only `dependencies` count, not `devDependencies`, so an Angular library listed under `devDependencies` stays external. The walk reads a few `package.json` files per server start. A library that imports Angular without declaring it would be missed. That's a broken package, but the user can still list it in `resolve.noExternal`.
+
+## 21. Publish the docs as an Angular SSR site built with the plugin
+
+*16 October 2026*
+
+**Decision.** The user docs live in `site/`: an Angular app compiled by vite-plugin-ngp with `ssr: true`, prerendered to static HTML by `site/scripts/prerender.mjs`, hydrated in the browser, and deployed to GitHub Pages at https://push-based.github.io/vite-angular/ on every push to `main`. Pages are markdown in `site/content`, compiled to HTML at build time with marked and Shiki. The look is the PushBased design system's tokens and `.pb-*` classes. `CLAUDE.md` and the README require every user-visible change to update the matching page in the same commit.
+
+**Why.** Building the docs with the plugin makes the site a second real app, next to the playground: every deploy runs per-module compilation, linking, the server build and hydration from a clean machine. Static prerendering is what Pages can host. Compiling markdown at build time keeps marked and Shiki out of the browser bundle.
+
+**Cost.** The site is public while the repo is private, so its GitHub links only work for push-based members. Every deploy builds ngp, which takes minutes when the Rust cache is cold. Prerendering uses `renderApplication` directly, not `@angular/ssr`, so the script, not Angular, decides which routes exist.
+
+**Revisit when** the repo goes public, or Angular publishes ngp and deploys no longer need to build it.

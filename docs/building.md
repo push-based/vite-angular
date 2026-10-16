@@ -1,6 +1,6 @@
 # Building vite-angular from scratch
 
-This page takes you from a fresh clone to the playground running in your browser. Angular hasn't published ngp yet, so the build compiles it from Angular's source first, at the commit pinned in [toolchain/versions.env](../toolchain/versions.env). The first build took about 2 minutes on a 12-core M2 Max, and takes longer with fewer cores. Later builds reuse their caches, which take about 1.6 GB of disk.
+This page takes you from a fresh clone to the playground running in your browser. Angular hasn't published ngp yet, so the build compiles it from Angular's source first, at the commit pinned in [toolchain/versions.env](../toolchain/versions.env). The first build took about 2 minutes on a 12-core M2 Max, and the whole CI job about 8 minutes on a 2-core GitHub runner. Later builds reuse their caches, which take about 1.6 GB of disk.
 
 Everything stays inside the repo. The build installs Rust into `toolchain/.cache/rust` and doesn't touch a Rust you may already have, your `PATH` or your shell profile.
 

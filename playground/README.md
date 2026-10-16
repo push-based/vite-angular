@@ -21,6 +21,7 @@ Every page except the overview is lazy-loaded, so each one is a separate module 
 ## Things the playground taught us
 
 - **Angular copies component styles into every shadow root.** A rule from a `ViewEncapsulation.None` component reaches a `ShadowDom` component too. Global stylesheets don't. The Styles page shows both.
+- **Angular never hydrates `ShadowDom` components.** With server rendering on, every page renders on the server and hydrates without mismatches. The one exception is the `ShadowDom` box on the Styles page: Angular skips hydrating it and renders it again in the browser. It ends up correct, with no errors.
 - **Editing a component's `.ts` and `.html` at the same time costs a failed HMR attempt.** The template update is applied against the old class before the `.ts` change arrives, the runtime reports `angular:invalidate`, and the plugin falls back to a full reload. The result is correct, just slower than a single reload.
 
 ## Look and feel

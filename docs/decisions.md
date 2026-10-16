@@ -46,7 +46,7 @@ Each entry records one choice: what we decided, why, what it costs, and when to 
 
 **Why.** After every update, the analyzer reloads its tsconfig and re-expands the `include` globs: 172 ms per edit at 5,000 components, against about 1 ms with only `files` to resolve. The output was identical in the bench's spike.
 
-**Cost.** Files that no entry imports, directly or indirectly, are invisible to the analyzer. Adding new files hasn't been tested. Same output is checked only on the playground ([test](../packages/vite-plugin-ngp/test/entry-tsconfig.test.mjs)), not on a large app.
+**Cost.** Files that no entry imports, directly or indirectly, are invisible to the analyzer. New files work: the analyzer finds them through imports ([decision 25](#25-tell-the-analyzer-about-deleted-files-with-invalidatefiles)). Same output is checked only on the playground ([test](../packages/vite-plugin-ngp/test/entry-tsconfig.test.mjs)), not on a large app.
 
 **Revisit when** Angular re-resolves entry points only when files are added or deleted. The code marks this `TODO(parity)`.
 
@@ -291,3 +291,17 @@ The `ng build` row is the playground copied into a CLI project with an `angular.
 **Cost.** It's a copy of someone else's code. When the CLI changes its pass, this one doesn't follow until someone ports the change. Marking every top-level call in Angular's packages pure trusts that none of them is there for its side effect. The CLI trusts the same thing, so a package that broke it would break `ng build` too. Third-party libraries such as NgRx get the class wrapping but not the top-level marking, as under the CLI. The pass takes about 0.2 s over the 1.8 MB of Angular's own packages. Whole builds didn't get slower, because the minifier then has less code to work on. That was measured on the playground only.
 
 **Revisit when** `@angular/build` exports its optimizer, or Rolldown can mark a package's top-level code pure. Then the plugin should call that instead of keeping a copy.
+
+## 25. Tell the analyzer about deleted files with invalidateFiles
+
+*16 October 2026*
+
+**Decision.** When a `.ts` or `.html` file is deleted, the plugin calls `analyzer.invalidateFiles` for it instead of `updateFileContent`, and invalidates every importer of the file in Vite's module graph. A file counts as deleted when it can't be read, whatever event the watcher reported. After compiling a component, the plugin reports NG2008 for every `templateUrl` file that doesn't exist. And when a component's last compile failed, an edit to its template or inline template reloads the page instead of updating in place.
+
+**Why.** The plugin used to ignore deletes. The analyzer keeps every file sent with `updateFileContent` in an in-memory overlay and never drops it, so after a delete it went on compiling importers against the deleted content, and Vite kept serving the importers' cached output: no error at all. `invalidateFiles` is the only call that drops the overlay. In ngp at `92e5aa8` it treats created, deleted and changed files alike, so the plugin uses it only for deletes and keeps `updateFileContent` for the rest. In the tests the analyzer's stale list did include the importers, but the plugin invalidates Vite's importers as well, so the error doesn't depend on that list being complete. Disk decides instead of the event type because on macOS, chokidar reported newly created files as `change` in the tests. The NG2008 check exists because ngp compiles a missing template to an empty one without a diagnostic, even in a fresh compiler. A deleted template would otherwise give a blank component. The reload after a failed compile is needed because the failed component isn't running in the browser, and an update sent to it changes nothing on the page.
+
+[file-changes.test.mjs](../packages/vite-plugin-ngp/test/file-changes.test.mjs) covers new components, deletes, renames, deleting a file that's still used, and new, deleted and repointed templates. It runs a real dev server and Vite's watcher, and checks against a fresh compiler. Run against the plugin before this change, four of its eight fail: the three that delete a file, and the `templateUrl` test, which points a component at a template before the file exists. Changing `templateUrl` to another file works too: the analyzer moves the component to the new template, and only edits to the new one update it. That's the case decision 23 hadn't tried. A `templateUrl` change still reloads, as decision 23 says.
+
+**Cost.** One more private analyzer call, `invalidateFiles`, typed by hand. The NG2008 check reads the analyzer's metadata after every component compile. That cost isn't measured, but the analyzer has the metadata cached by then. The check is the plugin's, not Angular's, so its message can differ from ngc's in edge cases. Missing `styleUrl` files aren't checked.
+
+**Revisit when** ngp reports a missing template itself, or drops its overlay on `updateFileContent` for a file that's gone.

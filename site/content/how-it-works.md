@@ -37,7 +37,7 @@ After every update, ngp's analyzer reloads its tsconfig and walks the whole sour
 
 ## Component HMR
 
-In the dev server, ngp compiles each component with the same HMR code the Angular CLI's compiler adds. When you edit a component's external template:
+In the dev server, ngp compiles each component with the same HMR code the Angular CLI's compiler adds. When you edit a component's external template, or only the inline `template` or `styles` in its `.ts` file:
 
 1. The plugin asks ngp for that component's update module, strips its types, and stores it.
 2. It sends `angular:component-update` over Vite's HMR channel.
@@ -45,9 +45,11 @@ In the dev server, ngp compiles each component with the same HMR code the Angula
 
 The component keeps its state: a counter at 2 stays at 2 while its heading changes. If the runtime can't apply an update, it says so, and the plugin reloads the page.
 
-Edits to a component's `.ts` file reload the page, including inline templates and inline styles. The CLI decides per edit whether a `.ts` change is safe to swap in. The plugin doesn't have that analysis yet.
+For a `.ts` edit, the plugin decides with the same rules as the Angular CLI's dev server. It compares the file before and after the edit, as text. If the only difference is inside the `template` or `styles` value of a component's decorator, those components update in place. In a file with several components, only the ones you edited update. Any other difference reloads the page: a new entry in `imports`, a changed `selector`, an input, a method, an import or a constant at the top of the file. An update can't bring in code the running page doesn't have yet, so those need the reload.
 
-If one save changes both a component's template and its `.ts` file, the page reloads once, without trying the template update first. The new template may use a field the running class doesn't have yet. The plugin waits 50 ms after a template edit to see whether the `.ts` file changed too, so template updates arrive 50 ms later than they would otherwise.
+The comparison is strict, and that's deliberate. It doesn't try to tell a harmless change from a real one, so reformatting a method reloads too. Two cases update in place under `ng serve` and reload here: a template kept in a constant outside the decorator, which is a top-level change, and an edit to `templateUrl` or `styleUrl`.
+
+If one save changes both a component's template and its `.ts` file, and the `.ts` change needs a reload, the page reloads once, without trying the template update first. The new template may use a field the running class doesn't have yet. If the `.ts` change only touched inline templates or styles, both update in place. The plugin waits 50 ms after a template edit to see whether the `.ts` file changed too, so template updates arrive 50 ms later than they would otherwise.
 
 ## Linking libraries
 

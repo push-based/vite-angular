@@ -162,7 +162,7 @@ Each entry records one choice: what we decided, why, what it costs, and when to 
 
 ## 15. Component HMR for external template edits only
 
-*16 October 2026*
+*16 October 2026. Superseded by 23. Narrowed by 22.*
 
 **Decision.** Only an edit to a component's external template is applied in place. Any edit to a `.ts` file reloads the page, even one that only touches the decorator's inline `template` or `styles`.
 
@@ -251,3 +251,17 @@ Each entry records one choice: what we decided, why, what it costs, and when to 
 **Cost.** Every template edit reaches the browser 50 ms later. Two writes more than 50 ms apart still count as two edits, so a slow tool that writes the template first gets the old failed update and reload. The window is a guess at how close one save writes its files. It wasn't measured across editors.
 
 **Revisit when** `.ts` edits can be applied in place (see 15). Then the plugin would send one update for both files instead of reloading.
+
+## 23. Update inline templates and styles in place, with the CLI's rules
+
+*16 October 2026. Supersedes 15.*
+
+**Decision.** When a component's `.ts` file changes, the plugin parses the old and the new content with TypeScript and compares them the way `analyzeFileUpdates` in `@angular/build` does ([hmr-candidates.ts](../packages/vite-plugin-ngp/src/hmr-candidates.ts)). Every top-level statement has to be textually identical, leading comments included, except inside a component class. There, the name, modifiers, `extends`/`implements` and members have to be identical too, the class has exactly one decorator, and only the values of `template` and `styles` may differ in it. If that holds, the plugin emits an update module for each component whose values changed and sends `angular:component-update`, as it does for external templates. Any other difference reloads the page.
+
+**Why.** It answers decision 15's question with the rules Angular's own dev server already ships, so an inline edit behaves here the way it does under `ng serve`. A textual comparison can't be fooled by a change it doesn't understand: `imports`, `selector`, an input, a method or a top-level constant all differ as text, so they all reload. ngp's metadata wasn't enough on its own: its `argsSpan` and `removalSpans` describe only the file the analyzer has now, not the one before the edit, and they say nothing about statements outside decorators. The analyzer still decides which classes are components.
+
+A template and its `.ts` file saved together still go through decision 22's 50 ms wait. If the `.ts` change was applied in place, the class on the page is unchanged, so the template update goes out too, after the `.ts` update. The page gets both without a reload. If the `.ts` change reloads, the template sends nothing, as before.
+
+**Cost.** Being textual makes it strict. Reformatting a method, or a comment inside a class, reloads even though nothing changed. So does a template kept in a constant outside the decorator, like the playground's `encapsulation.ts`, and any component with a second decorator. Each `.ts` edit is parsed twice more, outside ngp; that's not measured, but it's one file. The CLI also updates in place when `templateUrl`, `styleUrl` or `styleUrls` change, and the plugin doesn't yet, because pointing a component at another file hasn't been tried with ngp's analyzer.
+
+**Revisit when** ngp exposes its own "what changed" answer for an edit, or when external styles become Vite modules and `styleUrl` edits need the same treatment.

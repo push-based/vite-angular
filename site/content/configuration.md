@@ -35,7 +35,7 @@ export default defineConfig({
 | `tsconfig` | `tsconfig.app.json`, else `tsconfig.json` | The tsconfig your Angular compiler options come from, relative to Vite's root. |
 | `entries` | `src/main.ts`, plus `src/main.server.ts` if it exists | The modules the analyzer starts from. It finds every other file by following imports. |
 | `entryOnlyTsconfig` | `true` | Give the analyzer a generated tsconfig that lists only `entries`. |
-| `hmr` | `true` | Component HMR for external templates in the dev server. Builds ignore it. |
+| `hmr` | `true` | Component HMR in the dev server, for external templates and for inline `template` and `styles` edits. Builds ignore it. |
 | `ssr` | `false` | Server rendering. `true` uses `src/main.server.ts` as the server entry, and `{entry: 'path'}` names another. See [Server rendering](server-rendering). |
 
 ## When to change them

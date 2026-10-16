@@ -1,0 +1,103 @@
+import * as fs from 'node:fs/promises';
+import * as path from 'node:path';
+import {readConfiguration} from '@angular/compiler-cli';
+import {loadNgp, type Analyzer, type Engine, type HybridCompiler, type NgpDiagnostic} from './ngp-api.js';
+
+export interface CompilerOptions {
+  toolchainDir: string;
+  engine: Engine;
+  /** The user's tsconfig: compiler options and rootDir come from here. */
+  tsconfig: string;
+  /** The tsconfig the analyzer reads. See writeEntryTsconfig for why it can differ. */
+  analyzerTsconfig: string;
+}
+
+export interface TransformResult {
+  code: string;
+  map: string;
+  diagnostics: NgpDiagnostic[];
+}
+
+/**
+ * One long-lived ngp compiler, driven the way Vite drives a plugin: per module, from the code
+ * Vite hands over, in optimize mode, without ever running the whole-program delta pass.
+ */
+export class NgpCompiler {
+  /** What the analyzer believes each file contains, so edits are sent to it exactly once. */
+  private readonly known = new Map<string, string>();
+  /** Analyzer updates run one at a time, in call order. */
+  private updates: Promise<unknown> = Promise.resolve();
+
+  private constructor(
+    private readonly analyzer: Analyzer,
+    private readonly hybrid: HybridCompiler,
+  ) {}
+
+  static async create(options: CompilerOptions): Promise<NgpCompiler> {
+    const {api, binding} = await loadNgp(options.toolchainDir, options.engine);
+    const ngOptions = readConfiguration(options.tsconfig).options;
+    const analyzer = await api.createAnalyzer(options.analyzerTsconfig, {
+      optimize: true,
+      backend: options.engine,
+      ...binding,
+    });
+    // No tsconfigPath: with one, ngp rewrites .ngdiag.json after every chunk.
+    const hybrid = new api.HybridCompiler(analyzer, {
+      optimize: true,
+      tcbConfig: api.buildTypeCheckingConfig(ngOptions, false),
+      rootDir: path.dirname(options.tsconfig),
+      supportJitMode: ngOptions['supportJitMode'] !== false,
+    });
+    return new NgpCompiler(analyzer, hybrid);
+  }
+
+  /** Compiles one module. Resolves to null when ngp leaves it unchanged. */
+  async transform(file: string, code: string): Promise<TransformResult | null> {
+    await this.update(file, code);
+    const processed = await this.hybrid.processFile(file, code);
+    if (!processed.magicString.hasChanged()) {
+      return null;
+    }
+    return {
+      code: processed.magicString.toString(),
+      map: processed.magicString.generateMap({hires: 'boundary', source: file, includeContent: true}).toString(),
+      diagnostics: processed.diagnostics ?? [],
+    };
+  }
+
+  /**
+   * Sends a file's content to the analyzer if it differs from what the analyzer has, and resolves
+   * to the TypeScript files whose output may have changed. Works for templates too.
+   *
+   * This skips HybridCompiler.updateFileContent on purpose: that runs analyzeOptimizedDelta, which
+   * re-streams every file in the program after each edit. Vite re-requests what the page still
+   * uses, so dropping the stale files from the cache is enough.
+   */
+  update(file: string, content: string): Promise<string[]> {
+    const run = this.updates.then(async () => {
+      const previous = this.known.get(file) ?? (await fs.readFile(file, 'utf8').catch(() => undefined));
+      this.known.set(file, content);
+      if (previous === content) {
+        return [];
+      }
+      const invalidated = await this.analyzer.updateFileContent([{filePath: file, content}]);
+      const stale = invalidated.filter((f) => f.endsWith('.ts')).map((f) => path.resolve(f));
+      for (const f of [...stale, file]) {
+        this.hybrid.fileCache.delete(f);
+      }
+      return stale;
+    });
+    this.updates = run.catch(() => {});
+    return run;
+  }
+
+  /** The component file for an external template, or null if no component uses it. */
+  async componentForTemplate(templateFile: string): Promise<string | null> {
+    const result = await this.analyzer.getTsFileForTemplate(templateFile);
+    return result?.[0] ? path.resolve(result[0].tsFilePath) : null;
+  }
+
+  close(): void {
+    this.analyzer.close();
+  }
+}

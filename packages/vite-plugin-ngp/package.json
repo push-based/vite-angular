@@ -1,0 +1,33 @@
+{
+  "name": "vite-plugin-ngp",
+  "version": "0.0.0",
+  "description": "Vite plugin that compiles Angular with ngp, Angular's hybrid Rust/TypeScript preprocessor",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node --test test/"
+  },
+  "peerDependencies": {
+    "@angular/compiler-cli": "22.3.0-next.2",
+    "typescript": ">=6.0 <6.1",
+    "vite": "^8.3.0"
+  },
+  "devDependencies": {
+    "@angular/compiler": "22.3.0-next.2",
+    "@angular/compiler-cli": "22.3.0-next.2",
+    "@types/node": "24.19.2",
+    "typescript": "6.0.3",
+    "vite": "8.3.4"
+  },
+  "engines": {
+    "node": "^24.15.0"
+  }
+}

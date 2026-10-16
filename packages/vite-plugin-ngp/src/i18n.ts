@@ -2,6 +2,7 @@ import * as fs from 'node:fs';
 import {createRequire} from 'node:module';
 import * as path from 'node:path';
 import type {ɵParsedTranslation} from '@angular/localize';
+import remapping from '@jridgewell/remapping';
 import MagicString from 'magic-string';
 import type {Connect, Logger, Plugin, ResolvedConfig} from 'vite';
 
@@ -33,6 +34,11 @@ interface Locale {
 
 type Translations = Record<string, ɵParsedTranslation>;
 
+interface SourceMapJson {
+  sources: (string | null)[];
+  [key: string]: unknown;
+}
+
 /**
  * Stands in for the locale in the build's `$localize` prelude until each locale's output replaces
  * it with the locale code and its locale data. Same name the Angular CLI uses.
@@ -61,10 +67,10 @@ export interface I18nApi {
  *
  * - `vite` (dev): one locale, `devLocale`, translated at runtime. Each entry module first imports a
  *   prelude that loads `@angular/localize/init`, that locale's data and its translations.
- * - `vite build`: every locale, translated at build time. Rolldown renders one output per locale
- *   from the same module graph, into `<outDir>/<subPath>`, and this plugin's `renderChunk`
- *   replaces each `$localize` call with the translated string before the chunk is minified and
- *   hashed. No `$localize` runtime ships.
+ * - `vite build`: every locale, translated at build time, the way the CLI does it. Vite builds and
+ *   minifies the app once. Then this plugin's `generateBundle` writes every file once per locale,
+ *   into `<outDir>/<subPath>/`, with each `$localize` call replaced by its translated string. No
+ *   `$localize` runtime ships.
  */
 export function i18nPlugin(options: I18nOptions, getEntries: (root: string) => string[]): Plugin {
   const source = typeof options.sourceLocale === 'object' ? options.sourceLocale : {code: options.sourceLocale ?? 'en-US'};
@@ -74,12 +80,9 @@ export function i18nPlugin(options: I18nOptions, getEntries: (root: string) => s
   const extracting = () => process.env[EXTRACT_ENV] === '1';
   /** The URL the app is deployed under. Each locale lives at `<base><subPath>/`. */
   let deployBase = '/';
-  /** Locale per output directory, so a render hook knows which locale it renders. */
-  const localeByOutDir = new Map<string, Locale>();
   const translations = new Map<string, Promise<Translations>>();
   /** Every locale renders the same code for a chunk, so each chunk is parsed once. */
   const scans = new Map<string, Promise<LocalizeSites>>();
-  /** Each diagnostic once per locale, though every environment's output repeats it. */
   const reported = new Set<string>();
 
   function loadLocale(locale: Locale): Promise<Translations> {
@@ -121,29 +124,13 @@ export function i18nPlugin(options: I18nOptions, getEntries: (root: string) => s
         return;
       }
       // Every locale's files sit one folder down, at `<base><subPath>/`. Relative URLs, resolved
-      // against each page's <base href>, let one build serve all of them.
-      return {base: './'};
+      // against each page's <base href>, let one build serve all of them. The public directory is
+      // copied into each locale's folder by generateBundle instead of once into the outDir.
+      return {base: './', build: {copyPublicDir: false}};
     },
 
     configResolved(resolved) {
       config = resolved;
-      if (command !== 'build' || extracting()) {
-        return;
-      }
-      // One output per locale for every environment: the browser bundle and the server entry.
-      for (const environment of Object.values(resolved.environments)) {
-        const rolldownOptions = environment.build.rolldownOptions;
-        if (Array.isArray(rolldownOptions.output)) {
-          throw new Error('vite-plugin-ngp: i18n builds one output per locale, so `build.rolldownOptions.output` must not be an array.');
-        }
-        const output = rolldownOptions.output ?? {};
-        const outDir = path.resolve(resolved.root, environment.build.outDir);
-        rolldownOptions.output = locales.map((locale) => {
-          const dir = path.join(outDir, locale.subPath);
-          localeByOutDir.set(dir, locale);
-          return {...output, dir};
-        });
-      }
     },
 
     resolveId: {
@@ -155,7 +142,7 @@ export function i18nPlugin(options: I18nOptions, getEntries: (root: string) => s
       filter: {id: new RegExp(`^\0${PRELUDE_ID}$`)},
       async handler() {
         if (command === 'build') {
-          // Each locale's renderChunk swaps the placeholder for the locale and its locale data.
+          // Each locale's copy swaps the placeholder for the locale and its locale data.
           // The global has to exist before Angular reads `$localize.locale`.
           return `(globalThis.$localize ??= {}).locale = ${JSON.stringify(LOCALE_PLACEHOLDER)};\n`;
         }
@@ -212,49 +199,87 @@ export function i18nPlugin(options: I18nOptions, getEntries: (root: string) => s
       return [];
     },
 
-    async renderChunk(code, chunk, outputOptions) {
-      const locale = outputOptions.dir ? localeByOutDir.get(path.resolve(outputOptions.dir)) : undefined;
-      if (!locale || !(code.includes('$localize') || code.includes(LOCALE_PLACEHOLDER))) {
-        return null;
-      }
-      const result = await translateChunk(code, chunk.fileName, locale, {
-        translations: await loadLocale(locale),
-        // The source locale has no translations: every message is "missing", on purpose.
-        missingTranslation: locale.files.length ? (options.missingTranslation ?? 'warning') : 'ignore',
-        localeData: readLocaleData(locale.code, config.root, config.logger),
-        cache: scans,
-      });
-      for (const {type, message} of result.diagnostics) {
-        const key = `${locale.code}\0${message}`;
-        if (reported.has(key)) {
-          continue;
-        }
-        reported.add(key);
-        if (type === 'error') {
-          this.error(`[${locale.code}] ${message}`);
-        }
-        this.warn(`[${locale.code}] ${message}`);
-      }
-      return {code: result.code, map: result.map as never};
-    },
-
     closeBundle() {
       scans.clear();
     },
 
-    // Each locale's index.html gets its language, and a <base href> that both the relative asset
-    // URLs and Angular's router resolve against. `post`, because Vite emits index.html in its own
-    // generateBundle.
+    // Writes the bundle once per locale. Runs last (`post`), so Vite has emitted index.html and every
+    // chunk is minified: translation only replaces string literals, so minifying once is enough.
     generateBundle: {
       order: 'post',
-      handler(outputOptions, bundle) {
-        const locale = outputOptions.dir ? localeByOutDir.get(path.resolve(outputOptions.dir)) : undefined;
-        if (!locale) {
+      async handler(outputOptions, bundle) {
+        if (command !== 'build' || extracting()) {
           return;
         }
-        for (const file of Object.values(bundle)) {
-          if (file.type === 'asset' && file.fileName.endsWith('.html')) {
-            file.source = localizeHtml(String(file.source), locale.code, joinBase(deployBase, locale.subPath));
+        const files = Object.values(bundle);
+        for (const fileName of Object.keys(bundle)) {
+          delete bundle[fileName];
+        }
+        // Rolldown also lists each chunk's map as an asset. Each locale writes its own map instead.
+        const mapFiles = new Set(files.flatMap((f) => (f.type === 'chunk' && f.map ? [mapFileNameOf(f)] : [])));
+        const publicFiles = this.environment.config.consumer === 'client' ? listFiles(config.publicDir) : [];
+        for (const locale of locales) {
+          const translations = await loadLocale(locale);
+          const localeData = readLocaleData(locale.code, config.root, config.logger);
+          const emit = (fileName: string, source: string | Uint8Array) =>
+            this.emitFile({type: 'asset', fileName: path.posix.join(locale.subPath, fileName), source});
+          for (const file of files) {
+            if (file.type === 'asset') {
+              if (mapFiles.has(file.fileName)) {
+                continue;
+              }
+              const html = file.fileName.endsWith('.html');
+              // Each index.html gets its language, and a <base href> that both the relative asset
+              // URLs and Angular's router resolve against.
+              emit(file.fileName, html ? localizeHtml(String(file.source), locale.code, joinBase(deployBase, locale.subPath)) : file.source);
+              continue;
+            }
+            // Rolldown has already appended the source map comment for where it would write the map.
+            let code = file.code.replace(/\n?\/\/# sourceMappingURL=[^\n]*\s*$/, '');
+            let map = file.map ? (JSON.parse(file.map.toString()) as SourceMapJson) : null;
+            if (code.includes('$localize') || code.includes(LOCALE_PLACEHOLDER)) {
+              const result = await translateChunk(code, file.fileName, locale, {
+                translations,
+                // The source locale has no translations: every message is "missing", on purpose.
+                missingTranslation: locale.files.length ? (options.missingTranslation ?? 'warning') : 'ignore',
+                localeData,
+                cache: scans,
+              });
+              for (const {type, message} of result.diagnostics) {
+                // Once per locale, though the server bundle repeats the browser's messages.
+                const key = `${locale.code}\0${message}`;
+                if (!reported.has(key)) {
+                  reported.add(key);
+                  if (type === 'error') {
+                    this.error(`[${locale.code}] ${message}`);
+                  }
+                  this.warn(`[${locale.code}] ${message}`);
+                }
+              }
+              code = result.code;
+              if (map && result.map) {
+                map = JSON.parse(remapping([result.map as never, map as never], () => null).toString()) as SourceMapJson;
+              }
+            }
+            if (map) {
+              // One folder deeper than Rolldown wrote it, so relative sources need one more `..`.
+              map.sources = map.sources.map((source) =>
+                source && !/^[a-z]+:|^\//i.test(source) ? path.posix.join(...locale.subPath.split('/').map(() => '..'), source) : source,
+              );
+              const mapFileName = mapFileNameOf(file);
+              if (outputOptions.sourcemap === 'inline') {
+                code += `\n//# sourceMappingURL=data:application/json;base64,${Buffer.from(JSON.stringify(map)).toString('base64')}`;
+              } else {
+                if (outputOptions.sourcemap !== 'hidden') {
+                  code += `\n//# sourceMappingURL=${path.posix.relative(path.posix.dirname(file.fileName), mapFileName)}`;
+                }
+                emit(mapFileName, JSON.stringify(map));
+              }
+            }
+            emit(file.fileName, code);
+          }
+          for (const file of publicFiles) {
+            emit(path.relative(config.publicDir, file).split(path.sep).join('/'), fs.readFileSync(file));
           }
         }
       },
@@ -268,6 +293,21 @@ export function i18nPlugin(options: I18nOptions, getEntries: (root: string) => s
       server.middlewares.use(previewMiddleware(locales, source.code, outDir));
     },
   };
+}
+
+function mapFileNameOf(chunk: {fileName: string; sourcemapFileName?: string | null}): string {
+  return chunk.sourcemapFileName ?? `${chunk.fileName}.map`;
+}
+
+/** Every file below a directory, or none when it doesn't exist. */
+function listFiles(dir: string): string[] {
+  if (!dir || !fs.existsSync(dir)) {
+    return [];
+  }
+  return fs
+    .readdirSync(dir, {recursive: true, withFileTypes: true})
+    .filter((entry) => entry.isFile())
+    .map((entry) => path.join(entry.parentPath, entry.name));
 }
 
 function devLocaleOf(options: I18nOptions, locales: Locale[]): Locale {
@@ -420,7 +460,8 @@ export async function translateChunk(
   for (const site of sites.placeholders) {
     s.overwrite(site.start, site.end, literal);
     if (options.localeData) {
-      s.appendRight(site.statementEnd, `\n${options.localeData}\n`);
+      // Semicolons on both sides: minified statements don't always end with one.
+      s.appendRight(site.statementEnd, `\n;${options.localeData}\n;`);
     }
   }
   return {
@@ -461,7 +502,7 @@ async function scanChunk(code: string): Promise<LocalizeSites> {
       const guarded = parent?.type === 'LogicalExpression' && parent['operator'] === '&&' && parent['right'] === node && isLocalizeGuard(parent['left'] as AstNode);
       const target = guarded ? parent : node;
       sites.localeReads.push([target.start, target.end]);
-    } else if (node.type === 'Literal' && node['value'] === LOCALE_PLACEHOLDER) {
+    } else if (isPlaceholder(node, parent)) {
       const statement = [...ancestors].reverse().find((a) => a.type.endsWith('Statement'));
       sites.placeholders.push({start: node.start, end: node.end, statementEnd: statement?.end ?? node.end});
     }
@@ -485,6 +526,18 @@ function walk(node: AstNode, ancestors: AstNode[], visit: (node: AstNode, ancest
   }
   ancestors.pop();
   visit(node, ancestors);
+}
+
+/** The prelude's placeholder: a string, or the template literal a minifier turns it into. */
+function isPlaceholder(node: AstNode, parent: AstNode | undefined): boolean {
+  if (node.type === 'Literal') {
+    return node['value'] === LOCALE_PLACEHOLDER;
+  }
+  if (node.type !== 'TemplateLiteral' || parent?.type === 'TaggedTemplateExpression') {
+    return false;
+  }
+  const quasis = node['quasis'] as {value: {cooked: string | null}}[];
+  return quasis.length === 1 && quasis[0]!.value.cooked === LOCALE_PLACEHOLDER;
 }
 
 /** `$localize`, by name. Like the CLI's inliner, this doesn't check that it isn't shadowed. */

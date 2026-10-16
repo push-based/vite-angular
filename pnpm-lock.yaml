@@ -29,6 +29,9 @@ importers:
       '@babel/core':
         specifier: 8.0.7
         version: 8.0.7
+      '@jridgewell/remapping':
+        specifier: 2.3.5
+        version: 2.3.5
       esbuild:
         specifier: 0.28.2
         version: 0.28.2
@@ -72,6 +75,9 @@ importers:
       '@angular/core':
         specifier: 22.3.0-next.2
         version: 22.3.0-next.2(@angular/compiler@22.3.0-next.2)(rxjs@7.8.2)(zone.js@0.16.3)
+      '@angular/localize':
+        specifier: 22.3.0-next.2
+        version: 22.3.0-next.2(@angular/compiler-cli@22.3.0-next.2(@angular/compiler@22.3.0-next.2)(typescript@6.0.3))(@angular/compiler@22.3.0-next.2)
       '@angular/platform-browser':
         specifier: 22.3.0-next.2
         version: 22.3.0-next.2(@angular/common@22.3.0-next.2(@angular/core@22.3.0-next.2(@angular/compiler@22.3.0-next.2)(rxjs@7.8.2)(zone.js@0.16.3))(rxjs@7.8.2))(@angular/core@22.3.0-next.2(@angular/compiler@22.3.0-next.2)(rxjs@7.8.2)(zone.js@0.16.3))
@@ -501,8 +507,14 @@ packages:
       '@noble/hashes':
         optional: true
 
+  '@jridgewell/gen-mapping@0.3.13':
+    resolution: {integrity: sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA==}
+
   '@jridgewell/gen-mapping@0.4.0-beta.0':
     resolution: {integrity: sha512-JdGNkbE4GlNPYQhM0L95fBQr7ctLZJ276QXQLTad4t1oSdnnCI3fDq9DW3BqYAWv8Wc3+HS+4Gsii1oPMCfz1w==}
+
+  '@jridgewell/remapping@2.3.5':
+    resolution: {integrity: sha512-LI9u/+laYG4Ds1TDKSJW2YPrIlcVYOwi2fUC6xB43lueCjgxV4lffOCZCtYFiH6TNOX+tQKXx97T4IKHbhyHEQ==}
 
   '@jridgewell/resolve-uri@3.1.2':
     resolution: {integrity: sha512-bRISgCIjP20/tbWSPWMEi54QVPRZExkuD9lJL+UIxUKtwVJA8wW1Trb1jMs1RFXo1CBTNZ/5hpC9QvmKWdopKw==}
@@ -1782,9 +1794,19 @@ snapshots:
 
   '@exodus/bytes@1.16.0': {}
 
+  '@jridgewell/gen-mapping@0.3.13':
+    dependencies:
+      '@jridgewell/sourcemap-codec': 1.6.0
+      '@jridgewell/trace-mapping': 0.3.31
+
   '@jridgewell/gen-mapping@0.4.0-beta.0':
     dependencies:
       '@jridgewell/sourcemap-codec': 1.6.0
+      '@jridgewell/trace-mapping': 0.3.31
+
+  '@jridgewell/remapping@2.3.5':
+    dependencies:
+      '@jridgewell/gen-mapping': 0.3.13
       '@jridgewell/trace-mapping': 0.3.31
 
   '@jridgewell/resolve-uri@3.1.2': {}

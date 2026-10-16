@@ -20,7 +20,8 @@ test('translateChunk translates messages, inlines the locale, and adds locale da
   const code = [
     // Non-ASCII before the messages: the parser's offsets must be UTF-16, like JS strings.
     'const ɵüber = "Grüße";',
-    '(globalThis.$localize ??= {}).locale = "___NG_LOCALE_INSERT___";',
+    // Minified: no semicolon, and the placeholder as a template literal.
+    '(globalThis.$localize ??= {}).locale = `___NG_LOCALE_INSERT___`',
     'export const greeting = (name) => $localize`:@@greeting:Hello ${name}:name:!`;',
     'export const missing = $localize`:@@missing:Not translated`;',
     'export const locale = typeof $localize !== "undefined" && $localize.locale;',
@@ -32,7 +33,7 @@ test('translateChunk translates messages, inlines the locale, and adds locale da
   });
   assert.match(result.code, /`Hallo \$\{name\}!`/);
   assert.match(result.code, /"Not translated"/);
-  assert.match(result.code, /\.locale = "de";\s*globalThis\.registered = "de";/);
+  assert.match(result.code, /\.locale = "de"\s*;globalThis\.registered = "de";/);
   assert.match(result.code, /export const locale = "de";/);
   assert.doesNotMatch(result.code, /\$localize`/);
   assert.deepEqual(
@@ -58,21 +59,25 @@ test('negotiateLocale picks the first built locale the browser accepts', () => {
 
 test('vite build writes one translated folder per locale', async () => {
   const builder = await createBuilder({root: playground, logLevel: 'silent', build: {write: false}}, null);
-  const [en, de] = await builder.build(builder.environments.client);
-  const html = (output) => output.output.find((f) => f.fileName === 'index.html').source;
-  const js = (output) => output.output.filter((f) => f.type === 'chunk').map((f) => f.code).join('\n');
+  const {output} = await builder.build(builder.environments.client);
+  const text = (f) => (typeof f.source === 'string' ? f.source : Buffer.from(f.source).toString('utf8'));
+  const html = (locale) => text(output.find((f) => f.fileName === `${locale}/index.html`));
+  const js = (locale) => output.filter((f) => f.fileName.startsWith(`${locale}/`) && f.fileName.endsWith('.js')).map(text).join('\n');
 
-  assert.match(html(en), /<html lang="en-US">/);
-  assert.match(html(en), /<base href="\/en-US\/">/);
-  assert.match(html(de), /<html lang="de">/);
-  assert.match(html(de), /<base href="\/de\/">/);
-  assert.match(js(en), /one module at a time/);
-  assert.match(js(de), /ein Modul nach dem anderen/);
+  // Every file sits below a locale: nothing is left at the outDir's root.
+  assert.deepEqual([...new Set(output.map((f) => f.fileName.split('/')[0]))].sort(), ['de', 'en-US']);
+  assert.ok(output.some((f) => f.fileName === 'de/favicon.svg'), 'public files are copied into each locale');
+  assert.match(html('en-US'), /<html lang="en-US">/);
+  assert.match(html('en-US'), /<base href="\/en-US\/">/);
+  assert.match(html('de'), /<html lang="de">/);
+  assert.match(html('de'), /<base href="\/de\/">/);
+  assert.match(js('en-US'), /one module at a time/);
+  assert.match(js('de'), /ein Modul nach dem anderen/);
   // German locale data, inlined where the prelude sets the locale: month names, for DatePipe.
-  assert.match(js(de), /[`"]Oktober[`"]/);
-  assert.doesNotMatch(js(en), /[`"]Oktober[`"]/);
-  for (const output of [en, de]) {
-    assert.doesNotMatch(js(output), /\$localize`/);
+  assert.match(js('de'), /[`"]Oktober[`"]/);
+  assert.doesNotMatch(js('en-US'), /[`"]Oktober[`"]/);
+  for (const locale of ['en-US', 'de']) {
+    assert.doesNotMatch(js(locale), /\$localize`/);
   }
 });
 

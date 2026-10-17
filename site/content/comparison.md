@@ -5,7 +5,7 @@ description: How vite-plugin-ngp differs from ng serve, Analog and @oxc-angular/
 
 # Compared with alternatives
 
-You already have three ways to run Angular with Vite in the picture: the Angular CLI, Analog's Vite plugin, and VoidZero's `@oxc-angular/vite`. This page is for you if you're choosing between them and want to know what vite-plugin-ngp does differently, and what it costs you. It compares how each one works, not how fast it is. [Performance](performance) has the measurements.
+You already have three ways to run Angular with Vite in the picture: the Angular CLI, Analog's Vite plugin, and VoidZero's `@oxc-angular/vite`. This page is for you if you're choosing between them and want to know what vite-plugin-ngp does differently, and what it costs you. It compares how each one works, with one timing where a difference in the model shows up. [Performance](performance) has the rest.
 
 In one sentence: vite-plugin-ngp is the only one that compiles each module when Vite asks for it with Angular's own compiler, and it's the only one you can't `npm install`.
 
@@ -36,7 +36,7 @@ This is the difference the others follow from. ngc, the compiler behind `ng buil
 - **`@oxc-angular/vite`** compiles each file in its `transform` hook. It reads your tsconfig "for file discovery, not TypeScript compilation", in its own words, and reads imported files when a decorator's metadata comes from them.
 - **vite-plugin-ngp** compiles each file in its `transform` hook from the code Vite hands over. ngp's analyzer resolves references across files on demand, so the first module needs no whole-program pass. An edit recompiles only the modules the page still uses ([How it works](how-it-works#handling-an-edit)).
 
-So `ng serve` and Analog's default path take longer to start the bigger your app is, and the per-file tools mostly don't. That's the model; [Performance](performance#starting-the-dev-server) has the timings.
+So `ng serve` and Analog's default path take longer to start the bigger your app is, and the per-file tools mostly don't. On a generated 5,000-component app, from a cold start to the first paint, `ng serve` took 28.3 s, Analog 6.46 s, vite-plugin-ngp 1.74 s and `@oxc-angular/vite` 1.11 s, on one laptop on 17 October 2026 ([Performance](performance#starting-the-dev-server)).
 
 ## Whose compiler produces the output
 

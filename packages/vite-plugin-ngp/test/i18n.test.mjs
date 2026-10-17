@@ -10,7 +10,7 @@ import {fileURLToPath} from 'node:url';
 import {ɵmakeParsedTranslation as makeParsedTranslation} from '@angular/localize';
 import {createBuilder} from 'vite';
 import {extractMessages} from '../dist/extract.js';
-import {localizeHtml, negotiateLocale, translateChunk} from '../dist/i18n.js';
+import {localizeHtml, negotiateLocale, parseTranslationFile, translateChunk} from '../dist/i18n.js';
 
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const playground = path.join(repo, 'playground');
@@ -40,6 +40,28 @@ test('translateChunk translates messages, inlines the locale, and adds locale da
     result.diagnostics.map((d) => d.type),
     ['warning'],
   );
+});
+
+test('parseTranslationFile reports a unit it cannot read and keeps the rest, as ng build does', async () => {
+  // Ghostfolio's Catalan file has a target with `${emergencyFund}` in it, which the parser reads
+  // as the start of an ICU expression. The CLI logs the error and builds; so does the plugin.
+  const xlf = `<?xml version="1.0" encoding="UTF-8" ?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+  <file source-language="en" target-language="ca" datatype="plaintext" original="ng2.template">
+    <body>
+      <trans-unit id="good" datatype="html"><source>Hello</source><target>Hola</target></trans-unit>
+      <trans-unit id="bad" datatype="html"><source>Fund</source><target>Fons de \${emergencyFund}</target></trans-unit>
+    </body>
+  </file>
+</xliff>`;
+  const logged = {error: [], warn: []};
+  const logger = {error: (m) => logged.error.push(m), warn: (m) => logged.warn.push(m), info() {}, warnOnce() {}};
+  const translations = await parseTranslationFile('/app/src/locales/messages.ca.xlf', xlf, logger);
+  assert.equal(translations.good.messageParts.join(''), 'Hola');
+  // The parser keeps what it read of the unit up to the `{`, as it does for the CLI.
+  assert.equal(translations.bad.messageParts.join(''), 'Fons de $');
+  assert.ok(logged.error.length >= 1, 'expected the unreadable unit to be reported');
+  assert.match(logged.error[0], /messages\.ca\.xlf: /);
 });
 
 test('localizeHtml sets lang and base href', () => {

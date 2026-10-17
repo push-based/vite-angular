@@ -350,9 +350,20 @@ function targetMessage(translation: ɵParsedTranslation): string {
  * accepts. Later files win over earlier ones for the same message id.
  */
 async function loadTranslationFiles(locale: Locale, logger: Logger): Promise<Translations> {
-  if (locale.files.length === 0) {
-    return {};
+  const translations: Translations = {};
+  for (const file of locale.files) {
+    Object.assign(translations, await parseTranslationFile(file, await fs.promises.readFile(file, 'utf8'), logger));
   }
+  return translations;
+}
+
+/**
+ * One translation file, in any format `ng extract-i18n` writes. A translation unit the parser
+ * can't read in full, such as a `{` in a target that isn't an ICU expression, is reported as an
+ * error and the build goes on with what the parser read of it, as `ng build` does. Ghostfolio's
+ * Catalan file has two such units, and `ng build` builds it with the errors in its log.
+ */
+export async function parseTranslationFile(file: string, contents: string, logger: Logger): Promise<Translations> {
   const tools = await import('@angular/localize/tools');
   const parsers = [
     new tools.Xliff2TranslationParser(),
@@ -361,29 +372,28 @@ async function loadTranslationFiles(locale: Locale, logger: Logger): Promise<Tra
     new tools.SimpleJsonTranslationParser(),
     new tools.ArbTranslationParser(),
   ];
-  const translations: Translations = {};
-  for (const file of locale.files) {
-    const contents = await fs.promises.readFile(file, 'utf8');
-    let parsed: ReturnType<(typeof parsers)[number]['parse']> | undefined;
-    for (const parser of parsers) {
-      const analysis = parser.analyze(file, contents);
-      if (analysis.canParse) {
-        parsed = parser.parse(file, contents, analysis.hint as never);
-        break;
-      }
+  let parsed: ReturnType<(typeof parsers)[number]['parse']> | undefined;
+  for (const parser of parsers) {
+    const analysis = parser.analyze(file, contents);
+    if (analysis.canParse) {
+      parsed = parser.parse(file, contents, analysis.hint as never);
+      break;
     }
-    if (!parsed) {
-      throw new Error(`vite-plugin-ngp: ${file} is not a translation file in a format @angular/localize reads.`);
-    }
-    if (parsed.diagnostics.hasErrors) {
-      throw new Error(parsed.diagnostics.formatDiagnostics(`vite-plugin-ngp: failed to read ${file}`));
-    }
-    if (parsed.locale && parsed.locale !== locale.code) {
-      logger.warn(`[vite-plugin-ngp] ${path.basename(file)} is for locale '${parsed.locale}', but is configured for '${locale.code}'.`);
-    }
-    Object.assign(translations, parsed.translations);
   }
-  return translations;
+  if (!parsed) {
+    throw new Error(`vite-plugin-ngp: ${file} is not a translation file in a format @angular/localize reads.`);
+  }
+  for (const {type, message} of parsed.diagnostics.messages) {
+    if (type === 'error') logger.error(`[vite-plugin-ngp] ${path.basename(file)}: ${message}`);
+    else logger.warn(`[vite-plugin-ngp] ${path.basename(file)}: ${message}`);
+  }
+  // The parsers take a file's locale from its header; a file configured under another code is
+  // probably a mistake.
+  const locale = (parsed as {locale?: string}).locale;
+  if (locale && !file.includes(`.${locale}.`) && !file.includes(`/${locale}/`)) {
+    logger.warn(`[vite-plugin-ngp] ${path.basename(file)} says it is for locale '${locale}'.`);
+  }
+  return parsed.translations;
 }
 
 /**

@@ -16,6 +16,10 @@ What changed in vite-plugin-ngp, newest first. The plugin isn't on npm, so there
 - A class edit could reload the page twice, a second after the first reload. That happened when the plugin read the `.ts` file between a save truncating it and writing it. The plugin now waits out an empty read, the way Vite does. [How it works](how-it-works#component-hmr)
 - `DEBUG=vite-plugin-ngp` also logs how long each step of a template update took. [Configuration](configuration#what-the-plugin-sets-for-you)
 
+### Internationalization
+
+- A translation file with a unit the parser can't read in full, such as a `{` in a translation that isn't an ICU expression, no longer fails `vite build`. The error is logged and the build goes on, as `ng build` does with the same file. Ghostfolio's Catalan translations have two such units. [Internationalization](i18n#the-build)
+
 ### This site
 
 - [Migrating from ng build](migrating-from-ng-build#where-every-option-goes) now says where `localize` and `i18nMissingTranslation` go, since i18n works. It listed them as not yet possible.

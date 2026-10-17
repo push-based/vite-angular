@@ -13,6 +13,12 @@ When you add or change anything a user of the plugin would see, update the match
 | An option, its default, or something the plugin configures in Vite (`define`, `optimizeDeps`, `resolve`, environments, middleware) | `site/content/configuration.md` |
 | How compiling, edits, HMR, linking or globals work | `site/content/how-it-works.md` |
 | Server rendering, the `render` contract, building or serving | `site/content/server-rendering.md` |
+| Component stylesheets: `styleUrl`, Sass, encapsulation, style HMR | `site/content/styles.md` |
+| Type-checking: what it checks, where errors show, what it costs | `site/content/type-checking.md` |
+| Running specs under Vitest | `site/content/testing.md` |
+| i18n: marking, extraction, translation, per-locale builds | `site/content/i18n.md` |
+| An `ng build` option: `fileReplacements`, `budgets`, `polyfills`, or what can't move | `site/content/migrating-from-ng-build.md` |
+| A number measured with `bench/` | `site/content/performance.md` |
 | What works, what doesn't, a new limit or a fixed one | `site/content/status.md` |
 | Setup steps, required versions, the toolchain | `site/content/getting-started.md`, `site/content/building-ngp.md` |
 | A number on the home page, or the home page's claims | `site/src/app/pages/home.ts` and `home.html` |

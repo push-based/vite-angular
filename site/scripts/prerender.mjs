@@ -48,7 +48,7 @@ await writeFile(
 await writeFile(path.join(client, 'robots.txt'), `User-agent: *\nAllow: /\n\nSitemap: ${siteUrl}sitemap.xml\n`);
 
 // 4. llms.txt (https://llmstxt.org): an index an AI assistant can read, and llms-full.txt with every
-// page in one file. The plugin isn't in any model's training data, and its repo is private.
+// page in one file. The plugin isn't in any model's training data.
 const sections = [...new Set(docs.map((d) => d.section))];
 const llms = [
   '# vite-plugin-ngp',

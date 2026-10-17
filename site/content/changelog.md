@@ -5,7 +5,7 @@ description: What changed in vite-plugin-ngp, newest first, for anyone following
 
 # Changelog
 
-What changed in vite-plugin-ngp, newest first. The repository is private, so this page is how you find out what landed since you last looked. Every entry links to the page that documents it.
+What changed in vite-plugin-ngp, newest first. The plugin isn't on npm, so there are no releases: this page is how you find out what landed since you last looked. Every entry links to the page that documents it.
 
 ## 17 October 2026
 
@@ -17,6 +17,7 @@ What changed in vite-plugin-ngp, newest first. The repository is private, so thi
 
 - [Migrating from ng build](migrating-from-ng-build#where-every-option-goes) now says where `localize` and `i18nMissingTranslation` go, since i18n works. It listed them as not yet possible.
 - An editing pass over every page: stale counts fixed, and the Server rendering page's prerender timing remeasured on the current 14 pages. [Server rendering](server-rendering#prerendering-for-static-hosting)
+- The repo, [push-based/vite-angular](https://github.com/push-based/vite-angular), is public. [Getting started](getting-started#1-build-ngp) now starts with `git clone` instead of asking for access, and no page calls the repo private any more.
 
 ## 16 October 2026
 

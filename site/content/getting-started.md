@@ -20,9 +20,11 @@ You don't need Rust, Bazel or an Angular checkout. The build installs its own Ru
 
 ## 1. Build ngp
 
-Angular hasn't published ngp to npm, so the plugin's repo builds it from Angular's source, at a pinned commit. The repo, [push-based/vite-angular](https://github.com/push-based/vite-angular), is private for now, so you need access from [PushBased](https://push-based.io/) to clone it. Then, from its root:
+Angular hasn't published ngp to npm, so the plugin's repo, [push-based/vite-angular](https://github.com/push-based/vite-angular), builds it from Angular's source at a pinned commit. Clone it and build:
 
 ```bash
+git clone https://github.com/push-based/vite-angular.git
+cd vite-angular
 nvm use
 pnpm install
 pnpm toolchain

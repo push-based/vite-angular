@@ -547,3 +547,12 @@ It also fixes the opposite mistake. Under 22, a template reported more than 50 m
 **Cost.** A `load` hook call for every app `.ts` module, and a disk read in a transform that races an edit. When another plugin's `load` supplies a module, its read time is unknown, and after a watcher edit its transforms reach the analyzer only if their code matches disk.
 
 **Revisit when** Vite passes `transform` the time or version of the code it read.
+## 47. Public repo, with the bench repo still private
+
+*17 October 2026*
+
+**Decision.** `push-based/vite-angular` is public, and the docs site, the README and Getting started say so: anyone can clone it and build ngp. The bench repo stays private, and the few links into it are labeled. Supersedes [decision 10](decisions.md).
+
+**Why.** The repo depends on nothing private. ngp is built from Angular's public source, and the bench results the Performance page cites are in this repo's `bench/results/`. A public repo is the only way someone outside PushBased can try per-module Angular compilation before Angular publishes ngp, and the docs site already was public.
+
+**Cost.** Everything in the repo is published the moment it's pushed, docs and decisions included, so the no-machine-paths rule and the measured-numbers-only rule now apply to every file, not just the site.

@@ -22,7 +22,7 @@ src/app/pages/overview/overview.html:18:30 - error TS2551: Property 'modee' does
 
 The check never holds anything up. Your edit is compiled and sent to the page first, and template edits still update in place. Errors are reported when they change, so an unrelated edit doesn't print the same list again. When you fix the last one, the terminal says `type-check: no errors` and the overlay closes. A page you open later shows the current errors straight away.
 
-`vite build` runs the same check and fails if there's any error, with the same list. On this site (4 components) and on the repo's playground (19), the check adds about 110 ms to the build.
+`vite build` runs the same check and fails if there's any error, with the same list. On this site and on the repo's playground, 4 and 19 components when this was measured, the check adds about 110 ms to the build.
 
 ## What it checks
 
@@ -45,7 +45,7 @@ Then it runs `tsgo` on that tsconfig, in a child process. For an error inside a 
 
 ## Where it's weak
 
-- **Every check is a whole-program check.** `tsgo` keeps an incremental cache between runs, but each run still loads the whole program. On the repo's playground, 19 components, a check takes 100–250 ms in the dev server. On a 5,000-component app, a planted template error reached the terminal 1.45 s after the edit, 300 ms of it the wait before the check starts. `ng serve` took 1.66 s for the same error ([Performance](performance#type-errors-in-the-dev-server)). So on a large app expect errors a second or two after the edit, not milliseconds.
+- **Every check is a whole-program check.** `tsgo` keeps an incremental cache between runs, but each run still loads the whole program. On the repo's playground, 19 components at the time, a check takes 100–250 ms in the dev server. On a 5,000-component app, a planted template error reached the terminal 1.45 s after the edit, 300 ms of it the wait before the check starts. `ng serve` took 1.66 s for the same error ([Performance](performance#type-errors-in-the-dev-server)). So on a large app expect errors a second or two after the edit, not milliseconds.
 - **Startup does extra work on Vite's thread.** The first check generates every component's block, one file at a time, while your first page loads. On the playground's 19 components that took 60 ms. It hasn't been measured on a large app.
 - **Your Vite cache directory has to be inside the project.** The check's tsconfig lives there, and TypeScript resolves `types` entries like `vite/client` from it. The default, `node_modules/.vite`, works. If you set `cacheDir` outside the project and your tsconfig lists `types`, every check fails with TS2688.
 - **One position differs from `ng build`.** A template given as an expression, like `template: TEMPLATE`, gets its errors at that expression, not inside the string.

@@ -8,7 +8,8 @@ The public docs for vite-plugin-ngp, at https://push-based.github.io/vite-angula
 | `src/app/docs.ts` | The list of pages: their order, sidebar section, route and file |
 | `src/app/pages/` | The home page, the docs page layout and the 404 page |
 | `src/main.server.ts` | The server entry: `render(url, document)` and the routes to prerender |
-| `scripts/prerender.mjs` | Renders every route from the server bundle into `dist/client` |
+| `scripts/prerender.mjs` | Renders every route from the server bundle into `dist/client`, and writes `404.html`, `sitemap.xml`, `robots.txt`, `llms.txt` and each page's markdown next to it |
+| `scripts/check-docs.ts` | `pnpm docs:check`: fails when the Configuration table, the sidebar, a page's front matter or a link between pages has drifted from the code |
 | `scripts/logo.mjs` | Generates `public/logo.svg` |
 
 ## Work on it

@@ -7,7 +7,7 @@
 
 **Docs: https://push-based.github.io/vite-angular/**
 
-This README is for someone who has just been given access to this repo. It covers what works today, how to run it, how the repo is laid out, and the rules for changing it. The docs site is for people using the plugin in their own app.
+This README is for someone who has just cloned this repo. It covers what works today, how to run it, how the repo is laid out, and the rules for changing it. The docs site is for people using the plugin in their own app.
 
 ## Why it exists
 
@@ -26,12 +26,15 @@ A first version on top of a prototype compiler. Each item below was checked in t
 - Template and TypeScript type-checking with TypeScript 7 in a separate process: errors in the dev server's terminal and overlay, and a failed `vite build`.
 - Angular i18n: `ngp-extract-i18n` for messages, and one translated folder per locale from a single `vite build` (`i18n` option).
 - Production builds with Angular's linker and a port of the CLI's build optimizer. The playground's JavaScript comes out within 2% of `ng build`'s for the same app.
+- Component stylesheets (`styleUrl`) through Vite's CSS pipeline, so Sass and PostCSS work, with Angular's view encapsulation and in-place updates.
+- Vitest with TestBed, compiling only the specs a run asks for and what they import.
+- angular.json's `fileReplacements`, `budgets` and `polyfills` as plugin options in the CLI's shapes. Every other build option maps to Vite config.
 
 **Missing**
-- External stylesheets as Vite CSS modules. ngp inlines `styleUrl` files itself, so preprocessors and CSS HMR don't apply.
-- HTTP status codes from SSR, Vitest, and Windows outside WSL 2.
+- Preprocessors in inline `styles`. ngp compiles them as plain CSS, and there's no `inlineStyleLanguage`.
+- HTTP status codes from SSR, `@angular/ssr`'s per-route render modes, the service worker, and Windows outside WSL 2.
 
-**Where it's weakest.** Nobody can `npm install` this: ngp isn't published, so the repo builds it from Angular's source, and every `@angular/*` package is pinned to exactly `22.3.0-next.2`. The plugin also uses ngp's API below its intended surface, so any Angular commit can break it. And the headline numbers (164 ms to the first module, about 4 ms per edit at 5,000 components) come from spikes against ngp's API, not from this plugin's dev server. The comparison against `ng serve`, Analog and `@oxc-angular/vite` hasn't been run yet.
+**Where it's weakest.** Nobody can `npm install` this: ngp isn't published, so the repo builds it from Angular's source, and every `@angular/*` package is pinned to exactly `22.3.0-next.2`. The plugin also uses ngp's API below its intended surface, so any Angular commit can break it. And the numbers come from one laptop: at 5,000 components the dev server shows the first page in 1.9 s where `ng serve` takes 28.5 s, and a template edit lands in about 150 ms where `ng serve` takes 1.8 s, measured end to end with the harness in [bench](bench). Real apps with third-party libraries, Linux, and memory haven't been measured. The [Performance](https://push-based.github.io/vite-angular/performance/) page has the tables and says where they're weak.
 
 The full list is on the [status page](https://push-based.github.io/vite-angular/status/).
 
@@ -90,6 +93,7 @@ To use the plugin in your own app, follow [Getting started](https://push-based.g
 | [packages/vite-plugin-ngp](packages/vite-plugin-ngp) | The plugin. `src/index.ts` holds the Vite hooks, `src/compiler.ts` wraps ngp, and `test/` has the tests |
 | [playground](playground) | A demo app with one page per Angular feature area. Its [README](playground/README.md) says what each page exercises and what breaks visibly when the plugin gets it wrong |
 | [site](site) | The public docs site: an Angular app compiled by the plugin and prerendered with its SSR. The pages are Markdown in [site/content](site/content) |
+| [bench](bench) | The end-to-end benchmark: dev-server starts, edits, type-check latency, builds and bundle sizes for the plugin, `ng serve`, Analog and `@oxc-angular/vite`. Its results are behind the Performance page |
 | [toolchain](toolchain) | Builds ngp from Angular's source, at the commit in [versions.env](toolchain/versions.env) |
 | [docs](docs) | For people working on the plugin: [building.md](docs/building.md), [design.md](docs/design.md), [decisions.md](docs/decisions.md) |
 | [.github/workflows](.github/workflows) | `ci` builds ngp on a clean Ubuntu runner, runs the tests and builds the playground. `pages` deploys the docs site |
@@ -106,8 +110,9 @@ To use the plugin in your own app, follow [Getting started](https://push-based.g
 | `pnpm playground:build` | Builds the playground's client and server bundles |
 | `pnpm site:dev` | Runs the docs site with live reload |
 | `pnpm site:build` | Builds and prerenders the docs site |
+| `pnpm docs:check` | Checks the docs site against the code: the options table, the sidebar, front matter and links. Part of `pnpm test` and of CI |
 
-The tests run the plugin on the playground. They check that the entry-only tsconfig doesn't change any output, that HMR in a real dev server applies template and inline-style edits in place and reloads once when the class changed too, which `.ts` edits qualify for HMR, what the build optimizer rewrites, and which Angular libraries get bundled on the server. CI runs them on every push. The whole job takes about 8 minutes on a 2-core runner.
+The tests run the plugin on the playground and on small fixture apps. They cover the entry-only tsconfig (identical output), HMR in a real dev server (template, inline-style and stylesheet edits in place, one reload when the class changed too), adding, renaming and deleting files, the build optimizer, type-checking, Vitest, the `ng build` options, i18n, and which Angular libraries get bundled on the server. CI runs them on every push: about 8 minutes on a 2-core runner when the Rust cache is cold, about 2 minutes with it.
 
 ## Changing things
 
@@ -115,7 +120,7 @@ The tests run the plugin on the playground. They check that the entry-only tscon
 
 **Log design choices.** Each choice gets an entry in [docs/decisions.md](docs/decisions.md): what was decided, why, what it costs, and when to revisit it. When a decision changes, add a new entry that supersedes the old one. Don't edit the old one.
 
-**Write in Clarity style.** Docs follow [Clarity](https://clarity.addy.ie/): write for one reader you can picture, be specific enough to be wrong, and take a position and say where it's weak. Don't publish a number that wasn't measured, and say where each number came from. The site is public and this repo is private, so never publish machine paths, and label any link into a private repo.
+**Write in Clarity style.** Docs follow [Clarity](https://clarity.addy.ie/): write for one reader you can picture, be specific enough to be wrong, and take a position and say where it's weak. Don't publish a number that wasn't measured, and say where each number came from. The site and this repo are public and the bench repo is private, so never publish machine paths, and keep links into private repos few and labeled.
 
 **Commit small, commit your own paths.** Commit each coherent change on its own, with its docs, and push. Several people and agent sessions often share one checkout, so commit only your own paths (`git commit -- <paths>`) and never revert changes you didn't make.
 

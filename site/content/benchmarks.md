@@ -217,7 +217,7 @@ node real.mjs super-productivity && node real.mjs ghostfolio
 ```
 
 ```bash
-NGP_TOOLCHAIN=../toolchain/out node run.mjs --apps super-productivity,ghostfolio --tools ngp,cli,nx
+NGP_TOOLCHAIN="$PWD/../toolchain/out" node run.mjs --apps super-productivity,ghostfolio --tools ngp,cli,nx
 ```
 
 ```bash

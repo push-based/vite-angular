@@ -51,16 +51,16 @@ ngp({typeChecker: 'tsrs'})
 
 The plugin lists tsrs only as an optional peer dependency, so your app picks the version; the plugin was written against 0.16.0-ts7.1.0-dev.20260929. Without it, the check reports one error naming the option and the install command, in the terminal and the overlay in dev, and `vite build` fails with it. Each checker keeps its own incremental build info, so switching never reads the other's.
 
-**What it buys.** On the repo's bench, from writing a template type error until the dev server's terminal names it, and from removing it until the terminal reports the app clean. Medians of 10 edits per app after 2 warm-ups, measured on 17 October 2026 on an M2 Max with the result in `bench/results/2026-10-17-typecheck-tsrs.json`, tsrs 0.16.0-ts7.1.0-dev.20260929 against `tsgo` 7.0.2:
+**What it buys.** On the repo's bench, from writing a template type error until the dev server's terminal names it, and from removing it until the terminal reports the app clean. Medians of 20 edits per app after 2 warm-ups, in the full run behind the [Performance](performance#type-errors-in-the-dev-server) page on the evening of 17 October 2026 on an M2 Max, with the result in `bench/results/2026-10-17-rerun-generated.json`, tsrs 0.16.0-ts7.1.0-dev.20260929 against `tsgo` 7.0.2:
 
-| | playground (21 components) | 5,000 components |
-|---|---:|---:|
-| `tsgo`, error shown | 527 ms | 1.56 s |
-| `tsrs`, error shown | 508 ms | 1.12 s |
-| `tsgo`, error cleared | 570 ms | 1.45 s |
-| `tsrs`, error cleared | 562 ms | 1.12 s |
+| | 100 components | 1,000 | 5,000 | playground (21) |
+|---|---:|---:|---:|---:|
+| `tsgo`, error shown | 496 ms | 638 ms | 1.36 s | 500 ms |
+| `tsrs`, error shown | 484 ms | 557 ms | 1.02 s | 479 ms |
+| `tsgo`, error cleared | 502 ms | 548 ms | 1.36 s | 498 ms |
+| `tsrs`, error cleared | 483 ms | 500 ms ±6% | 1.02 s | 477 ms |
 
-At 5,000 components tsrs takes about 0.4 s off every check, a quarter of the time from edit to error. On the playground the two are within 20 ms of each other: there the 300 ms wait before the check and the watcher's own delay are most of the half second, and the check itself is a tenth of a second or two with either. The `tsgo` figures here are from the same run as the tsrs ones, so they're comparable with each other; the [Performance](performance#type-errors-in-the-dev-server) page's 1.37 s for `tsgo` at 5,000 components came from an earlier run on a quieter machine. Expect the gap to show on apps where the check itself takes a second or more, and not before.
+At 5,000 components tsrs takes about 0.34 s off every check, a quarter of the time from edit to error; at 1,000 components about 60 ms. On the small apps the two are within 20 ms of each other: there the 300 ms wait before the check and the watcher's own delay are most of the half second, and the check itself is a tenth of a second or two with either. Expect the gap to show on apps where the check itself takes a second or more, and not before. The same run put the two side by side on every other metric: starts, edits and builds came out within the run-to-run drift of each other, and the one other difference is memory. The dev server's peak during the edit series at 5,000 components was 2.0 GB with tsrs against 2.5 GB with `tsgo`, and a production build's peak 4.4 GB against 4.8 ([Performance](performance#memory)).
 
 **Where it's weak.**
 
@@ -79,7 +79,7 @@ Then it runs `tsgo` on that tsconfig, in a child process. For an error inside a 
 
 ## Where it's weak
 
-- **Every check is a whole-program check.** `tsgo` keeps an incremental cache between runs, but each run still loads the whole program. On the repo's playground, 19 components at the time, a check takes 100–250 ms in the dev server. On a 5,000-component app, a planted template error reached the terminal 1.45 s after the edit, 300 ms of it the wait before the check starts. `ng serve` took 1.66 s for the same error ([Performance](performance#type-errors-in-the-dev-server)). So on a large app expect errors a second or two after the edit, not milliseconds.
+- **Every check is a whole-program check.** `tsgo` keeps an incremental cache between runs, but each run still loads the whole program. On the repo's playground, 19 components at the time, a check takes 100–250 ms in the dev server. On a 5,000-component app, a planted template error reached the terminal 1.36 s after the edit, 300 ms of it the wait before the check starts, and 1.02 s with tsrs. `ng serve` took 1.66 s for the same error ([Performance](performance#type-errors-in-the-dev-server)). So on a large app expect errors a second or two after the edit, not milliseconds.
 - **The first errors come after the first page.** The first check generates every component's block on Vite's thread, one file at a time, and that used to run while your first page was compiling. On Super Productivity, 252 components, the blocks took 0.67 s of the thread and everything the page needed waited behind them. So the first check now waits until the server has been idle for half a second. Measured on 17 October 2026 on a laptop, warm restarts of that app, medians of 5: first paint went from 6.72 s to 6.00 s, and the first error report moved from 7.1 s after the start to 8.9 s, since the check now starts after the page instead of alongside it. An app that never leaves the server idle, say one polling a file it serves every few hundred milliseconds, gets its first check 60 s after the start instead. Checks after edits are unchanged.
 - **Your Vite cache directory has to be inside the project.** The check's tsconfig lives there, and TypeScript resolves `types` entries like `vite/client` from it. The default, `node_modules/.vite`, works. If you set `cacheDir` outside the project and your tsconfig lists `types`, every check fails with TS2688.
 - **One position differs from `ng build`.** A template given as an expression, like `template: TEMPLATE`, gets its errors at that expression, not inside the string.

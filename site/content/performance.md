@@ -5,17 +5,18 @@ description: How fast vite-plugin-ngp starts, updates and builds next to ng serv
 
 # Performance
 
-On a 5,000-component app, vite-plugin-ngp shows the first page 1.7 seconds after you start the dev server, where `ng serve` takes 28.3 seconds. A template edit reaches the page in about 120 ms, where `ng serve` takes 1.8 seconds and Analog reloads the page in 2.7 seconds. Neither grows much with the app, where the CLI's times grow with every component, and the plugin type-checks the whole time. Once the page is up after a restart, the plugin's dev server holds 1.0 GB where `ng serve` holds 6.0 GB. `@oxc-angular/vite` matches the plugin's typical template edit and is faster and lighter at everything else, but it uses its own compiler, doesn't type-check, and its builds don't split `@defer` blocks into their own chunks. Production builds are where the plugin gains least: 20 seconds against `ng build`'s 30, both type-checking, at the same peak memory.
+On a 5,000-component app, vite-plugin-ngp shows the first page 1.6 seconds after you start the dev server, where `ng serve` takes 28.4 seconds. A template edit reaches the page in 100 to 130 ms, where `ng serve` takes 1.8 seconds and Analog reloads the page in 2.7 seconds. Neither grows much with the app, where the CLI's times grow with every component, and the plugin type-checks the whole time. Once the page is up after a restart, the plugin's dev server holds 0.9 GB where `ng serve` holds 4.7 GB. `@oxc-angular/vite` matches the plugin's typical template edit and is faster and lighter at everything else, but it uses its own compiler, doesn't type-check, and its builds don't split `@defer` blocks into their own chunks. Production builds are where the plugin gains least: 20 seconds against `ng build`'s 30, both type-checking, at about the same peak memory.
 
-This page is for you if you're deciding whether to try vite-plugin-ngp instead of the Angular CLI or Analog, and want to know what you'd gain and what you'd give up. The apps here are generated; [Benchmarks on real apps](benchmarks) measures two open-source apps against their own CLI on GitHub's runners. Every number here was measured on one laptop on 17 October 2026, in one run of the benchmark in the repo's `bench/` folder, on the plugin at commit `92efd3a`. Each figure shows the medians its table lists; the plugin's bar is violet, every other tool's gray. The last sections say how it was measured, and where these numbers are weak.
+This page is for you if you're deciding whether to try vite-plugin-ngp instead of the Angular CLI or Analog, and want to know what you'd gain and what you'd give up. The apps here are generated; [Benchmarks on real apps](benchmarks) measures two open-source apps against their own CLI on GitHub's runners. Every number here was measured on one laptop on the evening of 17 October 2026, in one run of the benchmark in the repo's `bench/` folder, on the plugin at commit `e401c10`. Each figure shows the medians its table lists; the plugin's bar is violet, every other tool's gray. The last sections say how it was measured, and where these numbers are weak.
 
 ## What was measured
 
-Four toolchains, each with its own README's setup and nothing else, on the same apps, with the same Angular, `22.3.0-next.2`:
+Four toolchains, each with its own README's setup and nothing else, on the same apps, with the same Angular, `22.3.0-next.2`, plus the plugin a second time with its opt-in [`typeChecker: 'tsrs'`](type-checking#checking-with-tsrs), which swaps `tsgo` for Oxc's Rust port of TypeScript 7:
 
 | Toolchain | Version | Type-checks? |
 |---|---|---|
-| vite-plugin-ngp | the repo at commit `92efd3a` | yes: in a background process in dev, and before `vite build` finishes |
+| vite-plugin-ngp | the repo at commit `e401c10` | yes: in a background process in dev, and before `vite build` finishes |
+| vite-plugin-ngp, `typeChecker: 'tsrs'` | the same, with tsrs 0.16.0-ts7.1.0-dev.20260929 | yes, the same check in tsrs |
 | Angular CLI, `ng serve` and `ng build` | `@angular/build` 22.3.0-next.2 | yes, in both |
 | Analog, `@analogjs/vite-plugin-angular` | 2.8.2-beta.1, with a one-line patch (see [below](performance#where-these-numbers-are-weak)) | no: `disableTypeChecking` is on by default |
 | `@oxc-angular/vite` | 0.0.41 | no, by design |
@@ -36,10 +37,11 @@ From starting the process to the first contentful paint of the rendered app.
 
 | Toolchain | 100 | 1,000 | 5,000 | playground |
 |---|---:|---:|---:|---:|
-| vite-plugin-ngp | 813 ms | 994 ms | 1.74 s | 775 ms |
-| `ng serve` | 2.18 s | 6.98 s | 28.3 s | n/a |
-| Analog | 1.10 s | 1.94 s | 6.46 s | 1.07 s |
-| `@oxc-angular/vite` | 370 ms | 529 ms | 1.11 s | 357 ms |
+| vite-plugin-ngp | 784 ms | 1.00 s | 1.64 s | 770 ms |
+| vite-plugin-ngp, `typeChecker: 'tsrs'` | 778 ms | 949 ms | 1.57 s | 775 ms |
+| `ng serve` | 2.06 s | 6.92 s | 28.4 s | n/a |
+| Analog | 1.04 s | 1.94 s | 6.43 s | 1.08 s |
+| `@oxc-angular/vite` | 359 ms | 532 ms | 1.09 s | 352 ms |
 
 That's a cold start: every cache the toolchain keeps was deleted first. A restart keeps those caches, and is what you do every morning:
 
@@ -47,16 +49,17 @@ That's a cold start: every cache the toolchain keeps was deleted first. A restar
 
 | Toolchain | 100 | 1,000 | 5,000 | playground |
 |---|---:|---:|---:|---:|
-| vite-plugin-ngp | 435 ms | 452 ms | 565 ms | 468 ms |
-| `ng serve` | 2.08 s | 6.82 s | 27.9 s | n/a |
-| Analog | 1.03 s | 1.68 s | 5.77 s | 958 ms |
-| `@oxc-angular/vite` | 321 ms | 297 ms | 333 ms | 303 ms |
+| vite-plugin-ngp | 405 ms | 453 ms | 570 ms | 467 ms |
+| vite-plugin-ngp, `typeChecker: 'tsrs'` | 399 ms | 451 ms | 539 ms | 463 ms |
+| `ng serve` | 1.92 s | 6.82 s | 28.1 s | n/a |
+| Analog | 909 ms | 1.74 s | 5.76 s | 948 ms |
+| `@oxc-angular/vite` | 282 ms | 296 ms | 338 ms | 303 ms |
 
-`ng serve` and Analog compile the whole program before the first page, so their start grows with the app. The CLI's cache barely helps a restart: 27.9 against 28.3 seconds. vite-plugin-ngp compiles only what the first page imports, so at 5,000 components it's 16 times faster than `ng serve` cold and almost 50 times faster on a restart.
+`ng serve` and Analog compile the whole program before the first page, so their start grows with the app. The CLI's cache barely helps a restart: 28.1 against 28.4 seconds. vite-plugin-ngp compiles only what the first page imports, so at 5,000 components it's 17 times faster than `ng serve` cold and almost 50 times faster on a restart. Which process runs the type-check makes no difference you can see here: the tsrs rows are within the run-to-run drift of the default ones on every app.
 
-Most of the plugin's cold start is Vite pre-bundling Angular's packages, which a restart skips: 1.2 seconds of the 1.7 at 5,000 components. That step runs Angular's Babel linker on every partially compiled package. `@oxc-angular/vite` pays 0.8 seconds for the same step, so the slower linker probably costs the plugin about 0.4 seconds there. That's an inference from the two differences, not a measurement of the linker itself.
+Most of the plugin's cold start is Vite pre-bundling Angular's packages, which a restart skips: 1.1 seconds of the 1.6 at 5,000 components. That step runs Angular's Babel linker on every partially compiled package. `@oxc-angular/vite` pays 0.75 seconds for the same step, so the slower linker probably costs the plugin about 0.3 seconds there. That's an inference from the two differences, not a measurement of the linker itself.
 
-The plugin's background type-check was on for all of these, as it is by default, and it competed for the CPU while the first page loaded. Turning it off saved about 150 ms of a cold start at 5,000 components, 1.96 against 2.11 seconds, measured back to back in a separate run on 16 October. It made no measurable difference to edits. Since this run, the first check waits until the dev server has gone idle, so it no longer runs alongside the first page ([Type-checking](type-checking#what-you-see)); the start numbers above haven't been measured again since.
+The plugin's background type-check was on for all of these, as it is by default. Since 17 October the first check waits until the dev server has gone idle, so it no longer competes with the first page ([Type-checking](type-checking#what-you-see)). In the afternoon run of the same day, before that change, the cold start at 5,000 components was 1.74 seconds against 1.64 here, and a back-to-back comparison on 16 October had put the check's cost to a cold start at about 150 ms. The two agree, but 100 ms is also the size of the drift between runs, so read the saving from the 16 October comparison, not from these two runs.
 
 ## Template edits
 
@@ -66,14 +69,15 @@ From writing an external template to the new element in the page. "reload" means
 
 | Toolchain | 100 | 1,000 | 5,000 | playground |
 |---|---:|---:|---:|---:|
-| vite-plugin-ngp | 123 ms (61 ms) | 115 ms ±7% (58 ms) | 124 ms ±10% (60 ms) | 129 ms (66 ms) |
-| `ng serve` | 185 ms (177 ms) | 464 ms (449 ms) | 1.81 s (1.74 s) | n/a |
-| Analog, default | 264 ms ±10% (236 ms), reload | 796 ms (645 ms), reload | 2.70 s (2.56 s), reload | 201 ms (194 ms), reload |
-| `@oxc-angular/vite` | 80 ms ±48% (15 ms) | 117 ms (14 ms) | 118 ms (16 ms) | 119 ms (18 ms) |
+| vite-plugin-ngp | 97 ms ±30% (59 ms) | 119 ms (56 ms) | 109 ms ±23% (60 ms) | 129 ms (66 ms) |
+| vite-plugin-ngp, `typeChecker: 'tsrs'` | 123 ms (60 ms) | 102 ms ±19% (58 ms) | 71 ms ±11% (61 ms) | 129 ms (65 ms) |
+| `ng serve` | 183 ms (179 ms) | 459 ms (442 ms) | 1.81 s (1.76 s) | n/a |
+| Analog, default | 329 ms (227 ms), reload | 789 ms (633 ms), reload | 2.72 s (2.54 s), reload | 229 ms ±15% (195 ms), reload |
+| `@oxc-angular/vite` | 118 ms (16 ms) | 117 ms (15 ms) | 116 ms (16 ms) | 118 ms (16 ms) |
 
 The plugin's time stays flat from 100 to 5,000 components, because an edit regenerates only the edited component's update. `ng serve` rebuilds, and its time grows to 1.8 seconds. Analog reloads the page by default, and its time grows with the app too.
 
-The fastest edit matters here because of macOS. In a test with no plugin at all, Vite's file watcher noticed a write after either about 10–35 ms or about 113 ms, unpredictably. Every Vite toolchain's times have that in them, so each toolchain's edits cluster around two values, and a median depends on how many of a run's edits got the slow report. That's why `@oxc-angular/vite`'s median at 100 components is 80 ms with a ±48% spread and 117 ms everywhere else: more fast reports in that run, not a faster tool.
+The fastest edit matters here because of macOS. In a test with no plugin at all, Vite's file watcher noticed a write after either about 10–35 ms or about 113 ms, unpredictably. Every Vite toolchain's times have that in them, so each toolchain's edits cluster around two values, and a median depends on how many of a run's edits got the slow report. That's why the plugin's median at 100 components is 97 ms with a ±30% spread and 119 ms at 1,000, and why its tsrs row reads 71 ms at 5,000 components where the default reads 109: more fast reports in those series, not a faster tool. The fastest edits, in brackets, are the same 56 to 66 ms in every plugin series.
 
 The rings show what the medians hide. The plugin's edits cluster around 60 ms and 120 ms, and `@oxc-angular/vite`'s, in the same run, around 16 ms and 118 ms. On a slow report the two tie. On a fast one, the plugin still waits: it holds a template update until 50 ms after the template was written, in case the same save also changes the component's class, and when the watcher reports within 10 ms about 40 ms of that window is left ([How it works](how-it-works#component-hmr)). Everything else, from the analyzer through ngp's update module to the message to the browser, takes about 5 ms. Until 17 October the wait counted from the watcher's report instead, and the plugin's edits clustered around 75 ms and 175 ms.
 
@@ -87,25 +91,28 @@ Changing a signal's initial value in the first route's page component. Every too
 
 | Toolchain | 100 | 1,000 | 5,000 | playground |
 |---|---:|---:|---:|---:|
-| vite-plugin-ngp | 180 ms (79 ms) | 186 ms (85 ms) | 200 ms ±14% (126 ms) | 168 ms (64 ms) |
-| `ng serve` | 242 ms (229 ms) | 530 ms (505 ms) | 1.92 s (1.89 s) | n/a |
-| Analog | 323 ms ±8% (232 ms) | 757 ms ±5% (632 ms) | 2.69 s (2.56 s) | 199 ms (195 ms) |
-| `@oxc-angular/vite` | 168 ms (66 ms) | 169 ms (100 ms) | 182 ms (79 ms) | 145 ms ±13% (61 ms) |
+| vite-plugin-ngp | 179 ms (77 ms) | 187 ms (85 ms) | 216 ms ±17% (125 ms) | 167 ms (65 ms) |
+| vite-plugin-ngp, `typeChecker: 'tsrs'` | 181 ms (79 ms) | 185 ms (76 ms) | 210 ms (117 ms) | 140 ms ±21% (64 ms) |
+| `ng serve` | 236 ms (228 ms) | 522 ms (508 ms) | 1.89 s (1.85 s) | n/a |
+| Analog | 328 ms (218 ms) | 781 ms ±6% (627 ms) | 2.68 s (2.59 s) | 201 ms (192 ms) |
+| `@oxc-angular/vite` | 167 ms (67 ms) | 171 ms (67 ms) | 180 ms (73 ms) | 162 ms (61 ms) |
 
 The reload includes fetching and running every module the page needs again. The plugin and `@oxc-angular/vite` are within the watcher's noise of each other here.
 
 ## Type errors in the dev server
 
-Only vite-plugin-ngp and `ng serve` type-check in the dev server. This times planting a template type error until the terminal names it, and then removing it until the terminal reports the app clean.
+Only vite-plugin-ngp and `ng serve` type-check in the dev server. This times planting a template type error until the terminal names it, and then removing it until the terminal reports the app clean. The plugin is here twice: with `tsgo`, the default, and with tsrs.
 
 | Toolchain | 100 | 1,000 | 5,000 | playground |
 |---|---:|---:|---:|---:|
-| vite-plugin-ngp, error shown | 512 ms | 639 ms | 1.37 s | 500 ms |
-| vite-plugin-ngp, error cleared | 501 ms | 544 ms | 1.36 s | 499 ms |
-| `ng serve`, error shown | 182 ms | 433 ms | 1.60 s | n/a |
-| `ng serve`, error cleared | 184 ms | 455 ms | 1.73 s | n/a |
+| vite-plugin-ngp, error shown | 496 ms | 638 ms | 1.36 s | 500 ms |
+| vite-plugin-ngp, error cleared | 502 ms | 548 ms | 1.36 s | 498 ms |
+| with tsrs, error shown | 484 ms | 557 ms | 1.02 s | 479 ms |
+| with tsrs, error cleared | 483 ms | 500 ms ±6% | 1.02 s | 477 ms |
+| `ng serve`, error shown | 182 ms | 433 ms | 1.66 s | n/a |
+| `ng serve`, error cleared | 185 ms | 455 ms | 1.78 s | n/a |
 
-The plugin waits 300 ms after an edit before it checks, so on small apps `ng serve` reports first. At 5,000 components the plugin's whole-program `tsgo` check takes about 1.4 seconds, a little faster than `ng serve`'s rebuild. Neither holds up the page: the plugin's template update arrives in about 120 ms, and the type error 1.4 seconds after the edit. With the opt-in [`typeChecker: 'tsrs'`](type-checking#checking-with-tsrs) the same error reached the terminal in 1.12 s against 1.56 s for `tsgo` at 5,000 components, in a separate run on 17 October (`bench/results/2026-10-17-typecheck-tsrs.json`, not in the table above).
+The plugin waits 300 ms after an edit before it checks, so on small apps `ng serve` reports first. At 5,000 components the plugin's whole-program `tsgo` check takes about 1.4 seconds, a little faster than `ng serve`'s rebuild. Neither holds up the page: the plugin's template update arrives in about 110 ms, and the type error 1.4 seconds after the edit. With [`typeChecker: 'tsrs'`](type-checking#checking-with-tsrs) the same error shows in 1.02 seconds, a third less, and at 1,000 components in 557 ms against 638. On the small apps the two are within 20 ms, because there the 300 ms wait and the watcher's delay are most of the half second and the check itself is a tenth of it.
 
 ## Production builds
 
@@ -115,13 +122,14 @@ From starting `vite build` or `ng build` to the process exiting, with caches del
 
 | Toolchain | 100 | 1,000 | 5,000 | playground |
 |---|---:|---:|---:|---:|
-| vite-plugin-ngp | 1.32 s | 4.81 s | 20.2 s | 1.09 s |
-| vite-plugin-ngp, `typeCheck: false` | 1.16 s | 3.88 s | 16.7 s | 1.01 s |
-| `ng build` | 2.02 s | 6.72 s | 30.1 s | n/a |
-| Analog | 1.44 s | 4.50 s | 18.4 s | 1.22 s |
-| `@oxc-angular/vite` | 255 ms | 441 ms | 1.42 s | 315 ms |
+| vite-plugin-ngp | 1.32 s | 4.79 s | 20.5 s | 1.08 s |
+| vite-plugin-ngp, `typeChecker: 'tsrs'` | 1.29 s | 4.65 s | 19.6 s | 1.07 s |
+| vite-plugin-ngp, `typeCheck: false` | 1.16 s | 3.88 s | 16.7 s | 1.03 s |
+| `ng build` | 2.01 s | 6.73 s | 30.2 s | n/a |
+| Analog | 1.44 s | 4.51 s | 19.3 s | 1.22 s |
+| `@oxc-angular/vite` | 262 ms | 441 ms | 1.45 s | 317 ms |
 
-The fair comparisons are the plugin against `ng build`, since both type-check, and the plugin without type-checking against Analog and `@oxc-angular/vite`, which don't. Against `ng build`, the plugin is about a third faster. Without type-checking it comes in a little under Analog. `@oxc-angular/vite` builds 5,000 components in 1.4 seconds, about 12 times faster than anything else, because its compiler is Rust from end to end. ngp's analyzer is Rust too, but its code generation is Angular's template compiler, in TypeScript. In a build of the 5,000-component app without type-checking, profiled on 16 October, 14.6 of 16.6 seconds went to transforming modules, and Rolldown's rendering and minifying took the remaining 2. Rolldown's own timings put the plugin's build optimizer, which runs Babel on every module, at 3.6 seconds of that. The rest of the transform time is mostly ngp. The type-check adds another 3.5 seconds at 5,000 components.
+The fair comparisons are the plugin against `ng build`, since both type-check, and the plugin without type-checking against Analog and `@oxc-angular/vite`, which don't. Against `ng build`, the plugin is about a third faster. Without type-checking it comes in under Analog by 2.6 seconds at 5,000 components. `@oxc-angular/vite` builds 5,000 components in 1.4 seconds, about 12 times faster than anything else, because its compiler is Rust from end to end. ngp's analyzer is Rust too, but its code generation is Angular's template compiler, in TypeScript. In a build of the 5,000-component app without type-checking, profiled on 16 October, 14.6 of 16.6 seconds went to transforming modules, and Rolldown's rendering and minifying took the remaining 2. Rolldown's own timings put the plugin's build optimizer, which runs Babel on every module, at 3.6 seconds of that. The rest of the transform time is mostly ngp. The type-check adds another 3.8 seconds at 5,000 components with `tsgo`, and 2.9 with tsrs; it runs while Rolldown renders, so it's partly hidden.
 
 ## Bundle size
 
@@ -165,45 +173,48 @@ What the dev server held once the page had rendered after a restart, and in brac
 
 | Toolchain | 100 | 1,000 | 5,000 | playground |
 |---|---:|---:|---:|---:|
-| vite-plugin-ngp | 360 MB (431 MB ±7% peak) | 549 MB (805 MB peak) | 1.01 GB (1.01 GB peak) | 333 MB (393 MB peak) |
-| `ng serve` | 793 MB (793 MB peak) | 1.81 GB (1.81 GB peak) | 5.73 GB (6.03 GB peak) | n/a |
-| Analog | 453 MB (453 MB peak) | 616 MB (616 MB peak) | 1.38 GB (1.38 GB peak) | 473 MB (473 MB peak) |
-| `@oxc-angular/vite` | 221 MB (221 MB peak) | 221 MB (221 MB peak) | 262 MB (262 MB peak) | 222 MB (222 MB peak) |
+| vite-plugin-ngp | 360 MB (420 MB ±6% peak) | 551 MB (685 MB peak) | 932 MB (932 MB peak) | 336 MB (348 MB peak) |
+| vite-plugin-ngp, `typeChecker: 'tsrs'` | 368 MB (368 MB peak) | 556 MB (563 MB peak) | 939 MB (939 MB peak) | 335 MB (347 MB peak) |
+| `ng serve` | 784 MB (784 MB peak) | 1.81 GB (1.81 GB peak) | 4.67 GB (5.65 GB peak) | n/a |
+| Analog | 452 MB (452 MB peak) | 615 MB (615 MB peak) | 1.34 GB (1.34 GB peak) | 480 MB (480 MB peak) |
+| `@oxc-angular/vite` | 218 MB (218 MB peak) | 218 MB (218 MB peak) | 261 MB (261 MB peak) | 205 MB (205 MB peak) |
 
 After the edit series, 44 edits in one session, and in brackets the peak during them:
 
 | Toolchain | 100 | 1,000 | 5,000 | playground |
 |---|---:|---:|---:|---:|
-| vite-plugin-ngp | 333 MB (461 MB peak) | 519 MB (836 MB peak) | 1.43 GB (2.46 GB peak) | 325 MB (422 MB peak) |
-| `ng serve` | 883 MB (891 MB peak) | 1.86 GB (2.12 GB peak) | 6.57 GB (6.86 GB peak) | n/a |
-| Analog | 467 MB (517 MB peak) | 1,009 MB (1.09 GB peak) | 2.59 GB (3.55 GB peak) | 475 MB (502 MB peak) |
-| `@oxc-angular/vite` | 180 MB (234 MB peak) | 205 MB (231 MB peak) | 235 MB (267 MB peak) | 197 MB (228 MB peak) |
+| vite-plugin-ngp | 321 MB (465 MB peak) | 517 MB (828 MB peak) | 1.67 GB (2.48 GB peak) | 319 MB (436 MB peak) |
+| vite-plugin-ngp, `typeChecker: 'tsrs'` | 321 MB (420 MB peak) | 532 MB (673 MB peak) | 1.68 GB (2.01 GB peak) | 316 MB (414 MB peak) |
+| `ng serve` | 861 MB (865 MB peak) | 1.85 GB (1.90 GB peak) | 6.07 GB (6.44 GB peak) | n/a |
+| Analog | 476 MB (532 MB peak) | 1.08 GB (1.18 GB peak) | 3.52 GB (3.60 GB peak) | 480 MB (497 MB peak) |
+| `@oxc-angular/vite` | 176 MB (229 MB peak) | 176 MB (225 MB peak) | 239 MB (263 MB peak) | 193 MB (219 MB peak) |
 
-A cold start peaks higher for every tool, because Vite's pre-bundling and the CLI's first compile run then: 1.61 GB for the plugin at 5,000 components, 5.89 GB for `ng serve`, 2.05 GB for Analog and 970 MB for `@oxc-angular/vite`.
+A cold start peaks higher for every tool, because Vite's pre-bundling and the CLI's first compile run then: 1.56 GB for the plugin at 5,000 components, 5.63 GB for `ng serve`, 2.01 GB for Analog and 977 MB for `@oxc-angular/vite`.
 
 ![Peak memory of a production build: medians of 5 builds.](charts/memory-build.svg)
 
 | Toolchain | 100 | 1,000 | 5,000 | playground |
 |---|---:|---:|---:|---:|
-| vite-plugin-ngp | 631 MB | 1.48 GB | 5.02 GB | 603 MB |
-| vite-plugin-ngp, `typeCheck: false` | 600 MB | 1.17 GB ±6% | 3.73 GB | 545 MB |
-| `ng build` | 771 MB | 1.46 GB | 5.08 GB | n/a |
-| Analog | 681 MB | 1.11 GB | 3.36 GB | 662 MB |
-| `@oxc-angular/vite` | 280 MB | 578 MB | 1.55 GB | 270 MB |
+| vite-plugin-ngp | 644 MB | 1.46 GB | 4.77 GB ±7% | 624 MB |
+| vite-plugin-ngp, `typeChecker: 'tsrs'` | 643 MB | 1.26 GB | 4.39 GB | 612 MB |
+| vite-plugin-ngp, `typeCheck: false` | 610 MB | 1.32 GB | 3.76 GB | 566 MB |
+| `ng build` | 779 MB | 1.50 GB | 4.61 GB | n/a |
+| Analog | 672 MB | 1.12 GB | 3.39 GB | 648 MB |
+| `@oxc-angular/vite` | 280 MB | 576 MB | 1.55 GB | 270 MB |
 
-The dev server is where the difference is. `ng serve` holds the whole compiled program, so it grows with the app, to 5.7 GB at 5,000 components after a restart and 6.6 GB after the edits. The plugin holds what the browser has asked for: 1.0 GB after a restart at 5,000 components, less than Analog's 1.4 GB for the same page without a type-checker, and 1.4 GB after the edits where Analog holds 2.6 GB. Both peak higher during the edits, the plugin at 2.5 GB and Analog at 3.6; the plugin's `tsgo` check runs again after each edit, but the harness doesn't separate its share from Vite's. `@oxc-angular/vite` holds a quarter of a gigabyte at every size, with no type-checker and a compiler that keeps no program.
+The dev server is where the difference is. `ng serve` holds the whole compiled program, so it grows with the app, to 4.7 GB at 5,000 components after a restart, 5.7 at its peak on the way there, and 6.1 GB after the edits. The plugin holds what the browser has asked for: 0.9 GB after a restart at 5,000 components, less than Analog's 1.3 GB for the same page without a type-checker, and 1.7 GB after the edits where Analog holds 3.5 GB. Both peak higher during the edits, the plugin at 2.5 GB and Analog at 3.6. The plugin's check runs again after each edit, and the harness doesn't separate its share from Vite's, but the tsrs row does: with tsrs the same edits peak at 2.0 GB, so about half a gigabyte of that peak is `tsgo`. `@oxc-angular/vite` holds a quarter of a gigabyte at every size, with no type-checker and a compiler that keeps no program.
 
-Builds are even. The plugin's build of the 5,000-component app peaks at 5.0 GB against `ng build`'s 5.1, and 3.7 GB without the type-check, a little above Analog's 3.4. The 1.3 GB between the two plugin rows is `tsgo` checking the program next to Rolldown: the harness can't separate the two processes, but the type-check is the only difference between the rows.
+Builds are even. The plugin's build of the 5,000-component app peaks at 4.8 GB against `ng build`'s 4.6, and 3.8 GB without the type-check, a little above Analog's 3.4. The gigabyte between those two plugin rows is `tsgo` checking the program next to Rolldown: the harness can't separate the two processes, but the type-check is the only difference between the rows. With tsrs the same build peaks at 4.4 GB.
 
 ## What it adds up to
 
-If your app is large and you use `ng serve`, the dev server is where the plugin changes the most: a dev server that's ready in under 2 seconds instead of half a minute, template edits in a tenth of the time, and a fifth of the memory, with type-checking kept. If you use Analog, the plugin starts 3.7 times faster at 5,000 components and updates templates in place by default, where Analog reloads. Builds improve less: a third faster than `ng build` with the same output size and the same peak memory.
+If your app is large and you use `ng serve`, the dev server is where the plugin changes the most: a dev server that's ready in under 2 seconds instead of half a minute, template edits in a tenth of the time, and a fifth of the memory, with type-checking kept. If you use Analog, the plugin starts almost 4 times faster at 5,000 components and updates templates in place by default, where Analog reloads. Builds improve less: a third faster than `ng build` with the same output size and about the same peak memory. Checking with tsrs instead of `tsgo` changes none of that, and takes a third off the wait for a type error on a large app.
 
 `@oxc-angular/vite` beats the plugin on every timing here except the typical template edit, where they tie, and holds a quarter of its memory. What you give up for that is Angular's own compiler, type-checking, and code-splitting for `@defer`. The plugin's output is Angular's compiler's output, byte for byte the same as a full ngp build.
 
 ## Where these numbers are weak
 
-- **One laptop, with other work running.** An Apple M2 Max with 12 cores and 32 GB, on macOS 27, Node 26.12.0, headless Chrome 155. A virtual machine held one core for the whole run, and other development sessions were on the same machine. Each start and build waited for the 1-minute load average to drop below 6, and samples ran at loads between 2.3 and 6.0, with one exception: fourteen runaway processes another session had left behind pushed the load to 30 during the 100-component app's builds. That series was run again once they were stopped, and the tables show the rerun. Waiting for the load keeps samples out of the worst spikes, not out of all of them, and starts and builds ran in rounds, one toolchain after another, so a drift lands on every toolchain in a table alike. Compare toolchains within a table, not with numbers from another run or machine: the same measurement drifts between runs, and this run's numbers differ from the 16 October run's by a few percent either way.
+- **One laptop, with other work running.** An Apple M2 Max with 12 cores and 32 GB, on macOS 27, Node 26.12.0, headless Chrome 155. An idle virtual machine held one core for the whole run, and other development sessions' dev servers were on the same machine. Each start and build waited for the 1-minute load average to drop below 6, and samples recorded loads between 2.0 and 8.8. Waiting for the load keeps samples out of the worst spikes, not out of all of them, and starts and builds ran in rounds, one toolchain after another, so a drift lands on every toolchain in a table alike. Compare toolchains within a table, not with numbers from another run or machine: the same measurement drifts between runs, and this run's numbers differ from the afternoon run of the same day by a few percent either way, in both directions.
 - **Generated apps.** They're realistic in shape, but they're not your app: no third-party libraries beyond Angular, no large stylesheets, a global stylesheet of a few lines. The playground is the only hand-written app, and it's small. [Benchmarks on real apps](benchmarks) has Super Productivity and Ghostfolio.
 - **Cold means the toolchains' caches, not the operating system's.** The file system cache was warm for every run. A first start after a reboot would be slower for everyone.
 - **One kind of edit each.** Adding an element to a template, and changing a string in a class. An edit that adds an import or a new component can cost more, and wasn't measured.

@@ -7,6 +7,12 @@ description: What changed in vite-plugin-ngp, newest first, for anyone following
 
 What changed in vite-plugin-ngp, newest first. The plugin isn't on npm, so there are no releases: this page is how you find out what landed since you last looked. Every entry links to the page that documents it.
 
+## 18 October 2026
+
+### Docs
+
+- The Performance page is remeasured on the plugin with the tsrs option merged and the first dev-server check waiting for an idle server: the four generated apps on the laptop, now with `typeChecker: 'tsrs'` as a row of its own in every table. tsrs shows a type error at 5,000 components in 1.02 s where `tsgo` takes 1.36 s, and takes about half a gigabyte off the dev server's peak during edits and off a production build's; starts, edits and build times are within the run-to-run drift with either. Every other number moved by a few percent either way. [Performance](performance)
+
 ## 17 October 2026
 
 ### Type-checking

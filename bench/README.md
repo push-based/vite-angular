@@ -47,7 +47,7 @@ node apps.mjs
 That writes the three generated apps and a copy of the playground to `.work/apps.noindex`. Then, from `bench/`:
 
 ```bash
-NGP_TOOLCHAIN=../toolchain/out node run.mjs --apps standalone-1000-s1 --max-load 6
+NGP_TOOLCHAIN="$PWD/../toolchain/out" node run.mjs --apps standalone-1000-s1 --max-load 6
 ```
 
 Options: `--apps` (`standalone-100-s1`, `standalone-1000-s1`, `standalone-5000-s1`, `playground`, and the real apps below), `--tools` (`ngp`, `cli`, `nx`, `analog`, `oxc`, plus the variants below), `--metrics` (`dev-cold`, `dev-warm`, `edit`, `build`, and `typecheck`, which isn't in the default set), `--runs`, `--warmup`, `--edits`, `--edit-warmup`, and `--max-load`, which holds each sample until the 1-minute load average is below that number. Results go to `results/<timestamp>.json` unless `--out` says otherwise. A full run of all four apps took about an hour on an M2 Max.
@@ -105,7 +105,7 @@ node real.mjs ghostfolio
 That clones each app at its commit into `.work/real.noindex/`, pins every `@angular/*` package to `22.3.0-next.2`, runs the app's own install, applies the patch, writes a root `index.html` from the app's own plus the stylesheet links and entry script its CLI injects, and copies `vite.config.ngp.mjs` and its helpers in. Then:
 
 ```bash
-NGP_TOOLCHAIN=../toolchain/out node run.mjs --apps super-productivity,ghostfolio --tools ngp,cli,nx
+NGP_TOOLCHAIN="$PWD/../toolchain/out" node run.mjs --apps super-productivity,ghostfolio --tools ngp,cli,nx
 ```
 
 A real app runs under two tools: the plugin, and the one CLI it's built with (`cli` is the Angular CLI, `nx` is Nx; the harness skips the other). Analog and `@oxc-angular/vite` aren't set up on the real apps.

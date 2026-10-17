@@ -17,7 +17,7 @@ ngp, which Angular merged on 8 October 2026, splits the compiler in two. A Rust 
 
 When the browser asks for a `.ts` file, Vite hands its code to the plugin's `transform` hook. The plugin runs before Vite's own TypeScript transform, and it:
 
-1. Tells the analyzer about the code, if it differs from what the analyzer last saw. Another plugin may have changed it on the way.
+1. Tells the analyzer about the code, if it differs from what the analyzer last saw. Another plugin may have changed it on the way. Code Vite read before your latest save is left out, as the next section explains.
 2. Calls ngp's `processFile` for that one file, in optimize mode.
 3. Returns ngp's TypeScript and a source map. Vite's transform then strips the types, as it does for any TypeScript file.
 
@@ -32,6 +32,8 @@ When a file changes, the plugin sends the new content to the analyzer. The analy
 Adding, renaming and deleting files works the same way. The analyzer finds a new file through the import that adds it. When you delete a file, the plugin tells the analyzer it's gone and recompiles everything that imports it. An importer that still uses the file fails with an error, and recovers when the file is back. If a component's `templateUrl` points at a file that doesn't exist, the plugin reports `NG2008: Could not find template file`, as `ng build` would. ngp on its own would compile it to an empty template.
 
 The Angular CLI's path runs a "delta" pass after each edit, which streams every file in the program again: 465 ms at 5,000 components. The plugin skips it, because Vite's module graph already knows which modules the page still uses.
+
+A transform can carry code from before a save: Vite read the module, you saved, and only then did the transform run. Sending that code to the analyzer would undo your save for every component compiled before the file's next transform. So the plugin notes when Vite read each module, and a transform of a module read before the latest edit leaves the analyzer alone, unless its code is what's on disk now. Vite throws that transform's result away anyway, because your save invalidated the module while it ran, and compiles it again.
 
 ### Keeping edits cheap in large apps
 

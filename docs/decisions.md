@@ -535,3 +535,15 @@ It also fixes the opposite mistake. Under 22, a template reported more than 50 m
 **Why.** One build serves every locale only if its URLs don't name the locale. Relative URLs resolved against `<base href>` do that, and Angular's router reads the same element. The CLI sets the same `<base href>` per locale.
 
 **Cost.** No per-locale `baseHref` override, which the CLI has. A `base` that is a full URL, such as a CDN, is untested.
+
+## 46. A transform leaves the analyzer alone when Vite read its code before the watcher's last edit
+
+*17 October 2026*
+
+**Decision.** The plugin's `load` hook records when Vite read each `.ts` module, and `NgpCompiler` records when the watcher last sent each file, or reported it deleted. A transform whose module was read before that, or whose read time is unknown, sends its code to the analyzer only if the code is what's on disk now. Replaced files keep [decision 37](#37-file-replacements-swap-content-under-the-replaced-files-id-in-vite-and-in-the-analyzer)'s rule: their transforms never update the analyzer, because their code comes from another file and disk can't vouch for it.
+
+**Why.** Vite can read a module, see the file change, and transform the module afterwards with the old code. Sending that code reverted the analyzer: components compiled before the file's next transform used the old file, and nothing invalidated them later. A test that holds a transform between Vite's read and ngp reproduces it for an ordinary file in 3 of 3 runs without the guard, and passes 20 of 20 with it. Skipping is safe because the edit invalidated the module while the transform ran, so Vite discards the result and transforms the module again. The disk check covers the reverse: a file written again after the watcher read it, whose newer code mustn't be skipped. Comparing content alone, without the read time, would also skip code a plugin before ngp changed on purpose, on every transform after an edit.
+
+**Cost.** A `load` hook call for every app `.ts` module, and a disk read in a transform that races an edit. When another plugin's `load` supplies a module, its read time is unknown, and after a watcher edit its transforms reach the analyzer only if their code matches disk.
+
+**Revisit when** Vite passes `transform` the time or version of the code it read.

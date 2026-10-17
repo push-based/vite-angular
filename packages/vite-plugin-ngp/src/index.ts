@@ -225,6 +225,8 @@ function compilerPlugin(
    * same save can wait for the answer.
    */
   const tsEdits = new Map<string, TsEdit>();
+  /** When Vite read each module, by environment and id, from load until its transform. */
+  const readAt = new Map<string, number>();
   /** Template updates waiting for the watcher to report a `.ts` change. */
   const editWaiters = new Map<string, Set<() => void>>();
 
@@ -643,8 +645,16 @@ function compilerPlugin(
       handler: () => OVERLAY_CLIENT_ID,
     },
     load: {
-      filter: {id: /^\0vite-plugin-ngp:type-check-client$/},
-      handler: () => OVERLAY_CLIENT,
+      filter: {id: {include: [/^\0vite-plugin-ngp:type-check-client$/, TS_MODULE], exclude: [/\.d\.[cm]?ts$/, /\/node_modules\//]}},
+      handler(id) {
+        if (id === OVERLAY_CLIENT_ID) {
+          return OVERLAY_CLIENT;
+        }
+        // Vite reads the file after every load hook returns nothing. transform tells the compiler
+        // when, so code read before a watcher edit can't undo it.
+        readAt.set(`${this.environment.name}\0${id}`, performance.now());
+        return null;
+      },
     },
     transformIndexHtml() {
       if (typeCheckOverlay) {
@@ -668,7 +678,10 @@ function compilerPlugin(
           failed.add(file);
         }
         const start = performance.now();
-        const result = await ngp.transform(file, code);
+        const key = `${this.environment.name}\0${id}`;
+        const at = readAt.get(key);
+        readAt.delete(key);
+        const result = await ngp.transform(file, code, at);
         if (debug) {
           const ms = (performance.now() - start).toFixed(1);
           // To stderr, like Vite's own DEBUG output: Vitest silences Vite's logger.

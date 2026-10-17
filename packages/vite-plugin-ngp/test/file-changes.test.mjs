@@ -22,8 +22,11 @@ const fixture = path.join(here, 'fixtures/file-changes');
 const toolchainDir = process.env.NGP_TOOLCHAIN ?? path.join(repo, 'toolchain/out');
 const EVENT_TIMEOUT = 10_000;
 
-/** A dev server on a fresh copy of the fixture, plus helpers to change it and read its output. */
-async function startApp() {
+/**
+ * A dev server on a fresh copy of the fixture, plus helpers to change it and read its output.
+ * `plugins` run before ngp's.
+ */
+async function startApp({plugins = []} = {}) {
   // realpath: on macOS the temp dir is behind a /var -> /private/var symlink, and the analyzer and
   // Vite both report real paths.
   const root = realpathSync(await fs.mkdtemp(path.join(os.tmpdir(), 'vite-plugin-ngp-files-')));
@@ -49,6 +52,7 @@ async function startApp() {
     optimizeDeps: {noDiscovery: true, include: []},
     server: {ws: false},
     plugins: [
+      ...plugins,
       ngp({toolchain: toolchainDir}),
       {
         name: 'test:capture',
@@ -116,6 +120,7 @@ async function startApp() {
 
   const app = {
     root,
+    server,
     errors,
     sent,
     async write(files, timeout) {
@@ -263,8 +268,8 @@ function rendersComponent(code, selector, className) {
   return code.includes(`'${selector}'`) && new RegExp(`dependencies: \\[[^\\]]*\\b${className}\\b`).test(code);
 }
 
-async function withApp(fn) {
-  const app = await startApp();
+async function withApp(fn, options) {
+  const app = await startApp(options);
   try {
     await assertFresh(app, ['src/main.ts', 'src/app/app.ts', 'src/app/greeting.ts']);
     await fn(app);
@@ -397,3 +402,53 @@ test('deleting an external template that is still used fails clearly, and restor
     await assertFresh(app, ['src/app/app.ts']);
     app.errors.length = 0;
   }));
+
+test('a transform that read a file before an edit leaves the edit in place', async () => {
+  // Holds one transform of `text.ts` after Vite has read the file and before ngp sees the code, the
+  // way a pre-transform can still be running when the file changes.
+  let gate = null;
+  const holdNextTransform = () => {
+    let reached, release;
+    const held = new Promise((resolve) => (reached = resolve));
+    gate = {reached, released: new Promise((resolve) => (release = resolve))};
+    return {held, release};
+  };
+  const gatePlugin = {
+    name: 'test:gate',
+    enforce: 'pre',
+    async transform(code, id) {
+      if (gate && id.endsWith('/src/app/text.ts')) {
+        const {reached, released} = gate;
+        gate = null;
+        reached(code);
+        await released;
+      }
+    },
+  };
+  await withApp(
+    async (app) => {
+      await app.write({
+        'src/app/text.ts': "export const TEXT = '<p>before</p>';\n",
+        'src/app/greeting.ts': component('Greeting', 'app-greeting', "template: TEXT").replace(
+          "import {Component} from '@angular/core';",
+          "import {Component} from '@angular/core';\nimport {TEXT} from './text';",
+        ),
+      });
+      assert.match(await app.served('src/app/greeting.ts'), /before/);
+
+      const {held, release} = holdNextTransform();
+      const transform = app.server.environments.client.transformRequest('/src/app/text.ts').catch(() => {});
+      assert.match(await held, /before/, 'the held transform read the file before the edit');
+      await app.write({'src/app/text.ts': "export const TEXT = '<p>after</p>';\n"});
+      release();
+      await transform;
+
+      // Greeting first: compiling text.ts again would mend the analyzer.
+      const out = await assertFresh(app, ['src/app/greeting.ts']);
+      assert.match(out['src/app/greeting.ts'], /after/);
+      // Vite drops the held result, since the edit invalidated the module while it ran.
+      assert.match(await app.served('src/app/text.ts'), /after/);
+    },
+    {plugins: [gatePlugin]},
+  );
+});

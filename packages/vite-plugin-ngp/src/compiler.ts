@@ -49,6 +49,8 @@ export interface TransformResult {
 export class NgpCompiler {
   /** What the analyzer believes each file contains, so edits are sent to it exactly once. */
   private readonly known = new Map<string, string>();
+  /** When the watcher last sent each file, or reported it deleted, by `performance.now()`. */
+  private readonly edited = new Map<string, number>();
   /** Analyzer updates run one at a time, in call order. */
   private updates: Promise<unknown> = Promise.resolve();
   /** Type-check blocks as last generated, null for files without one. Stale files are dropped. */
@@ -106,9 +108,12 @@ export class NgpCompiler {
     return compiler;
   }
 
-  /** Compiles one module. Resolves to null when ngp leaves it unchanged. */
-  async transform(file: string, code: string): Promise<TransformResult | null> {
-    await this.update(file, code, 'transform');
+  /**
+   * Compiles one module. `readAt` is when Vite read the file, by `performance.now()`, if known.
+   * Resolves to null when ngp leaves it unchanged.
+   */
+  async transform(file: string, code: string, readAt?: number): Promise<TransformResult | null> {
+    await this.update(file, code, 'transform', readAt);
     const processed = await this.hybrid.processFile(file, code);
     if (!processed.magicString.hasChanged()) {
       return null;
@@ -150,13 +155,24 @@ export class NgpCompiler {
    * This skips HybridCompiler.updateFileContent on purpose: that runs analyzeOptimizedDelta, which
    * re-streams every file in the program after each edit. Vite re-requests what the page still
    * uses, so dropping the stale files from the cache is enough.
+   *
+   * From a transform, `readAt` is when Vite read the file, as for `transform`.
    */
-  update(file: string, content: string, origin: 'transform' | 'watcher'): Promise<FileUpdate> {
+  update(file: string, content: string, origin: 'transform' | 'watcher', readAt?: number): Promise<FileUpdate> {
+    if (origin === 'watcher') {
+      this.edited.set(file, performance.now());
+    }
     return this.enqueue(async () => {
       // A replaced file's content comes from its replacement on disk: once at startup, then from
       // the watcher. A transform's code can be older than the last watcher edit, when Vite loaded
       // the module just before it, and sending it would undo that edit.
       if (origin === 'transform' && this.replaced.has(file)) {
+        return {stale: [], previous: this.known.get(file)};
+      }
+      // The same race for any file: Vite read it, the watcher then sent an edit, and now this
+      // transform brings the code from before the edit. Vite transforms the module again once
+      // it's invalidated, so the analyzer keeps the edit, unless the code is what's on disk now.
+      if (origin === 'transform' && content !== this.known.get(file) && (await this.predatesEdit(file, content, readAt))) {
         return {stale: [], previous: this.known.get(file)};
       }
       // A file we haven't seen yet: from a transform, the analyzer has read (or will read) the
@@ -182,11 +198,24 @@ export class NgpCompiler {
    * invalidateFiles drops the overlay, and the analyzer then finds the file gone from disk.
    */
   remove(file: string): Promise<string[]> {
+    this.edited.set(file, performance.now());
     return this.enqueue(async () => {
       this.known.delete(file);
       const invalidated = await this.analyzer.invalidateFiles([{filePath: file, updateType: FileUpdateType.Deleted}]);
       return this.dropStale(file, invalidated);
     });
+  }
+
+  /**
+   * Whether a transform's code may be older than the watcher's last edit to the file: Vite read
+   * it before the edit, or nobody said when, and it isn't what's on disk now.
+   */
+  private async predatesEdit(file: string, code: string, readAt: number | undefined): Promise<boolean> {
+    const editedAt = this.edited.get(file);
+    if (editedAt === undefined || (readAt !== undefined && readAt > editedAt)) {
+      return false;
+    }
+    return (await fs.readFile(file, 'utf8').catch(() => undefined)) !== code;
   }
 
   /** Runs analyzer updates one at a time, in call order. */

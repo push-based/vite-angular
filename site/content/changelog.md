@@ -9,6 +9,10 @@ What changed in vite-plugin-ngp, newest first. The repository is private, so thi
 
 ## 17 October 2026
 
+### Editing in the dev server
+
+- A save can no longer be undone by a module Vite read just before it: components compiled afterwards see the saved file. [How it works](how-it-works#handling-an-edit)
+
 ### This site
 
 - [Migrating from ng build](migrating-from-ng-build#where-every-option-goes) now says where `localize` and `i18nMissingTranslation` go, since i18n works. It listed them as not yet possible.

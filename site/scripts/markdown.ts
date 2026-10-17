@@ -103,6 +103,21 @@ export async function renderMarkdown(source: string, page = '', file?: string) {
         const attrs = external ? ' target="_blank" rel="noopener"' : '';
         return `<a href="${token.href}"${attrs}>${inner}</a>`;
       },
+      // Each body cell carries its column's header, so on a phone the stylesheet can stack a row
+      // into labeled lines instead of scrolling the table sideways. data-cols lets it leave
+      // two-column tables alone.
+      table(token) {
+        const labels = token.header.map((cell) => cell.text.replace(/[`*_]/g, ''));
+        const render = (cell: Tokens.TableCell, label?: string) => {
+          const tag = cell.header ? 'th' : 'td';
+          const align = cell.align ? ` align="${cell.align}"` : '';
+          const data = label ? ` data-label="${escapeHtml(label)}"` : '';
+          return `<${tag}${align}${data}>${this.parser.parseInline(cell.tokens)}</${tag}>`;
+        };
+        const head = `<thead>\n<tr>${token.header.map((cell) => render(cell)).join('')}</tr>\n</thead>`;
+        const body = token.rows.map((row) => `<tr>${row.map((cell, i) => render(cell, labels[i])).join('')}</tr>`).join('\n');
+        return `<table data-cols="${token.header.length}">\n${head}\n<tbody>\n${body}\n</tbody>\n</table>\n`;
+      },
       blockquote(token) {
         const type = callouts.get(token as Tokens.Blockquote);
         const inner = this.parser.parse(token.tokens);

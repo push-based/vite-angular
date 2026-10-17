@@ -32,20 +32,20 @@ export default defineConfig({
 
 ## Options
 
-| Option | Type | Default | What it does |
-|---|---|---|---|
-| `toolchain` | `string` | `NGP_TOOLCHAIN` | The directory `pnpm toolchain` builds ngp into, holding `preprocessor/` and `engines/`. Without it, or the environment variable, the plugin stops with an error. |
-| `engine` | `'native' \| 'wasm'` | `'native'` | Which build of ngp's analyzer to load: the native Node addon, or `'wasm'`. There's no automatic fallback. |
-| `tsconfig` | `string` | `tsconfig.app.json`, else `tsconfig.json`. Under Vitest, `tsconfig.spec.json` first | The tsconfig your Angular compiler options come from, relative to Vite's root. |
-| `entries` | `string[]` | `src/main.ts`, plus `src/main.server.ts` if it exists. Under Vitest, none | The modules the analyzer starts from. It finds every other file by following imports. |
-| `entryOnlyTsconfig` | `boolean` | `true` | Give the analyzer a generated tsconfig that lists only `entries`. |
-| `hmr` | `boolean` | `true` | Component HMR in the dev server, for external templates and for inline `template` and `styles` edits. Builds and Vitest ignore it. |
-| `i18n` | `I18nOptions` | off | Angular i18n: `sourceLocale`, `locales`, `devLocale` and `missingTranslation`. `vite build` writes one translated folder per locale, and the dev server serves `devLocale`. See [Internationalization](i18n). |
-| `ssr` | `boolean \| {entry?: string}` | `false` | Server rendering. `true` uses `src/main.server.ts` as the server entry, and `{entry: 'path'}` names another. Vitest ignores it. See [Server rendering](server-rendering). |
-| `typeCheck` | `boolean` | `true`, except under Vitest | Type-check templates and TypeScript with TypeScript 7, in a separate process. The dev server reports errors in the terminal and the overlay, and `vite build` fails on them. See [Type-checking](type-checking). |
-| `fileReplacements` | `{replace: string; with: string}[]` | `[]` | angular.json's `fileReplacements`, relative to Vite's root. Every import of `replace` gets the content of `with`, in Vite and in ngp's analyzer, in dev and in builds. |
-| `budgets` | `Budget[]` | `[]` | angular.json's `budgets`: size limits checked after `vite build`, with the CLI's types and messages. An error budget fails the build. |
-| `polyfills` | `string[]` | `[]` | angular.json's `polyfills`: packages or files imported before your app. `zone.js` also makes the plugin rewrite `async`/`await` so zone.js can track it. |
+| Option | Type, default | What it does |
+|---|---|---|
+| `toolchain` | `string`<br>Default: the `NGP_TOOLCHAIN` variable | The directory `pnpm toolchain` builds ngp into, holding `preprocessor/` and `engines/`. Without it, or the environment variable, the plugin stops with an error. |
+| `engine` | `'native' \| 'wasm'`<br>Default `'native'` | Which build of ngp's analyzer to load: the native Node addon, or `'wasm'`. There's no automatic fallback. |
+| `tsconfig` | `string`<br>Default `tsconfig.app.json`, else `tsconfig.json`. Under Vitest, `tsconfig.spec.json` first | The tsconfig your Angular compiler options come from, relative to Vite's root. |
+| `entries` | `string[]`<br>Default `src/main.ts`, plus `src/main.server.ts` if it exists. Under Vitest, none | The modules the analyzer starts from. It finds every other file by following imports. |
+| `entryOnlyTsconfig` | `boolean`<br>Default `true` | Give the analyzer a generated tsconfig that lists only `entries`. |
+| `hmr` | `boolean`<br>Default `true` | Component HMR in the dev server, for external templates and for inline `template` and `styles` edits. Builds and Vitest ignore it. |
+| `i18n` | `I18nOptions`<br>Off by default | Angular i18n: `sourceLocale`, `locales`, `devLocale` and `missingTranslation`. `vite build` writes one translated folder per locale, and the dev server serves `devLocale`. See [Internationalization](i18n). |
+| `ssr` | `boolean \| {entry?: string}`<br>Default `false` | Server rendering. `true` uses `src/main.server.ts` as the server entry, and `{entry: 'path'}` names another. Vitest ignores it. See [Server rendering](server-rendering). |
+| `typeCheck` | `boolean`<br>Default `true`, except under Vitest | Type-check templates and TypeScript with TypeScript 7, in a separate process. The dev server reports errors in the terminal and the overlay, and `vite build` fails on them. See [Type-checking](type-checking). |
+| `fileReplacements` | `{replace: string; with: string}[]`<br>Default `[]` | angular.json's `fileReplacements`, relative to Vite's root. Every import of `replace` gets the content of `with`, in Vite and in ngp's analyzer, in dev and in builds. |
+| `budgets` | `Budget[]`<br>Default `[]` | angular.json's `budgets`: size limits checked after `vite build`, with the CLI's types and messages. An error budget fails the build. |
+| `polyfills` | `string[]`<br>Default `[]` | angular.json's `polyfills`: packages or files imported before your app. `zone.js` also makes the plugin rewrite `async`/`await` so zone.js can track it. |
 
 ## When to change them
 

@@ -50,9 +50,11 @@ for (const file of await readdir(path.dirname(pluginSource))) {
 const configuration = await readFile(path.join(site, 'content/configuration.md'), 'utf8');
 const squash = (type: string) => type.replace(/\s+/g, '');
 for (const option of options) {
-  const row = new RegExp(`^\\| \`${option}\` \\| \`((?:[^\`]|\\\\\\|)+)\` \\|`, 'm').exec(configuration);
+  // A row is | `option` | `type`<br>Default ... | what it does |: the type, then the default on
+  // its own line in the same cell, so the table fits the docs column without breaking words.
+  const row = new RegExp(`^\\| \`${option}\` \\| \`((?:[^\`]|\\\\\\|)+)\`(?:<br>| \\|)`, 'm').exec(configuration);
   if (!row) {
-    problems.push(`option \`${option}\` has no row in the Options table of site/content/configuration.md, as | \`${option}\` | \`type\` | default | what it does |`);
+    problems.push(`option \`${option}\` has no row in the Options table of site/content/configuration.md, as | \`${option}\` | \`type\`<br>Default ... | what it does |`);
     continue;
   }
   const documented = squash(row[1].replace(/\\\|/g, '|'));

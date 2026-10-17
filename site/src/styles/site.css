@@ -654,6 +654,19 @@ code {
   color: var(--color-text-heading);
   font-weight: 600;
   background: var(--color-surface-subtle);
+  white-space: nowrap;
+}
+
+/* Inline code in a cell never breaks inside a word, so `toolchain` can't become `toolchai` + `n`.
+   A type with spaces, like `boolean | {entry?: string}`, may still wrap at a space; an option name
+   never wraps. The last column holds the prose, so it keeps room to wrap, and a table that's
+   still too wide scrolls sideways. */
+.prose td code {
+  overflow-wrap: normal;
+}
+
+.prose td:first-child code {
+  white-space: nowrap;
 }
 
 .prose .code {
@@ -952,6 +965,43 @@ code {
     overflow: visible;
   }
   .brand__name {
+    display: none;
+  }
+}
+
+/* Phones: a table with three or more columns can't fit, so each row becomes a block of labeled
+   lines, from the data-label the markdown renderer puts on every cell. Two-column tables stay
+   tables. */
+@media (max-width: 34rem) {
+  .prose table:not([data-cols='2']) thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .prose table:not([data-cols='2']) tbody,
+  .prose table:not([data-cols='2']) tr,
+  .prose table:not([data-cols='2']) td {
+    display: block;
+  }
+  .prose table:not([data-cols='2']) tr {
+    padding: var(--space-3) 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .prose table:not([data-cols='2']) td {
+    padding: var(--space-1) 0;
+    border: 0;
+  }
+  .prose table:not([data-cols='2']) td::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 0.75rem;
+    line-height: 1rem;
+    color: var(--color-text-muted);
+  }
+  .prose table:not([data-cols='2']) td[data-label='']::before,
+  .prose table:not([data-cols='2']) td:not([data-label])::before {
     display: none;
   }
 }

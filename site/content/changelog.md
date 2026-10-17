@@ -20,6 +20,7 @@ What changed in vite-plugin-ngp, newest first. The plugin isn't on npm, so there
 - [Migrating from ng build](migrating-from-ng-build#where-every-option-goes) now says where `localize` and `i18nMissingTranslation` go, since i18n works. It listed them as not yet possible.
 - An editing pass over every page: stale counts fixed, and the Server rendering page's prerender timing remeasured on the current 14 pages. [Server rendering](server-rendering#prerendering-for-static-hosting)
 - The repo, [push-based/vite-angular](https://github.com/push-based/vite-angular), is public. [Getting started](getting-started#1-build-ngp) now starts with `git clone` instead of asking for access, and no page calls the repo private any more.
+- Tables no longer break option names or types mid-word. The [Options](configuration#options) table puts each option's type and default in one cell so it fits the docs column, and on a phone every table with three or more columns stacks each row into labeled lines.
 
 ## 16 October 2026
 

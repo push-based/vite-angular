@@ -9,6 +9,10 @@ What changed in vite-plugin-ngp, newest first. The plugin isn't on npm, so there
 
 ## 18 October 2026
 
+### Type-checking
+
+- What the idle-triggered first check gains on a cold start is now measured on the generated 5,000-component app, with the plugin before and after the change started in the same rounds: first paint went from 1.84 s to 1.70 s, every sample of the old plugin slower than every sample of the new. A restart paints before the old one-second delay ever fired, and didn't move. [Type-checking](type-checking#where-its-weak)
+
 ### Docs
 
 - The Performance page is remeasured on the plugin with the tsrs option merged and the first dev-server check waiting for an idle server: the four generated apps on the laptop, now with `typeChecker: 'tsrs'` as a row of its own in every table. tsrs shows a type error at 5,000 components in 1.02 s where `tsgo` takes 1.36 s, and takes about half a gigabyte off the dev server's peak during edits and off a production build's; starts, edits and build times are within the run-to-run drift with either. Every other number moved by a few percent either way. [Performance](performance)

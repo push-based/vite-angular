@@ -58,6 +58,12 @@ node report.mjs results/*.json
 
 That prints the markdown tables. A later file wins over an earlier one for the same app, tool and metric, so you can rerun one series and merge it.
 
+```bash
+node charts.mjs --generated results/<generated>.json --real results/ci-super-productivity.json,results/ci-ghostfolio.json
+```
+
+That draws the figures on the docs site's Performance and Benchmarks pages into `site/content/charts/`, from the same files: horizontal bars per tool and app on one scale, the plugin's in the brand violet and the others' in gray, with the fastest edit marked on the edit figures. The site inlines them, so they take the site's colors and dark theme; [docs/decisions.md](../docs/decisions.md) entry 51 says why. Rerun it whenever the files behind a page change, and commit the SVGs with the page.
+
 ## The tools, and how each is set up
 
 Every tool runs from `bench/node_modules` with Angular 22.3.0-next.2, the version ngp is built from, and the three Vite plugins with Vite 8.3.4. Each one gets its README's setup and nothing else, written into the app by [lib/tools.mjs](lib/tools.mjs). The only additions are a separate `cacheDir` and `build.outDir` per tool, so no tool reuses another's dependency cache or output.

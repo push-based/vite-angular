@@ -4,9 +4,12 @@
 // Beyond plain GitHub-flavored markdown it supports:
 //   ```ts title="vite.config.ts"   a filename above a code block
 //   > [!WARNING]                   a callout: NOTE, TIP, IMPORTANT, WARNING or CAUTION
+//   ![caption](charts/name.svg)    a figure: the SVG next to the page is inlined, so it can use the
+//                                  site's tokens and follow its theme; the alt text is its caption
 // and gives every heading an id and a "#" link, and every code block a copy button.
 
 import {execFileSync} from 'node:child_process';
+import {readFileSync} from 'node:fs';
 import * as path from 'node:path';
 import {Marked, type Token, type Tokens} from 'marked';
 import {createHighlighter, type Highlighter} from 'shiki';
@@ -96,6 +99,17 @@ export async function renderMarkdown(source: string, page = '', file?: string) {
         }
         const label = escapeHtml(`Link to this section: ${token.text.replace(/[`*_]/g, '')}`);
         return `<h${token.depth} id="${id}">${inner}<a class="heading-anchor" href="${page}#${id}" aria-label="${label}">#</a></h${token.depth}>\n`;
+      },
+      // A local SVG becomes an inline figure. Inlined, its `var(--color-...)` fills resolve against
+      // the page, so the chart follows the dark theme; as an <img> it couldn't. Anything else
+      // stays an <img>.
+      image(token) {
+        const local = file && !/^https?:\/\//.test(token.href) && token.href.endsWith('.svg');
+        if (!local) {
+          return `<img src="${token.href}" alt="${escapeHtml(token.text)}"${token.title ? ` title="${escapeHtml(token.title)}"` : ''}>`;
+        }
+        const svg = readFileSync(path.resolve(path.dirname(file), token.href), 'utf8').trim();
+        return `<figure class="figure">${svg}<figcaption>${this.parser.parseInline(token.tokens)}</figcaption></figure>\n`;
       },
       link(token) {
         const inner = this.parser.parseInline(token.tokens);
@@ -201,6 +215,7 @@ export function markdown(): Plugin {
       async handler(source, id) {
         const file = id.replace(/[?#].*$/, '');
         const page = path.basename(file, '.md');
+        for (const m of source.matchAll(/!\[[^\]]*\]\(([^)\s]+\.svg)\)/g)) this.addWatchFile(path.resolve(path.dirname(file), m[1]));
         const doc = await renderMarkdown(source, page.startsWith('_') ? '' : page, file);
         return {code: `export default ${JSON.stringify(doc)};`, map: null};
       },

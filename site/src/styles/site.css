@@ -692,6 +692,28 @@ code {
   font-size: inherit;
 }
 
+/* Figures: the benchmark charts, inline SVGs drawn by bench/charts.mjs against the tokens. Like
+   a wide table, a figure scrolls sideways on a phone rather than shrinking its text. */
+
+.prose .figure {
+  margin: 0 0 var(--space-6);
+  overflow-x: auto;
+}
+
+.prose .figure svg {
+  display: block;
+  width: 100%;
+  min-width: 36rem;
+  height: auto;
+}
+
+.prose .figure figcaption {
+  margin-top: var(--space-2);
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(--color-text-muted);
+}
+
 /* Heading links: a "#" that appears on hover or focus, so a section can be shared. */
 
 .heading-anchor {

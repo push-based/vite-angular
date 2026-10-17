@@ -6,38 +6,16 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import {parseArgs} from 'node:util';
+import {TOOL_LABEL as TOOL_LABELS, TOOL_ORDER, kb, loadResults, mem, time} from './lib/results.mjs';
 
 const {values: args, positionals} = parseArgs({allowPositionals: true, options: {out: {type: 'string'}}});
 if (positionals.length === 0) throw new Error('Usage: node report.mjs <results.json> [...]');
 
-const files = positionals.map((f) => ({file: f, ...JSON.parse(fs.readFileSync(f, 'utf8'))}));
-const latest = new Map();
-for (const f of files) for (const r of f.results) latest.set(`${r.app}|${r.tool}|${r.metric}`, {...r, file: f.file});
-const getRaw = (app, tool, metric) => latest.get(`${app}|${tool}|${metric}`);
+const {files, latest, apps: APPS, appLabel: APP_LABEL, get: getRaw} = loadResults(positionals);
 // Once `cli` stands for "the app's own CLI", it answers for Nx too.
 const get = (app, tool, metric) => getRaw(app, tool, metric) ?? (tool === 'cli' && realOnly ? getRaw(app, 'nx', metric) : undefined);
-
-// Generated apps by size, then the playground, then real apps in the order they were run.
-const KNOWN = ['standalone-100-s1', 'standalone-1000-s1', 'standalone-5000-s1', 'playground'];
-const seenApps = [...new Set([...latest.values()].map((r) => r.app))];
-const APPS = [...KNOWN.filter((a) => seenApps.includes(a)), ...seenApps.filter((a) => !KNOWN.includes(a))];
-const APP_LABEL = {
-  'standalone-100-s1': '100',
-  'standalone-1000-s1': '1,000',
-  'standalone-5000-s1': '5,000',
-  playground: 'playground',
-};
-for (const r of latest.values()) if (r.label && !APP_LABEL[r.app]) APP_LABEL[r.app] = r.label;
-const TOOLS = ['ngp', 'ngp-notc', 'cli', 'nx', 'analog', 'analog-hmr', 'oxc'].filter((t) => [...latest.values()].some((r) => r.tool === t));
-const TOOL_LABEL = {
-  ngp: 'vite-plugin-ngp',
-  'ngp-notc': 'vite-plugin-ngp, `typeCheck: false`',
-  cli: 'Angular CLI',
-  nx: 'Nx',
-  analog: 'Analog',
-  'analog-hmr': 'Analog, `liveReload: true`',
-  oxc: '@oxc-angular/vite',
-};
+const TOOLS = TOOL_ORDER.filter((t) => [...latest.values()].some((r) => r.tool === t));
+const TOOL_LABEL = {...TOOL_LABELS};
 // A real app's own CLI is both "its CLI" and a tool: one row for `cli` and `nx` together when
 // only real apps are in the tables, so Super Productivity's Angular CLI and Ghostfolio's Nx share
 // the row "the app's own CLI".
@@ -46,11 +24,6 @@ if (realOnly && TOOLS.includes('cli') && TOOLS.includes('nx')) {
   TOOLS.splice(TOOLS.indexOf('nx'), 1);
   TOOL_LABEL.cli = "the app's own CLI";
 }
-const own = (app, metric) => get(app, 'cli', metric) ?? get(app, 'nx', metric);
-
-const time = (ms) => (ms >= 10_000 ? `${(ms / 1000).toFixed(1)} s` : ms >= 1000 ? `${(ms / 1000).toFixed(2)} s` : `${Math.round(ms)} ms`);
-const mem = (bytes) => (bytes >= 10 * 2 ** 30 ? `${(bytes / 2 ** 30).toFixed(1)} GB` : bytes >= 2 ** 30 ? `${(bytes / 2 ** 30).toFixed(2)} GB` : `${Math.round(bytes / 2 ** 20).toLocaleString('en-US')} MB`);
-const kb = (b) => (b < 10 * 1024 ? `${(b / 1024).toFixed(1)} kB` : `${Math.round(b / 1024).toLocaleString('en-US')} kB`);
 
 function cell(r, key, extra = '', format = time) {
   if (!r) return '';

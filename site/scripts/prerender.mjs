@@ -3,7 +3,7 @@
 // Run after `vite build`, which with the plugin's `ssr` option writes dist/client (browser) and
 // dist/server (server entry).
 
-import {copyFile, mkdir, readFile, writeFile} from 'node:fs/promises';
+import {copyFile, cp, mkdir, readFile, writeFile} from 'node:fs/promises';
 import * as path from 'node:path';
 import {fileURLToPath, pathToFileURL} from 'node:url';
 
@@ -28,10 +28,12 @@ for (const {route, file} of pages) {
   console.log(`prerendered ${base}${route} → dist/client/${file} (${Math.round(performance.now() - started)} ms)`);
 }
 
-// 2. Each page's markdown next to its HTML (/configuration.md), for "View as markdown" and llms.txt.
+// 2. Each page's markdown next to its HTML (/configuration.md), for "View as markdown" and llms.txt,
+// and the figures the markdown embeds, so they resolve from there too.
 for (const d of docs) {
   await copyFile(path.join(site, 'content', `${d.path}.md`), path.join(client, `${d.path}.md`));
 }
+await cp(path.join(site, 'content/charts'), path.join(client, 'charts'), {recursive: true});
 
 // 3. sitemap.xml and robots.txt.
 const today = new Date().toISOString().slice(0, 10);

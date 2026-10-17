@@ -1,0 +1,524 @@
+{
+  "environment": {
+    "date": "2026-10-17T17:07:31.773Z",
+    "commit": "066b7bd",
+    "pluginDirty": false,
+    "machine": {
+      "cpu": "Apple M2 Max",
+      "cores": 12,
+      "memoryGB": 32,
+      "os": "Darwin 27.0.0 arm64",
+      "power": "Now drawing from 'AC Power'"
+    },
+    "node": "v26.12.0",
+    "chrome": "Chrome/155.0.8059.84",
+    "versions": {
+      "@angular/core": "22.3.0-next.2",
+      "@angular/compiler-cli": "22.3.0-next.2",
+      "@angular/build": "22.3.0-next.2",
+      "@angular/cli": "22.3.0-next.2",
+      "@analogjs/vite-plugin-angular": "2.8.2-beta.1",
+      "@oxc-angular/vite": "0.0.41",
+      "vite": "8.3.4",
+      "rolldown": "1.2.14",
+      "typescript": "6.0.3",
+      "puppeteer-core": "25.14.0"
+    },
+    "patches": [
+      "@analogjs__vite-plugin-angular@2.8.2-beta.1.patch",
+      "real/ghostfolio.patch",
+      "real/super-productivity.patch"
+    ],
+    "ci": null,
+    "ngp": {
+      "toolchain": "toolchain/out",
+      "versions": "# Everything the ngp build pins. Change a value here, then rerun `pnpm toolchain`.\n\n# Angular commit ngp is built from. 92e5aa8 is the commit behind 22.3.0-next.2.\nANGULAR_SHA=92e5aa8f154096a756757d0e295cde4299788650\n\n# The npm release built from ANGULAR_SHA. ngp's backend imports compiler-cli's private\n# hybrid_analysis API, so every @angular/* pin in this repo must equal this version.\nANGULAR_NPM_VERSION=22.3.0-next.2\n\n# Rust toolchain for both engines, installed locally by setup-rust.sh.\nRUST_TOOLCHAIN=1.96.0\n\n# Must equal the wasm-bindgen crate version in Angular's Cargo.lock (Cargo.toml pins =0.2.121).\nWASM_BINDGEN_VERSION=0.2.121",
+      "plugin": "92efd3a"
+    }
+  },
+  "settings": {
+    "runs": 5,
+    "warmup": 1,
+    "edits": 10,
+    "editWarmup": 2,
+    "maxLoad": 6
+  },
+  "apps": [
+    {
+      "id": "standalone-100-s1",
+      "label": "100",
+      "kind": "generated",
+      "components": 100
+    }
+  ],
+  "results": [
+    {
+      "app": "standalone-100-s1",
+      "label": "100",
+      "kind": "generated",
+      "components": 100,
+      "tool": "ngp",
+      "toolLabel": "vite-plugin-ngp",
+      "metric": "build",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "ms": 1326.7645830000001,
+          "load": [
+            3.49,
+            4,
+            5.06
+          ],
+          "memory": {
+            "peak": 633995264,
+            "peakProcesses": 2
+          }
+        },
+        {
+          "ms": 1316.4051250000011,
+          "load": [
+            3.77,
+            4.05,
+            5.08
+          ],
+          "memory": {
+            "peak": 659374080,
+            "peakProcesses": 2
+          }
+        },
+        {
+          "ms": 1329.3040420000016,
+          "load": [
+            3.71,
+            4.03,
+            5.06
+          ],
+          "memory": {
+            "peak": 661946368,
+            "peakProcesses": 2
+          }
+        },
+        {
+          "ms": 1304.622292,
+          "load": [
+            3.73,
+            4.03,
+            5.06
+          ],
+          "memory": {
+            "peak": 692731904,
+            "peakProcesses": 2
+          }
+        },
+        {
+          "ms": 1315.141499999998,
+          "load": [
+            3.75,
+            4.03,
+            5.05
+          ],
+          "memory": {
+            "peak": 667140096,
+            "peakProcesses": 2
+          }
+        }
+      ],
+      "time": {
+        "n": 5,
+        "median": 1316.4051250000011,
+        "min": 1304.622292,
+        "max": 1329.3040420000016,
+        "madPct": 0.7869505977499887
+      },
+      "memoryPeak": {
+        "n": 5,
+        "median": 661946368,
+        "min": 633995264,
+        "max": 692731904,
+        "madPct": 0.7846146230384634
+      },
+      "boot": {
+        "errors": [],
+        "lazyRoute": "f4"
+      },
+      "sizes": {
+        "total": {
+          "js": {
+            "files": 47,
+            "raw": 433722,
+            "gzip": 129787
+          },
+          "css": {
+            "files": 1,
+            "raw": 39,
+            "gzip": 59
+          }
+        },
+        "initial": {
+          "js": {
+            "files": 1,
+            "raw": 238039,
+            "gzip": 72890
+          },
+          "css": {
+            "files": 1,
+            "raw": 39,
+            "gzip": 59
+          }
+        }
+      }
+    },
+    {
+      "app": "standalone-100-s1",
+      "label": "100",
+      "kind": "generated",
+      "components": 100,
+      "tool": "cli",
+      "toolLabel": "Angular CLI",
+      "metric": "build",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "ms": 2014.5322079999996,
+          "load": [
+            3.49,
+            4,
+            5.06
+          ],
+          "memory": {
+            "peak": 807976960,
+            "peakProcesses": 2
+          }
+        },
+        {
+          "ms": 2011.8389590000006,
+          "load": [
+            3.77,
+            4.05,
+            5.08
+          ],
+          "memory": {
+            "peak": 803602432,
+            "peakProcesses": 2
+          }
+        },
+        {
+          "ms": 2023.288625000001,
+          "load": [
+            3.71,
+            4.03,
+            5.06
+          ],
+          "memory": {
+            "peak": 804323328,
+            "peakProcesses": 2
+          }
+        },
+        {
+          "ms": 2030.546875,
+          "load": [
+            3.73,
+            4.03,
+            5.06
+          ],
+          "memory": {
+            "peak": 819249152,
+            "peakProcesses": 2
+          }
+        },
+        {
+          "ms": 2020.8128340000003,
+          "load": [
+            3.75,
+            4.03,
+            5.05
+          ],
+          "memory": {
+            "peak": 815497216,
+            "peakProcesses": 2
+          }
+        }
+      ],
+      "time": {
+        "n": 5,
+        "median": 2020.8128340000003,
+        "min": 2011.8389590000006,
+        "max": 2030.546875,
+        "madPct": 0.3107970166424955
+      },
+      "memoryPeak": {
+        "n": 5,
+        "median": 807976960,
+        "min": 803602432,
+        "max": 819249152,
+        "madPct": 0.5414174186353037
+      },
+      "boot": {
+        "errors": [],
+        "lazyRoute": "f4"
+      },
+      "sizes": {
+        "total": {
+          "js": {
+            "files": 56,
+            "raw": 431332,
+            "gzip": 131563
+          },
+          "css": {
+            "files": 1,
+            "raw": 39,
+            "gzip": 59
+          }
+        },
+        "initial": {
+          "js": {
+            "files": 1,
+            "raw": 253226,
+            "gzip": 78883
+          },
+          "css": {
+            "files": 1,
+            "raw": 39,
+            "gzip": 59
+          }
+        }
+      }
+    },
+    {
+      "app": "standalone-100-s1",
+      "label": "100",
+      "kind": "generated",
+      "components": 100,
+      "tool": "analog",
+      "toolLabel": "Analog",
+      "metric": "build",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "ms": 1428.9824169999993,
+          "load": [
+            3.77,
+            4.05,
+            5.08
+          ],
+          "memory": {
+            "peak": 666746880,
+            "peakProcesses": 1
+          }
+        },
+        {
+          "ms": 1452.5959590000002,
+          "load": [
+            3.71,
+            4.03,
+            5.06
+          ],
+          "memory": {
+            "peak": 758120448,
+            "peakProcesses": 1
+          }
+        },
+        {
+          "ms": 1487.8827500000007,
+          "load": [
+            3.73,
+            4.03,
+            5.06
+          ],
+          "memory": {
+            "peak": 714211328,
+            "peakProcesses": 1
+          }
+        },
+        {
+          "ms": 1429.1257920000025,
+          "load": [
+            3.75,
+            4.03,
+            5.05
+          ],
+          "memory": {
+            "peak": 668663808,
+            "peakProcesses": 1
+          }
+        },
+        {
+          "ms": 1438.9040830000013,
+          "load": [
+            3.61,
+            3.99,
+            5.03
+          ],
+          "memory": {
+            "peak": 690094080,
+            "peakProcesses": 1
+          }
+        }
+      ],
+      "time": {
+        "n": 5,
+        "median": 1438.9040830000013,
+        "min": 1428.9824169999993,
+        "max": 1487.8827500000007,
+        "madPct": 0.6895293520410419
+      },
+      "memoryPeak": {
+        "n": 5,
+        "median": 690094080,
+        "min": 666746880,
+        "max": 758120448,
+        "madPct": 3.383190883190883
+      },
+      "boot": {
+        "errors": [],
+        "lazyRoute": "f4"
+      },
+      "sizes": {
+        "total": {
+          "js": {
+            "files": 47,
+            "raw": 432746,
+            "gzip": 129735
+          },
+          "css": {
+            "files": 1,
+            "raw": 39,
+            "gzip": 59
+          }
+        },
+        "initial": {
+          "js": {
+            "files": 1,
+            "raw": 238070,
+            "gzip": 72904
+          },
+          "css": {
+            "files": 1,
+            "raw": 39,
+            "gzip": 59
+          }
+        }
+      }
+    },
+    {
+      "app": "standalone-100-s1",
+      "label": "100",
+      "kind": "generated",
+      "components": 100,
+      "tool": "oxc",
+      "toolLabel": "@oxc-angular/vite",
+      "metric": "build",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "ms": 257.72129099999984,
+          "load": [
+            3.77,
+            4.05,
+            5.08
+          ],
+          "memory": {
+            "peak": 291356672,
+            "peakProcesses": 1
+          }
+        },
+        {
+          "ms": 254.59399999999914,
+          "load": [
+            3.71,
+            4.03,
+            5.06
+          ],
+          "memory": {
+            "peak": 299696128,
+            "peakProcesses": 1
+          }
+        },
+        {
+          "ms": 257.47370899999805,
+          "load": [
+            3.73,
+            4.03,
+            5.06
+          ],
+          "memory": {
+            "peak": 296435712,
+            "peakProcesses": 1
+          }
+        },
+        {
+          "ms": 250.1710000000021,
+          "load": [
+            3.75,
+            4.03,
+            5.05
+          ],
+          "memory": {
+            "peak": 306561024,
+            "peakProcesses": 1
+          }
+        },
+        {
+          "ms": 252.71945899999992,
+          "load": [
+            3.61,
+            3.99,
+            5.03
+          ],
+          "memory": {
+            "peak": 303316992,
+            "peakProcesses": 1
+          }
+        }
+      ],
+      "time": {
+        "n": 5,
+        "median": 254.59399999999914,
+        "min": 250.1710000000021,
+        "max": 257.72129099999984,
+        "madPct": 1.1310985333507155
+      },
+      "memoryPeak": {
+        "n": 5,
+        "median": 299696128,
+        "min": 291356672,
+        "max": 306561024,
+        "madPct": 1.20817843866171
+      },
+      "boot": {
+        "errors": [],
+        "lazyRoute": "f4"
+      },
+      "sizes": {
+        "total": {
+          "js": {
+            "files": 15,
+            "raw": 510479,
+            "gzip": 133831
+          },
+          "css": {
+            "files": 1,
+            "raw": 39,
+            "gzip": 59
+          }
+        },
+        "initial": {
+          "js": {
+            "files": 1,
+            "raw": 350843,
+            "gzip": 106993
+          },
+          "css": {
+            "files": 1,
+            "raw": 39,
+            "gzip": 59
+          }
+        }
+      }
+    }
+  ]
+}

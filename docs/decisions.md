@@ -597,3 +597,17 @@ Putting the bench's helpers into the plugin was the alternative. A `serviceWorke
 
 **Revisit when** the plugin grows a service-worker option, when a third real app with a different shape (a library-heavy enterprise app, or a Nx workspace with many libs) is pinned, or when the generated apps can run on CI without the disk noise the private bench repo measured.
 
+
+## 51. Draw the benchmark figures as inline SVG from the site's tokens
+
+*17 October 2026*
+
+**Decision.** `bench/charts.mjs` draws the figures on the Performance and Benchmarks pages from the same result files `report.mjs` turns into tables, as SVG files in `site/content/charts/`. A page embeds one with markdown's image syntax, and the site's markdown pipeline inlines a local `.svg` instead of linking it, inside a `<figure>` with the alt text as its caption. Every figure is one form: horizontal bars on one shared scale, one panel per app, the value at each bar's tip. The plugin's bar is the brand violet (`--color-brand`) and every other tool's is `--color-neutral-400`; the row label names the tool. The tables stay on the pages, under the figures.
+
+**Why.** The pages had a dozen tables of medians, and the point of most of them is one shape: the CLI's time grows with the app and the plugin's doesn't. A bar per tool per app shows that at a glance, and a shared scale across the panels is what makes the growth visible; per-panel scales would hide it. Inlining the SVG is what lets it use the site's tokens: an `<img>` can't read the page's CSS variables, so it would need its own colors and its own dark theme, and the site has a theme toggle as well as the system setting. Inlined, `fill: var(--color-brand)` follows both for free. Emphasis rather than a color per tool: with the tool named at the left of each bar, color only has to answer "which one is the plugin", and a four-hue palette from the tokens failed the color-vision checks for charts where any two bars can sit next to each other (the violet and the blue collapse under deuteranopia). The violet-and-gray pair passes them in both themes; the gray is below the chroma floor by design, it's the de-emphasis color. The fastest edit is a ring on the bar because the pages explain that macOS's watcher makes every Vite tool's edits bimodal, and the median alone hides that.
+
+Generating the figures at the site's build time, from the result files, was the alternative. It would keep `site/content/charts/` out of the repo, but it would make the site's build read `bench/results/`, and a reader of the markdown on GitHub would see no figure at all. Committed SVGs render there too.
+
+**Cost.** A figure is a fixed 640 pixels wide, so on a phone it scrolls sideways, like the wide tables already do, rather than reflowing. Every rerun of the benchmark is now two commands, `report.mjs` and `charts.mjs`, and a figure can go stale against its table if someone edits the markdown table by hand. The check in `pnpm docs:check` only knows whether the file a page embeds exists.
+
+**Revisit when** a figure needs a form the renderer doesn't have (a distribution of the edits, say), or when the pages get a third tool on the real apps and the two-series legend stops being enough.

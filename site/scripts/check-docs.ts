@@ -6,10 +6,12 @@
 //   - every page in content/ is in DOCS in src/app/docs.ts, and every DOCS entry has a page;
 //   - every page has a title and a description in its front matter;
 //   - every link between pages, in the markdown and on the home page, points at a page and a
-//     heading that exist.
+//     heading that exist;
+//   - every figure a page embeds exists next to it.
 //
 // Usage: node site/scripts/check-docs.ts
 
+import {existsSync} from 'node:fs';
 import {readdir, readFile} from 'node:fs/promises';
 import * as path from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -94,6 +96,10 @@ for (const file of files) {
   if (!/^---\n[\s\S]*?\btitle:\s*\S/.test(source)) problems.push(`site/content/${file} has no title in its front matter`);
   if (!/^---\n[\s\S]*?\bdescription:\s*\S/.test(source)) problems.push(`site/content/${file} has no description in its front matter`);
   ids.set(page, new Set([...doc.html.matchAll(/ id="([^"]+)"/g)].map((m) => m[1])));
+  // Figures: ![caption](charts/name.svg) inlines a file next to the page, which has to exist.
+  for (const m of source.matchAll(/!\[[^\]]*\]\(([^)\s]+\.svg)\)/g)) {
+    if (!existsSync(path.join(site, 'content', m[1]))) problems.push(`site/content/${file} embeds '${m[1]}', but there's no site/content/${m[1]}; \`node bench/charts.mjs\` draws the charts`);
+  }
   for (const m of doc.html.matchAll(/<a href="([^"]+)"/g)) {
     links.push({from: `site/content/${file}`, href: m[1]});
   }

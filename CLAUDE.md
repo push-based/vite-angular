@@ -18,8 +18,8 @@ When you add or change anything a user of the plugin would see, update the match
 | Running specs under Vitest | `site/content/testing.md` |
 | i18n: marking, extraction, translation, per-locale builds | `site/content/i18n.md` |
 | An `ng build` option: `fileReplacements`, `budgets`, `polyfills`, or what can't move | `site/content/migrating-from-ng-build.md` |
-| A number measured with `bench/` on the generated apps | `site/content/performance.md` |
-| A number measured with `bench/` on a real app, or how the real apps are set up | `site/content/benchmarks.md`, and `bench/README.md` |
+| A number measured with `bench/` on the generated apps | `site/content/performance.md`, and the figures: `node bench/charts.mjs` redraws `site/content/charts/` from the result files |
+| A number measured with `bench/` on a real app, or how the real apps are set up | `site/content/benchmarks.md`, its figures (same command), and `bench/README.md` |
 | What works, what doesn't, a new limit or a fixed one | `site/content/status.md` |
 | Setup steps, required versions, the toolchain | `site/content/getting-started.md`, `site/content/building-ngp.md` |
 | A number on the home page, or the home page's claims | `site/src/app/pages/home.ts` and `home.html` |

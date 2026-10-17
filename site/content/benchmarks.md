@@ -59,6 +59,8 @@ The runners are the published numbers: nobody else was using them, and anyone wi
 
 From starting the process to the first contentful paint of the rendered app, cold: every cache deleted first.
 
+![Cold start, restart and production build on each app, on GitHub's runners: the plugin in violet, the app's own CLI in gray. Medians of 5 runs.](charts/real-waits.svg)
+
 | Toolchain | Super Productivity, CI | Ghostfolio, CI | Super Productivity, laptop | Ghostfolio, laptop |
 |---|---:|---:|---:|---:|
 | vite-plugin-ngp | 21.4 s ±6% | 10.4 s | 8.01 s | 4.52 s |
@@ -78,6 +80,8 @@ Super Productivity is the surprise. On the runner the plugin's cold start, 21.4 
 ## Editing
 
 From writing a template of the first page to the new element in the page. "in place" means the component updated without a reload. In brackets, the fastest edit.
+
+![Template and .ts edits on each app, on GitHub's runners: medians of 10 edits, with the fastest edit marked by a ring.](charts/real-edits.svg)
 
 | Toolchain | Super Productivity, CI | Ghostfolio, CI | Super Productivity, laptop | Ghostfolio, laptop |
 |---|---:|---:|---:|---:|
@@ -122,6 +126,8 @@ Super Productivity's build comes out 9% smaller under the plugin, raw, and 10% s
 ## Memory
 
 The resident memory of each tool's processes, summed over its process tree.
+
+![Memory on GitHub's runners: what each tool's dev server held after a restart and after the edits, and a build's peak. Medians of 5 runs.](charts/real-memory.svg)
 
 ### Dev server, cold start
 

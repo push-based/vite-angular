@@ -31,7 +31,7 @@ export function loadApp(id) {
       template: 'src/app/pages/overview/overview.html',
       ts: {
         file: 'src/app/pages/overview/overview.ts',
-        find: `'Only what the browser imports, when it imports it.'`,
+        find: '$localize`Only what the browser imports, when it imports it.`',
       },
       // `ng serve` can't run it: it reads import.meta.env and import.meta.hot, which only Vite defines.
       unsupported: {cli: 'uses import.meta.env and import.meta.hot, which only Vite defines'},

@@ -215,9 +215,10 @@ async function editSeries(app, tool) {
       const edited = (m) => {
         if (kind === 'template') return `${original}\n<p>bench-mark-${m}</p>\n`;
         const {find} = app.ts;
-        const q = find.lastIndexOf("'");
+        // Before the string's closing quote: a plain string's, or a $localize template's backtick.
+        const q = Math.max(find.lastIndexOf("'"), find.lastIndexOf('`'));
         if (!original.includes(find)) throw new Error(`${app.ts.file} no longer contains ${find}`);
-        return original.replace(find, `${find.slice(0, q)} bench-mark-${m}${find.slice(q)}`);
+        return original.replace(find, () => `${find.slice(0, q)} bench-mark-${m}${find.slice(q)}`);
       };
       for (let i = 0; i < EDIT_WARMUP + EDITS; i++) {
         const m = ++n;

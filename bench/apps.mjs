@@ -44,6 +44,12 @@ for (const size of sizes) {
   for (const entry of ['src', 'public', 'index.html', 'tsconfig.json', 'tsconfig.app.json']) {
     fs.cpSync(path.join(from, entry), path.join(dir, entry), {recursive: true});
   }
+  // The playground marks its text for i18n, so every component calls `$localize`. Its own config
+  // gets that from vite-plugin-ngp's i18n option. Here every tool gets it the same way instead: the
+  // runtime `ng add @angular/localize` adds to an app's polyfills, imported first, so all four run
+  // the same code. bench/README.md says why this and not each tool's own setup.
+  const main = path.join(dir, 'src/main.ts');
+  fs.writeFileSync(main, `import '@angular/localize/init';\n` + fs.readFileSync(main, 'utf8'));
   fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({name: 'playground-bench', private: true, type: 'module'}, null, 2) + '\n');
   writeViteConfigs(dir);
   const commit = execFileSync('git', ['-C', REPO, 'log', '-1', '--format=%h', '--', 'playground'], {encoding: 'utf8'}).trim();

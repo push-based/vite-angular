@@ -290,6 +290,7 @@ async function editSeries(app, tool) {
   const typeChecks = [...proc.output().matchAll(/type-check: [^(\n]*\((\d+) ms\)/g)].map((m) => Number(m[1]));
   if (typeChecks.length) console.log(`  ${tool.id} type-checks during the session: ${typeChecks.join(', ')} ms`);
   if (errors.length) console.log(`  ${tool.id} edit: FAILED\n    ${errors.join('\n    ').slice(0, 2000)}`);
+  if (!app.ts) record(app, tool, 'edit-ts', {ok: false, unsupported: app.pin?.tsNotes ?? 'has no .ts edit target', memory: memoryAfter});
   for (const kind of app.ts ? ['template', 'ts'] : ['template']) {
     const s = out[kind];
     const modes = [...new Set(s.map((x) => x.mode))];

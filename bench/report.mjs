@@ -79,7 +79,7 @@ let out = '';
 out += table('Dev server: cold start to first contentful paint', 'dev-cold', 'fcp', 'Process start to the first paint of the rendered app, with every cache deleted first. Median.');
 out += table('Dev server: restart to first contentful paint', 'dev-warm', 'fcp', 'The same, keeping the caches the previous start wrote.');
 out += table('Template edit to DOM', 'edit-template', 'latency', 'Writing an external template until the new element is in the page. "reload" means the page reloaded to show it; otherwise the component updated in place. Median, and the fastest edit in brackets.', modeNote);
-out += table('.ts edit to DOM', 'edit-ts', 'latency', "Changing a signal's initial value in a page component until the new text is in the page. Every tool reloads the page for this. Median, and the fastest edit in brackets.", modeNote);
+out += table('.ts edit to DOM', 'edit-ts', 'latency', "Changing a string in a page component's class (a signal's initial value in the generated apps, a testimonial in Ghostfolio) until the new text is in the page. Every tool reloads the page for this. Median, and the fastest edit in brackets.", modeNote);
 out += table('Production build', 'build', 'time', 'Process start to exit, caches deleted first.');
 out += table('Type error reported in the dev server', 'typecheck', 'error', "Planting a template type error until the dev server's terminal names it. Only the tools that type-check in dev.");
 out += table('Type error cleared in the dev server', 'typecheck', 'clean', 'Removing it until the dev server reports the app clean again.');
@@ -89,12 +89,13 @@ out += table('Type error cleared in the dev server', 'typecheck', 'clean', 'Remo
 const settledNote = (r) => (r?.ok && r.memorySettled ? ` (${mem(r.memorySettled.median)} settled)` : '');
 out += table('Dev server memory, cold start', 'dev-cold', 'memoryPeak', "Resident memory of the dev server's whole process tree, sampled every 100 ms: the peak between process start and the rendered page, and in brackets what it held once the page had rendered and settled. Median. Includes esbuild, tsgo, Sass and worker processes; shared pages count once per process.", settledNote, mem);
 out += table('Dev server memory, restart', 'dev-warm', 'memoryPeak', 'The same for a restart with the caches kept.', settledNote, mem);
-const editMemRows = TOOLS.filter((t) => APPS.some((a) => get(a, t, 'edit-ts')?.memory));
+// The edit series' memory is on both of its records; the template one exists for every app.
+const editMemRows = TOOLS.filter((t) => APPS.some((a) => get(a, t, 'edit-template')?.memory));
 if (editMemRows.length) {
   const lines = ['### Dev server memory after edits', '', 'What the dev server held after the edit series (the warm-up and measured template and `.ts` edits, in one session), and in brackets its peak during that session.', '', `| Tool | ${APPS.map((a) => APP_LABEL[a]).join(' | ')} |`, `|---|${APPS.map(() => '---:').join('|')}|`];
   for (const t of editMemRows) {
     lines.push(`| ${TOOL_LABEL[t]} | ${APPS.map((a) => {
-      const r = get(a, t, 'edit-ts');
+      const r = get(a, t, 'edit-template');
       if (!r) return '';
       if (r.unsupported) return 'n/a';
       if (!r.ok || !r.memory) return 'failed ¹';
@@ -127,9 +128,14 @@ if (failures.length) {
 const unsupported = [...latest.values()].filter((r) => r.unsupported);
 const seen = new Set();
 for (const r of unsupported) {
-  if (seen.has(`${r.app}|${r.tool}`)) continue;
-  seen.add(`${r.app}|${r.tool}`);
-  out += `\nn/a: ${TOOL_LABEL[r.tool]} can't run the ${r.app}: it ${r.unsupported}.\n`;
+  // One line per app and tool, or per app when the reason is the app's (every tool says the same).
+  const perApp = unsupported.filter((u) => u.app === r.app && u.metric === r.metric).length > 1;
+  const key = perApp ? `${r.app}|${r.metric}` : `${r.app}|${r.tool}`;
+  if (seen.has(key)) continue;
+  seen.add(key);
+  out += perApp
+    ? `\nn/a: ${APP_LABEL[r.app] ?? r.app}, ${r.metric}: ${r.unsupported}\n`
+    : `\nn/a: ${TOOL_LABEL[r.tool]} can't run the ${r.app}: it ${r.unsupported}.\n`;
 }
 
 // The real apps, pinned.

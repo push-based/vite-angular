@@ -169,3 +169,19 @@ vite-plugin-ngp before and after decision 48 in `docs/decisions.md`, which count
 | @oxc-angular/vite, with after | 43 ms ±65% (9 ms) | 117 ms (16 ms) | 118 ms (16 ms) | 117 ms (17 ms) |
 
 Every tool's edits cluster at two values, set by when macOS's watcher reports the write: the plugin's at about 70 and 170 ms before, about 60 and 120 ms after, and oxc's at about 16 and 118 ms. A median moves with the mix, which is why both tools' 100-component medians, and the plugin's playground median, are low. The plugin's time per step, logged with `DEBUG=vite-plugin-ngp` at 1,000 components before the change: watcher 4–112 ms, read 0.1, analyzer update 0.6, wait 50.1, class check 0.1, ngp's update module 3.3, oxc type stripping 0.5, send 0.1 ms. The browser asked for the update module 0.8 ms after the send.
+
+# Real apps, 17 October 2026
+
+Super Productivity and Ghostfolio against their own CLI, with memory, from `node report.mjs ci-super-productivity.json ci-ghostfolio.json` (GitHub Actions, [run 39017944058](https://github.com/push-based/vite-angular/actions/runs/39017944058), one app per 4-core Ubuntu runner) and `node report.mjs 2026-10-17-real-apps.json` (the M2 Max laptop, the same day). What the numbers mean, how the apps were set up and where they're weak is on the docs site's [Benchmarks page](../../site/content/benchmarks.md). Every check passed for both tools on both apps in all three files. The two CI jobs ran on different CPUs, an AMD EPYC 9V74 for Super Productivity and an EPYC 7763 for Ghostfolio, so compare tools within a column.
+
+| Metric, median, plugin / own CLI | Super Productivity, CI | Ghostfolio, CI | Super Productivity, laptop | Ghostfolio, laptop |
+|---|---:|---:|---:|---:|
+| Cold start to first paint | 21.4 s / 23.1 s | 10.4 s / 21.5 s | 8.01 s / 14.3 s | 4.52 s / 9.50 s |
+| Restart to first paint | 11.5 s / 24.4 s | 4.53 s / 21.2 s | 6.53 s / 13.7 s | 1.79 s / 7.32 s |
+| Template edit to DOM | 145 ms / 3.33 s (reload) | 130 ms / 3.68 s | 149 ms / 1.39 s (reload) | 154 ms / 924 ms |
+| `.ts` edit to DOM | n/a | 413 ms / 4.18 s | n/a | 197 ms / 998 ms |
+| Production build | 18.0 s / 31.9 s | 17.8 s / 23.1 s | 10.3 s / 20.3 s | 8.92 s / 9.78 s |
+| Dev server memory, settled after a restart | 1.73 GB / 3.52 GB | 856 MB / 3.68 GB | 1.83 GB / 3.35 GB | 869 MB / 2.28 GB |
+| Dev server memory, peak of a cold start | 4.87 GB / 3.62 GB | 1.87 GB / 3.60 GB | 3.89 GB / 3.97 GB | 2.94 GB / 3.52 GB |
+| Build memory, peak | 4.17 GB / 4.11 GB | 2.08 GB / 2.60 GB | 4.03 GB / 4.41 GB | 2.26 GB / 2.89 GB |
+

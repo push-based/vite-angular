@@ -93,10 +93,10 @@ To use the plugin in your own app, follow [Getting started](https://push-based.g
 | [packages/vite-plugin-ngp](packages/vite-plugin-ngp) | The plugin. `src/index.ts` holds the Vite hooks, `src/compiler.ts` wraps ngp, and `test/` has the tests |
 | [playground](playground) | A demo app with one page per Angular feature area. Its [README](playground/README.md) says what each page exercises and what breaks visibly when the plugin gets it wrong |
 | [site](site) | The public docs site: an Angular app compiled by the plugin and prerendered with its SSR. The pages are Markdown in [site/content](site/content) |
-| [bench](bench) | The end-to-end benchmark: dev-server starts, edits, type-check latency, builds and bundle sizes for the plugin, `ng serve`, Analog and `@oxc-angular/vite`. Its results are behind the Performance page |
+| [bench](bench) | The end-to-end benchmark: dev-server starts, edits, type-check latency, builds, bundle sizes and memory for the plugin, `ng serve`, Analog and `@oxc-angular/vite` on generated apps, and for the plugin against their own CLI on two real apps, Super Productivity and Ghostfolio. Its results are behind the Performance and Benchmarks pages |
 | [toolchain](toolchain) | Builds ngp from Angular's source, at the commit in [versions.env](toolchain/versions.env) |
 | [docs](docs) | For people working on the plugin: [building.md](docs/building.md), [design.md](docs/design.md), [decisions.md](docs/decisions.md) |
-| [.github/workflows](.github/workflows) | `ci` builds ngp on a clean Ubuntu runner, runs the tests and builds the playground. `pages` deploys the docs site |
+| [.github/workflows](.github/workflows) | `ci` builds ngp on a clean Ubuntu runner, runs the tests and builds the playground. `pages` deploys the docs site. `bench-real` benchmarks the two real apps, on demand |
 | [CLAUDE.md](CLAUDE.md) | Rules for agents working in this repo. They apply to people too |
 
 ## Scripts

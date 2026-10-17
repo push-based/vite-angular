@@ -16,6 +16,11 @@ What changed in vite-plugin-ngp, newest first. The plugin isn't on npm, so there
 - A class edit could reload the page twice, a second after the first reload. That happened when the plugin read the `.ts` file between a save truncating it and writing it. The plugin now waits out an empty read, the way Vite does. [How it works](how-it-works#component-hmr)
 - `DEBUG=vite-plugin-ngp` also logs how long each step of a template update took. [Configuration](configuration#what-the-plugin-sets-for-you)
 
+### Benchmarks on real apps
+
+- A new page, [Benchmarks on real apps](benchmarks): the plugin against the Angular CLI on Super Productivity and against Nx on Ghostfolio, two open-source apps, for dev-server starts, edits, production builds and memory, measured on GitHub's runners and on a laptop. On GitHub's 4-core runners the plugin restarts Ghostfolio's dev server in 4.5 s where Nx takes 21 s, updates a template in about 130–150 ms on both apps where the CLIs take 3.3–3.7 s, builds Super Productivity in 18 s where `ng build` takes 32 s, and holds a third to a half of the CLIs' memory while you work; its cold start of Super Productivity, 21.4 s against 23.1 s, is the one number that barely moves. It also lists what each app needed to run on a per-file compiler at all. The `bench-real` workflow reruns it on demand.
+- [Status and limits](status#what-has-been-measured-and-what-hasnt) now says real apps, Linux and memory have been measured, and what still hasn't.
+
 ### Internationalization
 
 - A translation file with a unit the parser can't read in full, such as a `{` in a translation that isn't an ICU expression, no longer fails `vite build`. The error is logged and the build goes on, as `ng build` does with the same file. Ghostfolio's Catalan translations have two such units. [Internationalization](i18n#the-build)

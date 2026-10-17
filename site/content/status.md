@@ -47,11 +47,11 @@ vite-plugin-ngp is a first version on top of a prototype compiler. This page say
 - **i18n has one app behind it.** Extraction, translation and per-locale builds are checked on the playground's two locales and 34 messages. Formats other than XLIFF 1.2 were extracted, not translated from. An ICU message inside `@if` inside `@for` fails Angular's i18n hydration, which ngc's output does too.
 - **The linker is the slow one.** It's the Babel-based linker. The Angular CLI has since moved to a faster oxc-based one, which the plugin can't use yet because it's private to `@angular/build`.
 
-## What hasn't been measured
+## What has been measured, and what hasn't
 
-The [Performance](performance) page measures the plugin's dev server and builds against `ng serve`, Analog and `@oxc-angular/vite`, on generated apps of 100 to 5,000 components and the playground, on one laptop. Still unmeasured:
+The [Performance](performance) page measures the plugin's dev server and builds against `ng serve`, Analog and `@oxc-angular/vite`, on generated apps of 100 to 5,000 components and the playground, on one laptop. [Benchmarks on real apps](benchmarks) measures it against the Angular CLI on Super Productivity and against Nx on Ghostfolio, for time and memory, on GitHub's Ubuntu runners and on the same laptop. Still unmeasured:
 
-- **Real apps with third-party libraries.** The generated apps use only Angular's own packages. An app with Material or NgRx sends more packages through the Babel linker, which probably already costs the plugin about 0.4 s of a cold start at 5,000 components.
-- **Linux and Windows.** Every number is from macOS, where Vite's file watcher adds up to about 100 ms to each edit.
-- **Memory.** The plugin holds ngp's analyzer and a `tsgo` process next to Vite. Nobody has measured how much that is on a large app.
+- **Large real apps.** The two real apps have 252 and 157 components. An enterprise app with a thousand components and 50 libraries hasn't been tried, and the plugin's cold start grows with the number of packages the Babel linker has to process.
+- **Windows.** Every number is from macOS or Ubuntu. Windows runs only through WSL 2, and nobody has timed it there.
 - **How far apart one save writes its files.** The plugin holds a template update until 50 ms after the template was written, in case the same save changes the component's class. That 50 ms is a guess, and it's why the fastest template edit takes about 60 ms in the plugin against about 16 ms in `@oxc-angular/vite`. See [Performance](performance#template-edits).
+- **Memory on a large app.** On the two real apps the plugin's dev server holds 0.9–1.7 GB after a restart, where the CLIs hold 3.5–3.7 GB, but its cold start of Super Productivity peaks at 4.9 GB on a 4-core runner, above `ng serve`'s 3.6 GB. Nobody has measured it at 5,000 components.

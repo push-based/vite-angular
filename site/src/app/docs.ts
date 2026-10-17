@@ -37,6 +37,7 @@ export const DOCS: DocEntry[] = [
   {path: 'comparison', label: 'Compared with alternatives', section: 'Guide', load: () => import('../../content/comparison.md').then((m) => m.default)},
   {path: 'configuration', label: 'Configuration', section: 'Guide', load: () => import('../../content/configuration.md').then((m) => m.default)},
   {path: 'migrating-from-ng-build', label: 'Migrating from ng build', section: 'Guide', load: () => import('../../content/migrating-from-ng-build.md').then((m) => m.default)},
+  {path: 'nx', label: 'Migrating inside Nx', section: 'Guide', load: () => import('../../content/nx.md').then((m) => m.default)},
   {path: 'server-rendering', label: 'Server rendering', section: 'Guide', load: () => import('../../content/server-rendering.md').then((m) => m.default)},
   {path: 'testing', label: 'Testing with Vitest', section: 'Features', load: () => import('../../content/testing.md').then((m) => m.default)},
   {path: 'type-checking', label: 'Type-checking', section: 'Features', load: () => import('../../content/type-checking.md').then((m) => m.default)},

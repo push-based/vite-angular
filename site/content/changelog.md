@@ -48,6 +48,8 @@ What changed in vite-plugin-ngp, newest first. The plugin isn't on npm, so there
 ### This site
 
 - A new page, [Compared with alternatives](comparison), sets vite-plugin-ngp next to `ng serve`, Analog (its default path and `fastCompile`) and `@oxc-angular/vite`: when each compiles, whose compiler it runs, type-checking, HMR, SSR, linking, and how you get it, with a source for every claim and where the plugin is weaker.
+- A new page, [Migrating inside an Nx workspace](nx): how to move one app of an Nx workspace to the plugin while the rest stays on Nx. Vite's root in the app's folder, `tsconfig.base.json`'s paths as Vite aliases, libraries compiled from source with the app, `export type` and decorator metadata, Nx targets, and why `nx build my-lib` stays on ng-packagr. Checked on Ghostfolio, with Vite's root at the workspace root and at the app's folder.
+- [Status and limits](status#what-doesnt-work-yet) says library builds aren't supported, and [Migrating from ng build](migrating-from-ng-build#cant-move-yet) lists a library project under what can't move.
 - [Migrating from ng build](migrating-from-ng-build#where-every-option-goes) now says where `localize` and `i18nMissingTranslation` go, since i18n works. It listed them as not yet possible.
 - An editing pass over every page: stale counts fixed, and the Server rendering page's prerender timing remeasured on the current 14 pages. [Server rendering](server-rendering#prerendering-for-static-hosting)
 - The repo, [push-based/vite-angular](https://github.com/push-based/vite-angular), is public. [Getting started](getting-started#1-build-ngp) now starts with `git clone` instead of asking for access, and no page calls the repo private any more.

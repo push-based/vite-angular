@@ -7,7 +7,7 @@ description: Where each angular.json build option goes when an app moves from ng
 
 You have an app that `ng build` builds from angular.json, with the `@angular/build:application` builder, and you want to know whether it can move to Vite with this plugin. Most of angular.json's build options become Vite config you'd write for any Vite app. Three have no Vite equivalent, so the plugin takes them, under the same names and in the same shapes: `fileReplacements`, `budgets` and `polyfills`. The project's `i18n` block and the `localize` option become the plugin's `i18n` option. A handful of options can't move at all yet.
 
-Check [Can't move yet](migrating-from-ng-build#cant-move-yet) first. If your production build depends on any of those, stay on `ng build` for now. Then follow [Getting started](getting-started) for the toolchain, the pinned Angular version and `index.html`, and come back here for the rest.
+Check [Can't move yet](migrating-from-ng-build#cant-move-yet) first. If your production build depends on any of those, stay on `ng build` for now. Then follow [Getting started](getting-started) for the toolchain, the pinned Angular version and `index.html`, and come back here for the rest. If the app lives in an Nx workspace, [Migrating inside an Nx workspace](nx) adds what the workspace needs: Vite's root, tsconfig paths and the libraries the app imports.
 
 ## Configurations become modes
 
@@ -136,5 +136,6 @@ If your production build relies on any of these, it can't move to the plugin tod
 - **Sass, Less or other preprocessors in inline `styles`.** `styleUrl` files and global styles are fine: Vite compiles those.
 - **The service worker.** `@angular/service-worker`'s manifest isn't generated.
 - **Critical CSS inlining, subresource integrity and `autoCsp`.**
+- **A library project.** `ng build my-lib` runs ng-packagr, and the plugin doesn't replace it: it compiles apps, and a library an app imports compiles with the app. Keep ng-packagr for a library you publish. See [Buildable and publishable libraries](nx#buildable-and-publishable-libraries).
 
 [Status and limits](status) has the full list of what the plugin doesn't do yet, beyond build options.

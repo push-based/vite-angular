@@ -659,3 +659,15 @@ A disk cache of the linker's output, keyed by file content and Angular version, 
 **Cost.** A server stack trace through Angular's code points into `node_modules/.vite/deps_ssr/core-<hash>.js`, readable and unminified, rather than into `fesm2022/core.mjs`. The app's own modules keep their maps. A library first imported while the server runs is bundled then, and Vite reloads the server program, about a second on the playground; the client does the same. The Rolldown plugin that externalizes decides like Vite's `shouldExternalize`, by whether a bare import resolves into `node_modules`, but it's a copy of that rule, not a call to it. A server environment other than `ssr` gets `noExternal` and no pre-bundling, as before.
 
 **Revisit when** Vite lets a server environment share the client's optimizer rules, or offers a way to turn off the pre-bundle's source maps instead of deleting them, or when Angular's oxc-based linker becomes usable and the linker stops being worth caching.
+
+## 55. Compile apps, not libraries
+
+*17 October 2026*
+
+**Decision.** The plugin builds and serves applications. It doesn't write a library: no `.d.ts` emit, no partially compiled `ɵɵngDeclare` output, no Angular Package Format bundle. A library inside a workspace compiles as part of the app that imports it, from source, through the same per-file transform, with the app's tsconfig. A library that has to be published, or consumed as a built package, keeps ng-packagr through `ng build` or `nx build`. The site's Nx page and status page say so.
+
+**Why.** A library build is a different program: ngc in partial compilation mode, declaration emit, and a bundler that lays out the package format. ng-packagr does all of it against the same Angular version the plugin pins (`ng-packagr@22.3.0-next.2` is on npm), so there's nothing to gain from a second implementation. ngp, as the plugin uses it, is an app compiler in optimize mode; it offers no partial mode, and writing declarations is TypeScript's whole-program job, which the plugin only runs for type-checking. The main reason Nx users build libraries they never publish is incremental builds, so the app doesn't recompile them. The plugin compiles a file when it's asked for, so that reason goes away once the alias points at the source: checked on Ghostfolio, where both libraries compile with the client.
+
+**Cost.** A workspace that publishes libraries runs two toolchains, and ng-packagr with the pinned prerelease hasn't been tried in this repo. Consuming a built library from `dist/` is untested, though the linker runs on any module with partially compiled declarations. Nothing measures an app that imports fifty libraries from source.
+
+**Revisit when** ngp grows a partial compilation mode, or when Angular publishes ngp and ng-packagr builds on it.

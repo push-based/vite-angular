@@ -107,6 +107,8 @@ Verified in the [playground](../playground): `vite build` and `vite preview`, de
 | `fileReplacements` | Works in dev and builds, and reaches ngp's analyzer: a template read from a replaced file compiles from the replacement ([test](../packages/vite-plugin-ngp/test/build-options.test.mjs)). The playground swaps its environment file in builds |
 | `polyfills`, zone.js apps | Works. zone.js loads before Angular in the browser and on the server, and `async`/`await` is rewritten so zone.js tracks it. Costs 452 bytes and about 60 ms per build on the 311 kB fixture ([test](../packages/vite-plugin-ngp/test/polyfills.test.mjs)). Polyfills aren't added under Vitest |
 | `budgets` | Works, with the CLI's message text and its way of measuring `styleUrl` files, minified and unscoped. Inline `styles` are measured as written. The playground uses `ng new`'s budgets, and its largest stylesheet, `app.css`, measures 3.34 kB against the 4 kB warning |
+| Nx workspaces | Works, for one app with its libraries compiled from source: tsconfig paths as Vite aliases, `export type` on type re-exports, decorator metadata off. Checked on Ghostfolio with Vite's root at the workspace root (the bench) and at the app's folder ([Nx page](../site/content/nx.md)) |
+| Library builds | Not done, by design: no declarations, partial output or package format. ng-packagr keeps that job ([decision 55](decisions.md#55-compile-apps-not-libraries)) |
 | i18n | Works: dev in one locale, `ngp-extract-i18n`, and per-locale builds with SSR, on the playground's English and German. Template HMR keeps translations. No option to build only some locales. An ICU inside `@if` inside `@for` fails Angular's i18n hydration, with ngc's output too |
 
 ## Where it's weak

@@ -40,7 +40,7 @@
       </details>
     }
 
-    <div class="prose" (click)="onContentClick($event)" [innerHTML]="html()"></div>
+    <div class="prose" data-pagefind-body (click)="onContentClick($event)" [innerHTML]="html()"></div>
 
     @if (updated(); as updated) {
       <p class="text-caption page-meta">

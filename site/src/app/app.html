@@ -13,6 +13,22 @@
     <div class="header-actions">
       <button
         type="button"
+        class="search-button"
+        (click)="openSearch()"
+        (pointerenter)="prefetchSearch()"
+        (focus)="prefetchSearch()"
+        aria-label="Search"
+        aria-keyshortcuts="Meta+K Control+K"
+        [title]="'Search (' + shortcut() + ')'"
+      >
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+          <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></g>
+        </svg>
+        <span class="search-button__label">Search</span>
+        <kbd class="search-button__key">{{ shortcut() }}</kbd>
+      </button>
+      <button
+        type="button"
         class="icon-button"
         (click)="toggleTheme()"
         [attr.aria-pressed]="theme() === null ? null : theme() === 'dark'"
@@ -69,3 +85,5 @@
     </div>
   </div>
 </footer>
+
+<ng-container #searchHost />

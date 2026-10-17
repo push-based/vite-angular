@@ -9,6 +9,10 @@ What changed in vite-plugin-ngp, newest first. The plugin isn't on npm, so there
 
 ## 17 October 2026
 
+### Docs site
+
+- The site has search. Press ⌘K (Ctrl+K off a Mac) or the search button in the header, and it finds any page and the section of it that matches, such as `allowedHosts` in [Server rendering](server-rendering#the-server-entry). The index is built with Pagefind when the site is, and nothing of it loads until you open search: about 165 kB compressed then, most of it Pagefind's WebAssembly and the index.
+
 ### Editing in the dev server
 
 - A save can no longer be undone by a module Vite read just before it: components compiled afterwards see the saved file. [How it works](how-it-works#handling-an-edit)

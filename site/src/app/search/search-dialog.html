@@ -1,0 +1,67 @@
+<dialog #dialog class="search" aria-label="Search the docs" (close)="onClose()" (click)="onDialogClick($event)">
+  <div class="search__panel">
+    <div class="search__bar">
+      <svg class="search__icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+        <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></g>
+      </svg>
+      <input
+        #input
+        class="search__input"
+        type="text"
+        inputmode="search"
+        enterkeyhint="go"
+        placeholder="Search the docs"
+        aria-label="Search the docs"
+        role="combobox"
+        aria-autocomplete="list"
+        aria-controls="search-results"
+        [attr.aria-expanded]="items().length > 0"
+        [attr.aria-activedescendant]="activeId()"
+        autocomplete="off"
+        autocapitalize="off"
+        spellcheck="false"
+        autofocus
+        [value]="query()"
+        (input)="onInput($event)"
+        (keydown)="onKeydown($event)"
+      />
+      <button type="button" class="search__close" (click)="close()" aria-label="Close search">Esc</button>
+    </div>
+
+    <div class="search__body">
+      <ul id="search-results" class="search__results" role="listbox" aria-label="Results">
+        @for (item of items(); track item.url; let i = $index) {
+          <li
+            role="option"
+            class="search__result"
+            [class.search__result--heading]="item.kind === 'heading'"
+            [id]="itemId(i)"
+            [attr.aria-selected]="i === active()"
+            (pointermove)="active() !== i && active.set(i)"
+          >
+            <a [href]="item.url" tabindex="-1" (click)="onResultClick($event, item.url)">
+              <span class="search__title">{{ item.title }}</span>
+              @if (item.excerpt) {
+                <span class="search__excerpt" [innerHTML]="item.excerpt"></span>
+              }
+            </a>
+          </li>
+        }
+      </ul>
+
+      <p class="search__status" role="status">
+        @if (status() === 'unavailable') {
+          Search runs on the built site. Run <code>pnpm site:build</code>, then <code>pnpm --filter site preview</code>.
+        } @else if (status() === 'loading' && query()) {
+          Loading the index…
+        } @else if (query().trim() && !items().length) {
+          No results for “{{ query().trim() }}”.
+        } @else if (!query().trim()) {
+          Search every docs page. <kbd>↑</kbd> <kbd>↓</kbd> to move, <kbd>Enter</kbd> to open, <kbd>Esc</kbd> to close.
+        } @else {
+          <span class="visually-hidden">{{ pageCount() }} {{ pageCount() === 1 ? 'page' : 'pages' }} found.</span>
+        }
+      </p>
+    </div>
+  </div>
+</dialog>

@@ -1,0 +1,1693 @@
+{
+  "environment": {
+    "date": "2026-10-17T07:09:48.543Z",
+    "commit": "f39a920",
+    "pluginDirty": true,
+    "machine": {
+      "cpu": "Apple M2 Max",
+      "cores": 12,
+      "memoryGB": 32,
+      "os": "Darwin 27.0.0 arm64",
+      "power": "Now drawing from 'AC Power'"
+    },
+    "node": "v26.12.0",
+    "chrome": "Chrome/155.0.8059.84",
+    "versions": {
+      "@angular/core": "22.3.0-next.2",
+      "@angular/compiler-cli": "22.3.0-next.2",
+      "@angular/build": "22.3.0-next.2",
+      "@angular/cli": "22.3.0-next.2",
+      "@analogjs/vite-plugin-angular": "2.8.2-beta.1",
+      "@oxc-angular/vite": "0.0.41",
+      "vite": "8.3.4",
+      "rolldown": "1.2.14",
+      "typescript": "6.0.3",
+      "puppeteer-core": "25.14.0"
+    },
+    "patches": [
+      "@analogjs__vite-plugin-angular@2.8.2-beta.1.patch"
+    ],
+    "ngp": {
+      "toolchain": "../../../toolchain/out",
+      "versions": "# Everything the ngp build pins. Change a value here, then rerun `pnpm toolchain`.\n\n# Angular commit ngp is built from. 92e5aa8 is the commit behind 22.3.0-next.2.\nANGULAR_SHA=92e5aa8f154096a756757d0e295cde4299788650\n\n# The npm release built from ANGULAR_SHA. ngp's backend imports compiler-cli's private\n# hybrid_analysis API, so every @angular/* pin in this repo must equal this version.\nANGULAR_NPM_VERSION=22.3.0-next.2\n\n# Rust toolchain for both engines, installed locally by setup-rust.sh.\nRUST_TOOLCHAIN=1.96.0\n\n# Must equal the wasm-bindgen crate version in Angular's Cargo.lock (Cargo.toml pins =0.2.121).\nWASM_BINDGEN_VERSION=0.2.121",
+      "plugin": "32b209c"
+    }
+  },
+  "settings": {
+    "runs": 5,
+    "warmup": 1,
+    "edits": 20,
+    "editWarmup": 2,
+    "maxLoad": null
+  },
+  "results": [
+    {
+      "app": "standalone-100-s1",
+      "components": 100,
+      "tool": "ngp",
+      "metric": "edit-template",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "ms": 63,
+          "mode": "in-place",
+          "load": [
+            10.97,
+            7.71,
+            5.33
+          ]
+        },
+        {
+          "ms": 109,
+          "mode": "in-place",
+          "load": [
+            10.97,
+            7.71,
+            5.33
+          ]
+        },
+        {
+          "ms": 62,
+          "mode": "in-place",
+          "load": [
+            10.97,
+            7.71,
+            5.33
+          ]
+        },
+        {
+          "ms": 61,
+          "mode": "in-place",
+          "load": [
+            10.97,
+            7.71,
+            5.33
+          ]
+        },
+        {
+          "ms": 123,
+          "mode": "in-place",
+          "load": [
+            10.97,
+            7.71,
+            5.33
+          ]
+        },
+        {
+          "ms": 61,
+          "mode": "in-place",
+          "load": [
+            10.97,
+            7.71,
+            5.33
+          ]
+        },
+        {
+          "ms": 124,
+          "mode": "in-place",
+          "load": [
+            10.57,
+            7.68,
+            5.33
+          ]
+        },
+        {
+          "ms": 60,
+          "mode": "in-place",
+          "load": [
+            10.57,
+            7.68,
+            5.33
+          ]
+        },
+        {
+          "ms": 124,
+          "mode": "in-place",
+          "load": [
+            10.57,
+            7.68,
+            5.33
+          ]
+        },
+        {
+          "ms": 61,
+          "mode": "in-place",
+          "load": [
+            10.57,
+            7.68,
+            5.33
+          ]
+        },
+        {
+          "ms": 99,
+          "mode": "in-place",
+          "load": [
+            10.57,
+            7.68,
+            5.33
+          ]
+        },
+        {
+          "ms": 123,
+          "mode": "in-place",
+          "load": [
+            10.21,
+            7.65,
+            5.33
+          ]
+        },
+        {
+          "ms": 124,
+          "mode": "in-place",
+          "load": [
+            10.21,
+            7.65,
+            5.33
+          ]
+        },
+        {
+          "ms": 74,
+          "mode": "in-place",
+          "load": [
+            10.21,
+            7.65,
+            5.33
+          ]
+        },
+        {
+          "ms": 61,
+          "mode": "in-place",
+          "load": [
+            10.21,
+            7.65,
+            5.33
+          ]
+        },
+        {
+          "ms": 61,
+          "mode": "in-place",
+          "load": [
+            10.21,
+            7.65,
+            5.33
+          ]
+        },
+        {
+          "ms": 120,
+          "mode": "in-place",
+          "load": [
+            10.21,
+            7.65,
+            5.33
+          ]
+        },
+        {
+          "ms": 82,
+          "mode": "in-place",
+          "load": [
+            10.51,
+            7.76,
+            5.39
+          ]
+        },
+        {
+          "ms": 60,
+          "mode": "in-place",
+          "load": [
+            10.51,
+            7.76,
+            5.39
+          ]
+        },
+        {
+          "ms": 61,
+          "mode": "in-place",
+          "load": [
+            10.51,
+            7.76,
+            5.39
+          ]
+        }
+      ],
+      "latency": {
+        "n": 20,
+        "median": 68.5,
+        "min": 60,
+        "max": 124,
+        "madPct": 12.408759124087592
+      },
+      "mode": "in-place",
+      "typeChecks": []
+    },
+    {
+      "app": "standalone-100-s1",
+      "components": 100,
+      "tool": "ngp",
+      "metric": "edit-ts",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "ms": 192,
+          "mode": "reload",
+          "load": [
+            10.31,
+            7.76,
+            5.4
+          ]
+        },
+        {
+          "ms": 91,
+          "mode": "reload",
+          "load": [
+            10.31,
+            7.76,
+            5.4
+          ]
+        },
+        {
+          "ms": 183,
+          "mode": "reload",
+          "load": [
+            10.31,
+            7.76,
+            5.4
+          ]
+        },
+        {
+          "ms": 182,
+          "mode": "reload",
+          "load": [
+            10.31,
+            7.76,
+            5.4
+          ]
+        },
+        {
+          "ms": 178,
+          "mode": "reload",
+          "load": [
+            10.04,
+            7.75,
+            5.41
+          ]
+        },
+        {
+          "ms": 183,
+          "mode": "reload",
+          "load": [
+            10.04,
+            7.75,
+            5.41
+          ]
+        },
+        {
+          "ms": 167,
+          "mode": "reload",
+          "load": [
+            10.04,
+            7.75,
+            5.41
+          ]
+        },
+        {
+          "ms": 184,
+          "mode": "reload",
+          "load": [
+            10.04,
+            7.75,
+            5.41
+          ]
+        },
+        {
+          "ms": 187,
+          "mode": "reload",
+          "load": [
+            10.04,
+            7.75,
+            5.41
+          ]
+        },
+        {
+          "ms": 85,
+          "mode": "reload",
+          "load": [
+            10.68,
+            7.92,
+            5.48
+          ]
+        },
+        {
+          "ms": 115,
+          "mode": "reload",
+          "load": [
+            10.68,
+            7.92,
+            5.48
+          ]
+        },
+        {
+          "ms": 183,
+          "mode": "reload",
+          "load": [
+            10.68,
+            7.92,
+            5.48
+          ]
+        },
+        {
+          "ms": 177,
+          "mode": "reload",
+          "load": [
+            10.68,
+            7.92,
+            5.48
+          ]
+        },
+        {
+          "ms": 184,
+          "mode": "reload",
+          "load": [
+            10.68,
+            7.92,
+            5.48
+          ]
+        },
+        {
+          "ms": 184,
+          "mode": "reload",
+          "load": [
+            10.31,
+            7.89,
+            5.49
+          ]
+        },
+        {
+          "ms": 179,
+          "mode": "reload",
+          "load": [
+            10.31,
+            7.89,
+            5.49
+          ]
+        },
+        {
+          "ms": 178,
+          "mode": "reload",
+          "load": [
+            10.31,
+            7.89,
+            5.49
+          ]
+        },
+        {
+          "ms": 99,
+          "mode": "reload",
+          "load": [
+            10.31,
+            7.89,
+            5.49
+          ]
+        },
+        {
+          "ms": 191,
+          "mode": "reload",
+          "load": [
+            10.31,
+            7.89,
+            5.49
+          ]
+        },
+        {
+          "ms": 185,
+          "mode": "reload",
+          "load": [
+            10.2,
+            7.9,
+            5.51
+          ]
+        }
+      ],
+      "latency": {
+        "n": 20,
+        "median": 182.5,
+        "min": 85,
+        "max": 192,
+        "madPct": 2.4657534246575343
+      },
+      "mode": "reload",
+      "typeChecks": []
+    },
+    {
+      "app": "standalone-100-s1",
+      "components": 100,
+      "tool": "oxc",
+      "metric": "edit-template",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "ms": 120,
+          "mode": "in-place",
+          "load": [
+            10.35,
+            7.97,
+            5.54
+          ]
+        },
+        {
+          "ms": 17,
+          "mode": "in-place",
+          "load": [
+            10.35,
+            7.97,
+            5.54
+          ]
+        },
+        {
+          "ms": 119,
+          "mode": "in-place",
+          "load": [
+            10.35,
+            7.97,
+            5.54
+          ]
+        },
+        {
+          "ms": 9,
+          "mode": "in-place",
+          "load": [
+            10.35,
+            7.97,
+            5.54
+          ]
+        },
+        {
+          "ms": 117,
+          "mode": "in-place",
+          "load": [
+            10.35,
+            7.97,
+            5.54
+          ]
+        },
+        {
+          "ms": 117,
+          "mode": "in-place",
+          "load": [
+            9.76,
+            7.89,
+            5.53
+          ]
+        },
+        {
+          "ms": 118,
+          "mode": "in-place",
+          "load": [
+            9.76,
+            7.89,
+            5.53
+          ]
+        },
+        {
+          "ms": 52,
+          "mode": "in-place",
+          "load": [
+            9.76,
+            7.89,
+            5.53
+          ]
+        },
+        {
+          "ms": 17,
+          "mode": "in-place",
+          "load": [
+            9.76,
+            7.89,
+            5.53
+          ]
+        },
+        {
+          "ms": 34,
+          "mode": "in-place",
+          "load": [
+            9.76,
+            7.89,
+            5.53
+          ]
+        },
+        {
+          "ms": 53,
+          "mode": "in-place",
+          "load": [
+            9.76,
+            7.89,
+            5.53
+          ]
+        },
+        {
+          "ms": 15,
+          "mode": "in-place",
+          "load": [
+            9.38,
+            7.84,
+            5.53
+          ]
+        },
+        {
+          "ms": 117,
+          "mode": "in-place",
+          "load": [
+            9.38,
+            7.84,
+            5.53
+          ]
+        },
+        {
+          "ms": 20,
+          "mode": "in-place",
+          "load": [
+            9.38,
+            7.84,
+            5.53
+          ]
+        },
+        {
+          "ms": 100,
+          "mode": "in-place",
+          "load": [
+            9.38,
+            7.84,
+            5.53
+          ]
+        },
+        {
+          "ms": 56,
+          "mode": "in-place",
+          "load": [
+            9.38,
+            7.84,
+            5.53
+          ]
+        },
+        {
+          "ms": 15,
+          "mode": "in-place",
+          "load": [
+            8.86,
+            7.76,
+            5.51
+          ]
+        },
+        {
+          "ms": 15,
+          "mode": "in-place",
+          "load": [
+            8.86,
+            7.76,
+            5.51
+          ]
+        },
+        {
+          "ms": 17,
+          "mode": "in-place",
+          "load": [
+            8.86,
+            7.76,
+            5.51
+          ]
+        },
+        {
+          "ms": 15,
+          "mode": "in-place",
+          "load": [
+            8.86,
+            7.76,
+            5.51
+          ]
+        }
+      ],
+      "latency": {
+        "n": 20,
+        "median": 43,
+        "min": 9,
+        "max": 120,
+        "madPct": 65.11627906976744
+      },
+      "mode": "in-place",
+      "typeChecks": []
+    },
+    {
+      "app": "standalone-100-s1",
+      "components": 100,
+      "tool": "oxc",
+      "metric": "edit-ts",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "ms": 68,
+          "mode": "reload",
+          "load": [
+            8.4,
+            7.68,
+            5.5
+          ]
+        },
+        {
+          "ms": 170,
+          "mode": "reload",
+          "load": [
+            8.4,
+            7.68,
+            5.5
+          ]
+        },
+        {
+          "ms": 166,
+          "mode": "reload",
+          "load": [
+            8.4,
+            7.68,
+            5.5
+          ]
+        },
+        {
+          "ms": 169,
+          "mode": "reload",
+          "load": [
+            8.4,
+            7.68,
+            5.5
+          ]
+        },
+        {
+          "ms": 169,
+          "mode": "reload",
+          "load": [
+            7.8,
+            7.57,
+            5.47
+          ]
+        },
+        {
+          "ms": 169,
+          "mode": "reload",
+          "load": [
+            7.8,
+            7.57,
+            5.47
+          ]
+        },
+        {
+          "ms": 171,
+          "mode": "reload",
+          "load": [
+            7.8,
+            7.57,
+            5.47
+          ]
+        },
+        {
+          "ms": 69,
+          "mode": "reload",
+          "load": [
+            7.8,
+            7.57,
+            5.47
+          ]
+        },
+        {
+          "ms": 109,
+          "mode": "reload",
+          "load": [
+            7.8,
+            7.57,
+            5.47
+          ]
+        },
+        {
+          "ms": 167,
+          "mode": "reload",
+          "load": [
+            7.5,
+            7.51,
+            5.46
+          ]
+        },
+        {
+          "ms": 172,
+          "mode": "reload",
+          "load": [
+            7.5,
+            7.51,
+            5.46
+          ]
+        },
+        {
+          "ms": 129,
+          "mode": "reload",
+          "load": [
+            7.5,
+            7.51,
+            5.46
+          ]
+        },
+        {
+          "ms": 165,
+          "mode": "reload",
+          "load": [
+            7.5,
+            7.51,
+            5.46
+          ]
+        },
+        {
+          "ms": 171,
+          "mode": "reload",
+          "load": [
+            7.5,
+            7.51,
+            5.46
+          ]
+        },
+        {
+          "ms": 170,
+          "mode": "reload",
+          "load": [
+            7.06,
+            7.42,
+            5.44
+          ]
+        },
+        {
+          "ms": 168,
+          "mode": "reload",
+          "load": [
+            7.06,
+            7.42,
+            5.44
+          ]
+        },
+        {
+          "ms": 169,
+          "mode": "reload",
+          "load": [
+            7.06,
+            7.42,
+            5.44
+          ]
+        },
+        {
+          "ms": 171,
+          "mode": "reload",
+          "load": [
+            7.06,
+            7.42,
+            5.44
+          ]
+        },
+        {
+          "ms": 166,
+          "mode": "reload",
+          "load": [
+            7.06,
+            7.42,
+            5.44
+          ]
+        },
+        {
+          "ms": 171,
+          "mode": "reload",
+          "load": [
+            7.06,
+            7.42,
+            5.44
+          ]
+        }
+      ],
+      "latency": {
+        "n": 20,
+        "median": 169,
+        "min": 68,
+        "max": 172,
+        "madPct": 1.183431952662722
+      },
+      "mode": "reload",
+      "typeChecks": []
+    },
+    {
+      "app": "standalone-5000-s1",
+      "components": 5000,
+      "tool": "ngp",
+      "metric": "edit-template",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "ms": 127,
+          "mode": "in-place",
+          "load": [
+            6.77,
+            7.34,
+            5.43
+          ]
+        },
+        {
+          "ms": 125,
+          "mode": "in-place",
+          "load": [
+            6.77,
+            7.34,
+            5.43
+          ]
+        },
+        {
+          "ms": 103,
+          "mode": "in-place",
+          "load": [
+            6.77,
+            7.34,
+            5.43
+          ]
+        },
+        {
+          "ms": 63,
+          "mode": "in-place",
+          "load": [
+            6.71,
+            7.32,
+            5.44
+          ]
+        },
+        {
+          "ms": 125,
+          "mode": "in-place",
+          "load": [
+            6.71,
+            7.32,
+            5.44
+          ]
+        },
+        {
+          "ms": 125,
+          "mode": "in-place",
+          "load": [
+            6.71,
+            7.32,
+            5.44
+          ]
+        },
+        {
+          "ms": 68,
+          "mode": "in-place",
+          "load": [
+            6.71,
+            7.32,
+            5.44
+          ]
+        },
+        {
+          "ms": 60,
+          "mode": "in-place",
+          "load": [
+            6.71,
+            7.32,
+            5.44
+          ]
+        },
+        {
+          "ms": 125,
+          "mode": "in-place",
+          "load": [
+            6.71,
+            7.32,
+            5.44
+          ]
+        },
+        {
+          "ms": 135,
+          "mode": "in-place",
+          "load": [
+            6.49,
+            7.26,
+            5.43
+          ]
+        },
+        {
+          "ms": 125,
+          "mode": "in-place",
+          "load": [
+            6.49,
+            7.26,
+            5.43
+          ]
+        },
+        {
+          "ms": 61,
+          "mode": "in-place",
+          "load": [
+            6.49,
+            7.26,
+            5.43
+          ]
+        },
+        {
+          "ms": 88,
+          "mode": "in-place",
+          "load": [
+            6.49,
+            7.26,
+            5.43
+          ]
+        },
+        {
+          "ms": 81,
+          "mode": "in-place",
+          "load": [
+            6.49,
+            7.26,
+            5.43
+          ]
+        },
+        {
+          "ms": 112,
+          "mode": "in-place",
+          "load": [
+            7.09,
+            7.37,
+            5.48
+          ]
+        },
+        {
+          "ms": 109,
+          "mode": "in-place",
+          "load": [
+            7.09,
+            7.37,
+            5.48
+          ]
+        },
+        {
+          "ms": 124,
+          "mode": "in-place",
+          "load": [
+            7.09,
+            7.37,
+            5.48
+          ]
+        },
+        {
+          "ms": 127,
+          "mode": "in-place",
+          "load": [
+            7.09,
+            7.37,
+            5.48
+          ]
+        },
+        {
+          "ms": 143,
+          "mode": "in-place",
+          "load": [
+            7.09,
+            7.37,
+            5.48
+          ]
+        },
+        {
+          "ms": 62,
+          "mode": "in-place",
+          "load": [
+            6.68,
+            7.28,
+            5.46
+          ]
+        }
+      ],
+      "latency": {
+        "n": 20,
+        "median": 118,
+        "min": 60,
+        "max": 143,
+        "madPct": 10.169491525423728
+      },
+      "mode": "in-place",
+      "typeChecks": []
+    },
+    {
+      "app": "standalone-5000-s1",
+      "components": 5000,
+      "tool": "ngp",
+      "metric": "edit-ts",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "ms": 248,
+          "mode": "reload",
+          "load": [
+            6.68,
+            7.28,
+            5.46
+          ]
+        },
+        {
+          "ms": 130,
+          "mode": "reload",
+          "load": [
+            6.23,
+            7.18,
+            5.43
+          ]
+        },
+        {
+          "ms": 184,
+          "mode": "reload",
+          "load": [
+            6.23,
+            7.18,
+            5.43
+          ]
+        },
+        {
+          "ms": 165,
+          "mode": "reload",
+          "load": [
+            6.23,
+            7.18,
+            5.43
+          ]
+        },
+        {
+          "ms": 198,
+          "mode": "reload",
+          "load": [
+            6.23,
+            7.18,
+            5.43
+          ]
+        },
+        {
+          "ms": 132,
+          "mode": "reload",
+          "load": [
+            6.23,
+            7.18,
+            5.43
+          ]
+        },
+        {
+          "ms": 246,
+          "mode": "reload",
+          "load": [
+            5.89,
+            7.09,
+            5.41
+          ]
+        },
+        {
+          "ms": 192,
+          "mode": "reload",
+          "load": [
+            5.89,
+            7.09,
+            5.41
+          ]
+        },
+        {
+          "ms": 185,
+          "mode": "reload",
+          "load": [
+            5.89,
+            7.09,
+            5.41
+          ]
+        },
+        {
+          "ms": 159,
+          "mode": "reload",
+          "load": [
+            5.89,
+            7.09,
+            5.41
+          ]
+        },
+        {
+          "ms": 277,
+          "mode": "reload",
+          "load": [
+            5.89,
+            7.09,
+            5.41
+          ]
+        },
+        {
+          "ms": 132,
+          "mode": "reload",
+          "load": [
+            5.58,
+            7.01,
+            5.39
+          ]
+        },
+        {
+          "ms": 199,
+          "mode": "reload",
+          "load": [
+            5.58,
+            7.01,
+            5.39
+          ]
+        },
+        {
+          "ms": 194,
+          "mode": "reload",
+          "load": [
+            5.58,
+            7.01,
+            5.39
+          ]
+        },
+        {
+          "ms": 132,
+          "mode": "reload",
+          "load": [
+            5.58,
+            7.01,
+            5.39
+          ]
+        },
+        {
+          "ms": 231,
+          "mode": "reload",
+          "load": [
+            5.58,
+            7.01,
+            5.39
+          ]
+        },
+        {
+          "ms": 195,
+          "mode": "reload",
+          "load": [
+            5.53,
+            6.97,
+            5.39
+          ]
+        },
+        {
+          "ms": 157,
+          "mode": "reload",
+          "load": [
+            5.53,
+            6.97,
+            5.39
+          ]
+        },
+        {
+          "ms": 205,
+          "mode": "reload",
+          "load": [
+            5.53,
+            6.97,
+            5.39
+          ]
+        },
+        {
+          "ms": 199,
+          "mode": "reload",
+          "load": [
+            5.53,
+            6.97,
+            5.39
+          ]
+        }
+      ],
+      "latency": {
+        "n": 20,
+        "median": 193,
+        "min": 130,
+        "max": 277,
+        "madPct": 16.06217616580311
+      },
+      "mode": "reload",
+      "typeChecks": []
+    },
+    {
+      "app": "standalone-5000-s1",
+      "components": 5000,
+      "tool": "oxc",
+      "metric": "edit-template",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "ms": 119,
+          "mode": "in-place",
+          "load": [
+            5.22,
+            6.86,
+            5.37
+          ]
+        },
+        {
+          "ms": 119,
+          "mode": "in-place",
+          "load": [
+            5.22,
+            6.86,
+            5.37
+          ]
+        },
+        {
+          "ms": 120,
+          "mode": "in-place",
+          "load": [
+            5.22,
+            6.86,
+            5.37
+          ]
+        },
+        {
+          "ms": 119,
+          "mode": "in-place",
+          "load": [
+            5.22,
+            6.86,
+            5.37
+          ]
+        },
+        {
+          "ms": 120,
+          "mode": "in-place",
+          "load": [
+            5.22,
+            6.86,
+            5.37
+          ]
+        },
+        {
+          "ms": 117,
+          "mode": "in-place",
+          "load": [
+            4.88,
+            6.76,
+            5.34
+          ]
+        },
+        {
+          "ms": 18,
+          "mode": "in-place",
+          "load": [
+            4.88,
+            6.76,
+            5.34
+          ]
+        },
+        {
+          "ms": 16,
+          "mode": "in-place",
+          "load": [
+            4.88,
+            6.76,
+            5.34
+          ]
+        },
+        {
+          "ms": 16,
+          "mode": "in-place",
+          "load": [
+            4.88,
+            6.76,
+            5.34
+          ]
+        },
+        {
+          "ms": 117,
+          "mode": "in-place",
+          "load": [
+            4.88,
+            6.76,
+            5.34
+          ]
+        },
+        {
+          "ms": 118,
+          "mode": "in-place",
+          "load": [
+            4.88,
+            6.76,
+            5.34
+          ]
+        },
+        {
+          "ms": 18,
+          "mode": "in-place",
+          "load": [
+            4.57,
+            6.67,
+            5.31
+          ]
+        },
+        {
+          "ms": 119,
+          "mode": "in-place",
+          "load": [
+            4.57,
+            6.67,
+            5.31
+          ]
+        },
+        {
+          "ms": 118,
+          "mode": "in-place",
+          "load": [
+            4.57,
+            6.67,
+            5.31
+          ]
+        },
+        {
+          "ms": 119,
+          "mode": "in-place",
+          "load": [
+            4.57,
+            6.67,
+            5.31
+          ]
+        },
+        {
+          "ms": 117,
+          "mode": "in-place",
+          "load": [
+            4.57,
+            6.67,
+            5.31
+          ]
+        },
+        {
+          "ms": 118,
+          "mode": "in-place",
+          "load": [
+            4.57,
+            6.67,
+            5.31
+          ]
+        },
+        {
+          "ms": 119,
+          "mode": "in-place",
+          "load": [
+            4.29,
+            6.57,
+            5.29
+          ]
+        },
+        {
+          "ms": 16,
+          "mode": "in-place",
+          "load": [
+            4.29,
+            6.57,
+            5.29
+          ]
+        },
+        {
+          "ms": 118,
+          "mode": "in-place",
+          "load": [
+            4.29,
+            6.57,
+            5.29
+          ]
+        }
+      ],
+      "latency": {
+        "n": 20,
+        "median": 118,
+        "min": 16,
+        "max": 120,
+        "madPct": 0.847457627118644
+      },
+      "mode": "in-place",
+      "typeChecks": []
+    },
+    {
+      "app": "standalone-5000-s1",
+      "components": 5000,
+      "tool": "oxc",
+      "metric": "edit-ts",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "ms": 186,
+          "mode": "reload",
+          "load": [
+            4.02,
+            6.48,
+            5.26
+          ]
+        },
+        {
+          "ms": 186,
+          "mode": "reload",
+          "load": [
+            4.02,
+            6.48,
+            5.26
+          ]
+        },
+        {
+          "ms": 185,
+          "mode": "reload",
+          "load": [
+            4.02,
+            6.48,
+            5.26
+          ]
+        },
+        {
+          "ms": 187,
+          "mode": "reload",
+          "load": [
+            4.02,
+            6.48,
+            5.26
+          ]
+        },
+        {
+          "ms": 184,
+          "mode": "reload",
+          "load": [
+            3.78,
+            6.39,
+            5.24
+          ]
+        },
+        {
+          "ms": 184,
+          "mode": "reload",
+          "load": [
+            3.78,
+            6.39,
+            5.24
+          ]
+        },
+        {
+          "ms": 185,
+          "mode": "reload",
+          "load": [
+            3.78,
+            6.39,
+            5.24
+          ]
+        },
+        {
+          "ms": 188,
+          "mode": "reload",
+          "load": [
+            3.78,
+            6.39,
+            5.24
+          ]
+        },
+        {
+          "ms": 82,
+          "mode": "reload",
+          "load": [
+            3.78,
+            6.39,
+            5.24
+          ]
+        },
+        {
+          "ms": 96,
+          "mode": "reload",
+          "load": [
+            3.64,
+            6.31,
+            5.22
+          ]
+        },
+        {
+          "ms": 180,
+          "mode": "reload",
+          "load": [
+            3.64,
+            6.31,
+            5.22
+          ]
+        },
+        {
+          "ms": 187,
+          "mode": "reload",
+          "load": [
+            3.64,
+            6.31,
+            5.22
+          ]
+        },
+        {
+          "ms": 183,
+          "mode": "reload",
+          "load": [
+            3.64,
+            6.31,
+            5.22
+          ]
+        },
+        {
+          "ms": 189,
+          "mode": "reload",
+          "load": [
+            3.64,
+            6.31,
+            5.22
+          ]
+        },
+        {
+          "ms": 147,
+          "mode": "reload",
+          "load": [
+            3.51,
+            6.24,
+            5.2
+          ]
+        },
+        {
+          "ms": 186,
+          "mode": "reload",
+          "load": [
+            3.51,
+            6.24,
+            5.2
+          ]
+        },
+        {
+          "ms": 156,
+          "mode": "reload",
+          "load": [
+            3.51,
+            6.24,
+            5.2
+          ]
+        },
+        {
+          "ms": 187,
+          "mode": "reload",
+          "load": [
+            3.51,
+            6.24,
+            5.2
+          ]
+        },
+        {
+          "ms": 183,
+          "mode": "reload",
+          "load": [
+            3.51,
+            6.24,
+            5.2
+          ]
+        },
+        {
+          "ms": 184,
+          "mode": "reload",
+          "load": [
+            3.39,
+            6.17,
+            5.18
+          ]
+        }
+      ],
+      "latency": {
+        "n": 20,
+        "median": 184.5,
+        "min": 82,
+        "max": 189,
+        "madPct": 1.084010840108401
+      },
+      "mode": "reload",
+      "typeChecks": []
+    },
+    {
+      "app": "playground",
+      "components": 21,
+      "tool": "ngp",
+      "metric": "edit-template",
+      "ok": false,
+      "errors": [
+        "no first-contentful-paint entry\n  VITE v8.3.4  ready in 205 ms\n  ➜  Local:   http://127.0.0.1:4310/\n9:12:56 AM [vite] (client) [console.warn] NG0505: Angular hydration was requested on the client, but there was no serialized information present in the server response, thus hydration was not enabled. Make sure the `provideClientHydration()` is included into the list of providers in the server part of the application configuration. Find more at https://next.angular.dev/errors/NG0505\n9:12:56 AM [vite] (client) [console.error] ERROR ReferenceError: $localize is not defined\n    at consts (http://127.0.0.1:4310/src/app/app.ts:147:5)\n    at createTView (http://127.0.0.1:4310/node_modules/.vite-ngp/deps/core-Cs5RjRwN.js?v=236ff3c6:8327:57)\n    at getOrCreateComponentTView (http://127.0.0.1:4310/node_modules/.vite-ngp/deps/core-Cs5RjRwN.js?v=236ff3c6:8371:70)\n    at createComponentLView (http://127.0.0.1:4310/node_modules/.vite-ngp/deps/core-Cs5RjRwN.js?v=236ff3c6:8398:16)\n    at instantiateAllDirectives (http://127.0.0.1:4310/node_modules/.vite-ngp/deps/core-Cs5RjRwN.js?v=236ff3c6:8598:3)\n    at createDirectivesInstances (http://127.0.0.1:4310/node_modules/.vite-ngp/deps/core-Cs5RjRwN.js?v=236ff3c6:8487:2)\n    at ComponentFactory.createComponentRef (http://127.0.0.1:4310/node_modules/.vite-ngp/deps/core-Cs5RjRwN.js?v=236ff3c6:11823:4)\n    at ComponentFactory.create (http://127.0.0.1:4310/node_modules/.vite-ngp/deps/core-Cs5RjRwN.js?v=236ff3c6:11797:21)\n    at http://127.0.0.1:4310/node_modules/.vite-ngp/deps/core-Cs5RjRwN.js?v=236ff3c6:14936:37\n    at NoopNgZone.run (http://127.0.0.1:4310/node_modules/.vite-ngp/deps/core-Cs5RjRwN.js?v=236ff3c6:3690:13)\n9:12:56 AM [vite] (client) [console.error] ReferenceError: $localize is not defined\n    at consts (http://127.0.0.1:4310/src/app/app.ts:147:5)\n    at createTView (http://127.0.0.1:4310/node_modules/.vite-ngp/deps/core-Cs5RjRwN.js?v=236ff3c6:8327:57)\n    at getOrCreateComponentTView (http://127.0.0.1:4310/node_modules/.vite-ngp/deps/core-Cs5RjRwN.js?v=236ff3c6:8371:70)\n    at createComponentLView (http://127.0.0.1:4310/node_modules/.vite-ngp/deps/core-Cs5RjRwN.js?v=236ff3c6:8398:16)\n    at instantiateAllDirectives (http://127.0.0.1:4310/node_modules/.vite-ngp/deps/core-Cs5RjRwN.js?v=236ff3c6:8598:3)\n    at createDirectivesInstances (http://127.0.0.1:4310/node_modules/.vite-ngp/deps/core-Cs5RjRwN.js?v=236ff3c6:8487:2)\n    at ComponentFactory.createComponentRef (http://127.0.0.1:4310/node_modules/.vite-ngp/deps/core-Cs5RjRwN.js?v=236ff3c6:11823:4)\n    at ComponentFactory.create (http://127.0.0.1:4310/node_modules/.vite-ngp/deps/core-Cs5RjRwN.js?v=236ff3c6:11797:21)\n    at http://127.0.0.1:4310/node_modules/.vite-ngp/deps/core-Cs5RjRwN.js?v=236ff3c6:14936:37\n    at NoopNgZone.run (http://127.0.0.1:4310/node_modules/.vite-ngp/deps/core-Cs5RjRwN.js?v=236ff3c6:3690:13)"
+      ],
+      "samples": [],
+      "latency": null,
+      "mode": "",
+      "typeChecks": []
+    },
+    {
+      "app": "playground",
+      "components": 21,
+      "tool": "ngp",
+      "metric": "edit-ts",
+      "ok": false,
+      "errors": [
+        "no first-contentful-paint entry\n  VITE v8.3.4  ready in 205 ms\n  ➜  Local:   http://127.0.0.1:4310/\n9:12:56 AM [vite] (client) [console.warn] NG0505: Angular hydration was requested on the client, but there was no serialized information present in the server response, thus hydration was not enabled. Make sure the `provideClientHydration()` is included into the list of providers in the server part of the application configuration. Find more at https://next.angular.dev/errors/NG0505\n9:12:56 AM [vite] (client) [console.error] ERROR ReferenceError: $localize is not defined\n    at consts (http://127.0.0.1:4310/src/app/app.ts:147:5)\n    at createTView (http://127.0.0.1:4310/node_modules/.vite-ngp/deps/core-Cs5RjRwN.js?v=236ff3c6:8327:57)\n    at getOrCreateComponentTView (http://127.0.0.1:4310/node_modules/.vite-ngp/deps/core-Cs5RjRwN.js?v=236ff3c6:8371:70)\n    at createComponentLView (http://127.0.0.1:4310/node_modules/.vite-ngp/deps/core-Cs5RjRwN.js?v=236ff3c6:8398:16)\n    at instantiateAllDirectives (http://127.0.0.1:4310/node_modules/.vite-ngp/deps/core-Cs5RjRwN.js?v=236ff3c6:8598:3)\n    at createDirectivesInstances (http://127.0.0.1:4310/node_modules/.vite-ngp/deps/core-Cs5RjRwN.js?v=236ff3c6:8487:2)\n    at ComponentFactory.createComponentRef (http://127.0.0.1:4310/node_modules/.vite-ngp/deps/core-Cs5RjRwN.js?v=236ff3c6:11823:4)\n    at ComponentFactory.create (http://127.0.0.1:4310/node_modules/.vite-ngp/deps/core-Cs5RjRwN.js?v=236ff3c6:11797:21)\n    at http://127.0.0.1:4310/node_modules/.vite-ngp/deps/core-Cs5RjRwN.js?v=236ff3c6:14936:37\n    at NoopNgZone.run (http://127.0.0.1:4310/node_modules/.vite-ngp/deps/core-Cs5RjRwN.js?v=236ff3c6:3690:13)\n9:12:56 AM [vite] (client) [console.error] ReferenceError: $localize is not defined\n    at consts (http://127.0.0.1:4310/src/app/app.ts:147:5)\n    at createTView (http://127.0.0.1:4310/node_modules/.vite-ngp/deps/core-Cs5RjRwN.js?v=236ff3c6:8327:57)\n    at getOrCreateComponentTView (http://127.0.0.1:4310/node_modules/.vite-ngp/deps/core-Cs5RjRwN.js?v=236ff3c6:8371:70)\n    at createComponentLView (http://127.0.0.1:4310/node_modules/.vite-ngp/deps/core-Cs5RjRwN.js?v=236ff3c6:8398:16)\n    at instantiateAllDirectives (http://127.0.0.1:4310/node_modules/.vite-ngp/deps/core-Cs5RjRwN.js?v=236ff3c6:8598:3)\n    at createDirectivesInstances (http://127.0.0.1:4310/node_modules/.vite-ngp/deps/core-Cs5RjRwN.js?v=236ff3c6:8487:2)\n    at ComponentFactory.createComponentRef (http://127.0.0.1:4310/node_modules/.vite-ngp/deps/core-Cs5RjRwN.js?v=236ff3c6:11823:4)\n    at ComponentFactory.create (http://127.0.0.1:4310/node_modules/.vite-ngp/deps/core-Cs5RjRwN.js?v=236ff3c6:11797:21)\n    at http://127.0.0.1:4310/node_modules/.vite-ngp/deps/core-Cs5RjRwN.js?v=236ff3c6:14936:37\n    at NoopNgZone.run (http://127.0.0.1:4310/node_modules/.vite-ngp/deps/core-Cs5RjRwN.js?v=236ff3c6:3690:13)"
+      ],
+      "samples": [],
+      "latency": null,
+      "mode": "",
+      "typeChecks": []
+    },
+    {
+      "app": "playground",
+      "components": 21,
+      "tool": "oxc",
+      "metric": "edit-template",
+      "ok": false,
+      "errors": [
+        "no first-contentful-paint entry\ndeps/core-B52zmZxZ.js?v=9cc0ee74:10807:21)\n    at http://127.0.0.1:4310/node_modules/.vite-oxc/deps/core-B52zmZxZ.js?v=9cc0ee74:13943:37\n    at NoopNgZone.run (http://127.0.0.1:4310/node_modules/.vite-oxc/deps/core-B52zmZxZ.js?v=9cc0ee74:2706:13)\n9:13:02 AM [vite] (client) [console.warn] NG0505: Angular hydration was requested on the client, but there was no serialized information present in the server response, thus hydration was not enabled. Make sure the `provideClientHydration()` is included into the list of providers in the server part of the application configuration. Find more at https://next.angular.dev/errors/NG0505\n9:13:02 AM [vite] (client) [console.error] ERROR ReferenceError: $localize is not defined\n    at consts (http://127.0.0.1:4310/src/app/app.ts:138:5)\n    at createTView (http://127.0.0.1:4310/node_modules/.vite-oxc/deps/core-B52zmZxZ.js?v=9cc0ee74:7343:57)\n    at getOrCreateComponentTView (http://127.0.0.1:4310/node_modules/.vite-oxc/deps/core-B52zmZxZ.js?v=9cc0ee74:7387:70)\n    at createComponentLView (http://127.0.0.1:4310/node_modules/.vite-oxc/deps/core-B52zmZxZ.js?v=9cc0ee74:7414:16)\n    at instantiateAllDirectives (http://127.0.0.1:4310/node_modules/.vite-oxc/deps/core-B52zmZxZ.js?v=9cc0ee74:7614:3)\n    at createDirectivesInstances (http://127.0.0.1:4310/node_modules/.vite-oxc/deps/core-B52zmZxZ.js?v=9cc0ee74:7503:2)\n    at ComponentFactory.createComponentRef (http://127.0.0.1:4310/node_modules/.vite-oxc/deps/core-B52zmZxZ.js?v=9cc0ee74:10833:4)\n    at ComponentFactory.create (http://127.0.0.1:4310/node_modules/.vite-oxc/deps/core-B52zmZxZ.js?v=9cc0ee74:10807:21)\n    at http://127.0.0.1:4310/node_modules/.vite-oxc/deps/core-B52zmZxZ.js?v=9cc0ee74:13943:37\n    at NoopNgZone.run (http://127.0.0.1:4310/node_modules/.vite-oxc/deps/core-B52zmZxZ.js?v=9cc0ee74:2706:13)\n9:13:02 AM [vite] (client) [console.error] ReferenceError: $localize is not defined\n    at consts (http://127.0.0.1:4310/src/app/app.ts:138:5)\n    at createTView (http://127.0.0.1:4310/node_modules/.vite-oxc/deps/core-B52zmZxZ.js?v=9cc0ee74:7343:57)\n    at getOrCreateComponentTView (http://127.0.0.1:4310/node_modules/.vite-oxc/deps/core-B52zmZxZ.js?v=9cc0ee74:7387:70)\n    at createComponentLView (http://127.0.0.1:4310/node_modules/.vite-oxc/deps/core-B52zmZxZ.js?v=9cc0ee74:7414:16)\n    at instantiateAllDirectives (http://127.0.0.1:4310/node_modules/.vite-oxc/deps/core-B52zmZxZ.js?v=9cc0ee74:7614:3)\n    at createDirectivesInstances (http://127.0.0.1:4310/node_modules/.vite-oxc/deps/core-B52zmZxZ.js?v=9cc0ee74:7503:2)\n    at ComponentFactory.createComponentRef (http://127.0.0.1:4310/node_modules/.vite-oxc/deps/core-B52zmZxZ.js?v=9cc0ee74:10833:4)\n    at ComponentFactory.create (http://127.0.0.1:4310/node_modules/.vite-oxc/deps/core-B52zmZxZ.js?v=9cc0ee74:10807:21)\n    at http://127.0.0.1:4310/node_modules/.vite-oxc/deps/core-B52zmZxZ.js?v=9cc0ee74:13943:37\n    at NoopNgZone.run (http://127.0.0.1:4310/node_modules/.vite-oxc/deps/core-B52zmZxZ.js?v=9cc0ee74:2706:13)"
+      ],
+      "samples": [],
+      "latency": null,
+      "mode": "",
+      "typeChecks": []
+    },
+    {
+      "app": "playground",
+      "components": 21,
+      "tool": "oxc",
+      "metric": "edit-ts",
+      "ok": false,
+      "errors": [
+        "no first-contentful-paint entry\ndeps/core-B52zmZxZ.js?v=9cc0ee74:10807:21)\n    at http://127.0.0.1:4310/node_modules/.vite-oxc/deps/core-B52zmZxZ.js?v=9cc0ee74:13943:37\n    at NoopNgZone.run (http://127.0.0.1:4310/node_modules/.vite-oxc/deps/core-B52zmZxZ.js?v=9cc0ee74:2706:13)\n9:13:02 AM [vite] (client) [console.warn] NG0505: Angular hydration was requested on the client, but there was no serialized information present in the server response, thus hydration was not enabled. Make sure the `provideClientHydration()` is included into the list of providers in the server part of the application configuration. Find more at https://next.angular.dev/errors/NG0505\n9:13:02 AM [vite] (client) [console.error] ERROR ReferenceError: $localize is not defined\n    at consts (http://127.0.0.1:4310/src/app/app.ts:138:5)\n    at createTView (http://127.0.0.1:4310/node_modules/.vite-oxc/deps/core-B52zmZxZ.js?v=9cc0ee74:7343:57)\n    at getOrCreateComponentTView (http://127.0.0.1:4310/node_modules/.vite-oxc/deps/core-B52zmZxZ.js?v=9cc0ee74:7387:70)\n    at createComponentLView (http://127.0.0.1:4310/node_modules/.vite-oxc/deps/core-B52zmZxZ.js?v=9cc0ee74:7414:16)\n    at instantiateAllDirectives (http://127.0.0.1:4310/node_modules/.vite-oxc/deps/core-B52zmZxZ.js?v=9cc0ee74:7614:3)\n    at createDirectivesInstances (http://127.0.0.1:4310/node_modules/.vite-oxc/deps/core-B52zmZxZ.js?v=9cc0ee74:7503:2)\n    at ComponentFactory.createComponentRef (http://127.0.0.1:4310/node_modules/.vite-oxc/deps/core-B52zmZxZ.js?v=9cc0ee74:10833:4)\n    at ComponentFactory.create (http://127.0.0.1:4310/node_modules/.vite-oxc/deps/core-B52zmZxZ.js?v=9cc0ee74:10807:21)\n    at http://127.0.0.1:4310/node_modules/.vite-oxc/deps/core-B52zmZxZ.js?v=9cc0ee74:13943:37\n    at NoopNgZone.run (http://127.0.0.1:4310/node_modules/.vite-oxc/deps/core-B52zmZxZ.js?v=9cc0ee74:2706:13)\n9:13:02 AM [vite] (client) [console.error] ReferenceError: $localize is not defined\n    at consts (http://127.0.0.1:4310/src/app/app.ts:138:5)\n    at createTView (http://127.0.0.1:4310/node_modules/.vite-oxc/deps/core-B52zmZxZ.js?v=9cc0ee74:7343:57)\n    at getOrCreateComponentTView (http://127.0.0.1:4310/node_modules/.vite-oxc/deps/core-B52zmZxZ.js?v=9cc0ee74:7387:70)\n    at createComponentLView (http://127.0.0.1:4310/node_modules/.vite-oxc/deps/core-B52zmZxZ.js?v=9cc0ee74:7414:16)\n    at instantiateAllDirectives (http://127.0.0.1:4310/node_modules/.vite-oxc/deps/core-B52zmZxZ.js?v=9cc0ee74:7614:3)\n    at createDirectivesInstances (http://127.0.0.1:4310/node_modules/.vite-oxc/deps/core-B52zmZxZ.js?v=9cc0ee74:7503:2)\n    at ComponentFactory.createComponentRef (http://127.0.0.1:4310/node_modules/.vite-oxc/deps/core-B52zmZxZ.js?v=9cc0ee74:10833:4)\n    at ComponentFactory.create (http://127.0.0.1:4310/node_modules/.vite-oxc/deps/core-B52zmZxZ.js?v=9cc0ee74:10807:21)\n    at http://127.0.0.1:4310/node_modules/.vite-oxc/deps/core-B52zmZxZ.js?v=9cc0ee74:13943:37\n    at NoopNgZone.run (http://127.0.0.1:4310/node_modules/.vite-oxc/deps/core-B52zmZxZ.js?v=9cc0ee74:2706:13)"
+      ],
+      "samples": [],
+      "latency": null,
+      "mode": "",
+      "typeChecks": []
+    }
+  ]
+}

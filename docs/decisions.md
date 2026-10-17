@@ -623,3 +623,15 @@ Generating the figures at the site's build time, from the result files, was the 
 **Cost.** Search only works on the built site: `pnpm site:dev` has no index, and the dialog says so. The first open waits for the dialog's chunk, so keys typed in the first moment after ⌘K, before the field exists, are lost. The index is per build and in English only. Ranking is Pagefind's default: a word in a page's code or tables counts like one in its prose, so for `typeCheck` the Changelog and Performance pages rank above Configuration.
 
 **Revisit when** the index grows enough that its first load is noticeable on a phone, or when the site gets a second language.
+
+## 53. tsrs as an opt-in type-checker, tsgo as the default
+
+*17 October 2026*
+
+**Decision.** `typeChecker: 'tsrs'` runs the plugin's type check with tsrs, Oxc's Rust port of the TypeScript 7 compiler, instead of `tsgo`. The plugin spawns it the way it spawns `tsgo`, on the same generated tsconfig with the same flags, and parses the same output; only the binary and the name of the incremental build-info file change. tsrs is an optional peer dependency the app installs, resolved from the app's root, and pinned in the plugin's devDependencies (0.16.0-ts7.1.0-dev.20260929) so the tests run it. `tsgo` stays the default. The bench has an `ngp-tsrs` variant.
+
+**Why.** tsrs accepts the plugin's tsconfig unchanged, with `extends`, `rootDirs`, `incremental` and `files`, and prints tsc's `file(line,col): error TSxxxx: message` lines, so the block-to-template mapping doesn't change and the whole option is a resolver and a file name. It's faster where the check is the cost: on the bench's 5,000-component app a planted template error reached the terminal in 1.12 s with tsrs against 1.56 s with `tsgo`, medians of 10 in one run on 17 October 2026 (`bench/results/2026-10-17-typecheck-tsrs.json`); on the 21-component playground the two were within 20 ms, because the 300 ms debounce and the watcher are most of the half second there. Opt-in rather than the default because tsrs is pre-1.0 with issues disabled upstream, tracks TypeScript 7.1's development branch where `tsgo` is pinned at 7.0.2 (so a diagnostic can differ, and the tests pin only four), ships no Intel-Mac package, and is another 24 MB binary; if the plugin installed it, every app would pay for it. Resolving it from the app, not the plugin, lets the app move its version as tsrs moves, which it does weekly.
+
+**Cost.** Two checkers to keep working, and a second compiler whose diagnostics can differ from ngc's. The end-to-end test runs against both and skips tsrs where its binary isn't installed, so a CI runner without it proves nothing about it. Each checker's build info is a separate cache, so switching checkers starts cold.
+
+**Revisit when** tsrs reaches 1.0 or tracks the same TypeScript release as `tsgo`, when it ships an Intel-Mac package, or when the gap on large apps is enough that the default should move.

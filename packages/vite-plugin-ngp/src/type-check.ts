@@ -14,13 +14,18 @@ import {
   type Diagnostic,
 } from './type-check-diagnostics.js';
 
+/** Which TypeScript 7 runs the check: Microsoft's Go port, or Oxc's Rust port. */
+export type TypeCheckerKind = 'tsgo' | 'tsrs';
+
 export interface TypeCheckerOptions {
   /** The app's tsconfig. The check extends it. */
   tsconfig: string;
   /** Where the type-check blocks, the check's tsconfig and its build info go. */
   outDir: string;
-  /** Working directory for tsgo, which prints paths relative to it. */
+  /** Working directory for the checker, which prints paths relative to it. `tsrs` is resolved from here. */
   cwd: string;
+  /** `tsgo`, which the plugin installs, or `tsrs`, which the app installs. Defaults to `tsgo`. */
+  checker?: TypeCheckerKind;
 }
 
 export interface CheckedDiagnostic extends Diagnostic {
@@ -34,8 +39,8 @@ export interface TypeCheckResult {
 }
 
 /**
- * Type-checks the app the way ngc would: TypeScript 7 (`tsgo`) checks the app's own sources
- * together with ngp's type-check blocks, in a child process.
+ * Type-checks the app the way ngc would: TypeScript 7 (`tsgo`, or `tsrs` when asked) checks the
+ * app's own sources together with ngp's type-check blocks, in a child process.
  *
  * The blocks are written under `outDir`, at each component's absolute path, and the check's
  * tsconfig lists them in `rootDirs` next to the filesystem root. Their relative imports, like
@@ -43,14 +48,17 @@ export interface TypeCheckResult {
  * in those sources at their real positions. Errors inside a block are mapped to the template.
  */
 export class TypeChecker {
+  private readonly checker: TypeCheckerKind;
   private readonly tcbDir: string;
   private readonly configFile: string;
+  private bin: string | null = null;
   /** Block contents on disk, by block path. */
   private readonly written = new Map<string, string>();
   private rootNames: string[] | null = null;
   private child: ChildProcess | null = null;
 
   constructor(private readonly options: TypeCheckerOptions) {
+    this.checker = options.checker ?? 'tsgo';
     this.tcbDir = path.join(options.outDir, 'blocks');
     this.configFile = path.join(options.outDir, 'tsconfig.json');
   }
@@ -71,26 +79,33 @@ export class TypeChecker {
   /** Runs one check over `blocks`, the type-check block of each component file. */
   async check(blocks: Map<string, string>): Promise<TypeCheckResult> {
     const started = performance.now();
+    // A checker the app hasn't installed is one error, reported like any other, until it is.
+    try {
+      this.bin ??= this.checker === 'tsrs' ? tsrsBin(this.options.cwd) : tsgoBin();
+    } catch (error) {
+      return {diagnostics: [{code: 'TS0', message: error instanceof Error ? error.message : String(error)}], durationMs: performance.now() - started};
+    }
     const snapshot = await this.writeBlocks(blocks);
     await this.writeConfig([...snapshot.keys()]);
-    const output = await this.runTsgo();
+    const output = await this.run(this.bin);
     const raw = parseTscOutput(output.text, this.options.cwd);
     const diagnostics = await this.map(raw, snapshot);
-    // tsgo failed without printing a single error: a crash, or a missing binary.
+    // The checker failed without printing a single error: a crash, or a missing binary.
     if (raw.length === 0 && output.code !== 0) {
-      diagnostics.push({code: 'TS0', message: `tsgo exited with code ${output.code}:\n${output.text.trim()}`});
+      diagnostics.push({code: 'TS0', message: `${this.checker} exited with code ${output.code}:\n${output.text.trim()}`});
     }
     return {diagnostics, durationMs: performance.now() - started};
   }
 
-  /** Stops a running tsgo. The check it belongs to then resolves with whatever it printed. */
+  /** Stops a running checker. The check it belongs to then resolves with whatever it printed. */
   abort(): void {
     this.child?.kill();
   }
 
-  private runTsgo(): Promise<{code: number | null; text: string}> {
+  /** Both CLIs take tsc's flags and print tsc's `file(line,col): error TSxxxx: message` lines. */
+  private run(bin: string): Promise<{code: number | null; text: string}> {
     return new Promise((resolve, reject) => {
-      const child = spawn(process.execPath, [tsgoBin(), '-p', this.configFile, '--pretty', 'false'], {cwd: this.options.cwd});
+      const child = spawn(process.execPath, [bin, '-p', this.configFile, '--pretty', 'false'], {cwd: this.options.cwd});
       this.child = child;
       let text = '';
       child.stdout.on('data', (chunk) => (text += chunk));
@@ -143,9 +158,10 @@ export class TypeChecker {
         emitDeclarationOnly: false,
         declaration: false,
         composite: false,
-        // Rechecks only what an edit can affect. The build info is a cache, kept next to the blocks.
+        // Rechecks only what an edit can affect. The build info is a cache, kept next to the blocks,
+        // one per checker: neither reads the other's.
         incremental: true,
-        tsBuildInfoFile: path.join(this.options.outDir, 'tsconfig.tsbuildinfo'),
+        tsBuildInfoFile: path.join(this.options.outDir, `tsconfig.${this.checker}.tsbuildinfo`),
         // The blocks live outside the app. With a narrower rootDir, TypeScript would reject them.
         rootDir: fsRoot,
         rootDirs: [this.tcbDir, fsRoot, ...userRootDirs],
@@ -205,6 +221,23 @@ export class TypeChecker {
 function tsgoBin(): string {
   const require = createRequire(import.meta.url);
   return path.join(path.dirname(require.resolve('typescript7/package.json')), 'bin/tsc');
+}
+
+/**
+ * tsrs's CLI, resolved from the app: the plugin lists tsrs only as an optional peer dependency, so
+ * the app picks the version and pays for the binary only if it asks for it.
+ */
+function tsrsBin(root: string): string {
+  const require = createRequire(path.join(root, 'package.json'));
+  let pkg: string;
+  try {
+    pkg = require.resolve('tsrs/package.json');
+  } catch {
+    throw new Error(
+      `typeChecker: 'tsrs' needs the tsrs package, which isn't installed in ${root}. Run \`npm install -D tsrs\`, or set typeChecker: 'tsgo'.`,
+    );
+  }
+  return path.join(path.dirname(pkg), 'bin/tsrs');
 }
 
 /**

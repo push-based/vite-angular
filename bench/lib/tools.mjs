@@ -40,6 +40,17 @@ export default defineConfig({
   plugins: [ngp({typeCheck: false})],
 });
 `,
+  // Not a default: ngp checking with tsrs instead of tsgo, to compare the two checkers.
+  'ngp-tsrs': `import {defineConfig} from 'vite';
+import {ngp} from 'vite-plugin-ngp';
+
+// vite-plugin-ngp's documented setup with typeChecker: 'tsrs', which the bench installs next to it.
+export default defineConfig({
+  cacheDir: 'node_modules/.vite-ngp-tsrs',
+  build: {outDir: 'dist-ngp-tsrs'},
+  plugins: [ngp({typeChecker: 'tsrs'})],
+});
+`,
   analog: `import {defineConfig} from 'vite';
 import angular from '@analogjs/vite-plugin-angular';
 
@@ -117,6 +128,7 @@ export const TOOLS = {
   analog: viteTool('analog', 'Analog', '@analogjs/vite-plugin-angular'),
   oxc: viteTool('oxc', '@oxc-angular/vite', '@oxc-angular/vite'),
   'ngp-notc': viteTool('ngp-notc', 'vite-plugin-ngp, typeCheck off', 'vite-plugin-ngp'),
+  'ngp-tsrs': viteTool('ngp-tsrs', 'vite-plugin-ngp, typeChecker tsrs', 'vite-plugin-ngp'),
   'analog-hmr': viteTool('analog-hmr', 'Analog, liveReload on', '@analogjs/vite-plugin-angular'),
 };
 

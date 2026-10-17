@@ -25,11 +25,15 @@
     "@angular/compiler": "22.3.0-next.2",
     "@angular/compiler-cli": "22.3.0-next.2",
     "@angular/localize": "22.3.0-next.2",
+    "tsrs": ">=0.16.0-0",
     "typescript": ">=6.0 <6.1",
     "vite": "^8.3.0"
   },
   "peerDependenciesMeta": {
     "@angular/localize": {
+      "optional": true
+    },
+    "tsrs": {
       "optional": true
     }
   },
@@ -38,6 +42,7 @@
     "@angular/compiler-cli": "22.3.0-next.2",
     "@angular/localize": "22.3.0-next.2",
     "@types/node": "26.6.5",
+    "tsrs": "0.16.0-ts7.1.0-dev.20260929",
     "typescript": "6.0.3",
     "vite": "8.3.4",
     "zone.js": "0.16.3"

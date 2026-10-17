@@ -105,7 +105,7 @@ Only vite-plugin-ngp and `ng serve` type-check in the dev server. This times pla
 | `ng serve`, error shown | 182 ms | 433 ms | 1.60 s | n/a |
 | `ng serve`, error cleared | 184 ms | 455 ms | 1.73 s | n/a |
 
-The plugin waits 300 ms after an edit before it checks, so on small apps `ng serve` reports first. At 5,000 components the plugin's whole-program `tsgo` check takes about 1.4 seconds, a little faster than `ng serve`'s rebuild. Neither holds up the page: the plugin's template update arrives in about 120 ms, and the type error 1.4 seconds after the edit.
+The plugin waits 300 ms after an edit before it checks, so on small apps `ng serve` reports first. At 5,000 components the plugin's whole-program `tsgo` check takes about 1.4 seconds, a little faster than `ng serve`'s rebuild. Neither holds up the page: the plugin's template update arrives in about 120 ms, and the type error 1.4 seconds after the edit. With the opt-in [`typeChecker: 'tsrs'`](type-checking#checking-with-tsrs) the same error reached the terminal in 1.12 s against 1.56 s for `tsgo` at 5,000 components, in a separate run on 17 October (`bench/results/2026-10-17-typecheck-tsrs.json`, not in the table above).
 
 ## Production builds
 

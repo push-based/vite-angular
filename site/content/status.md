@@ -22,7 +22,7 @@ vite-plugin-ngp is a first version on top of a prototype compiler. This page say
 | Server rendering and hydration | Works in the dev server and in builds, with the `ssr` option. This site is prerendered that way |
 | Internationalization | Works: `i18n` attributes and `$localize`, extraction with `ngp-extract-i18n`, and one translated folder per locale from a single build, with server rendering too. The playground ships English and German. See [Internationalization](i18n) |
 | Vitest with TestBed | Works, with jsdom and zoneless TestBed. A run compiles only the specs it runs and what they import. Watch mode reruns specs after template edits too. See [Testing with Vitest](testing) |
-| [Type-checking](type-checking) | Works, for templates and TypeScript, with TypeScript 7 in a separate process. Errors show in the dev server's terminal and overlay, and fail `vite build`. Planted errors land where `ng build` puts them. Checked on this site and the playground. At 5,000 components a planted error shows 1.45 s after the edit ([Performance](performance#type-errors-in-the-dev-server)) |
+| [Type-checking](type-checking) | Works, for templates and TypeScript, with TypeScript 7 in a separate process. Errors show in the dev server's terminal and overlay, and fail `vite build`. Planted errors land where `ng build` puts them. Checked on this site and the playground. At 5,000 components a planted error shows 1.45 s after the edit ([Performance](performance#type-errors-in-the-dev-server)). Opt-in: the same check with tsrs, Oxc's Rust port of TypeScript 7, through `typeChecker: 'tsrs'` ([Checking with tsrs](type-checking#checking-with-tsrs)) |
 
 ## What doesn't work yet
 

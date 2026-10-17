@@ -9,6 +9,10 @@ What changed in vite-plugin-ngp, newest first. The plugin isn't on npm, so there
 
 ## 17 October 2026
 
+### Type-checking
+
+- New option `typeChecker: 'tsrs'` runs the type check with tsrs, Oxc's Rust port of TypeScript 7, instead of `tsgo`. You install `tsrs` yourself; the plugin hands it the same tsconfig and errors land in the same places. On the 5,000-component app a planted template error reaches the terminal in 1.12 s instead of 1.56 s, measured in one run; on the playground the two are even. [Checking with tsrs](type-checking#checking-with-tsrs)
+
 ### Docs site
 
 - The site has search. Press ⌘K (Ctrl+K off a Mac) or the search button in the header, and it finds any page and the section of it that matches, such as `allowedHosts` in [Server rendering](server-rendering#the-server-entry). The index is built with Pagefind when the site is, and nothing of it loads until you open search: about 165 kB compressed then, most of it Pagefind's WebAssembly and the index.

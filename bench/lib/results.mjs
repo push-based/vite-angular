@@ -4,11 +4,12 @@
 import * as fs from 'node:fs';
 
 export const KNOWN_APPS = ['standalone-100-s1', 'standalone-1000-s1', 'standalone-5000-s1', 'playground'];
-export const TOOL_ORDER = ['ngp', 'ngp-notc', 'cli', 'nx', 'analog', 'analog-hmr', 'oxc'];
+export const TOOL_ORDER = ['ngp', 'ngp-notc', 'ngp-tsrs', 'cli', 'nx', 'analog', 'analog-hmr', 'oxc'];
 
 export const TOOL_LABEL = {
   ngp: 'vite-plugin-ngp',
   'ngp-notc': 'vite-plugin-ngp, `typeCheck: false`',
+  'ngp-tsrs': "vite-plugin-ngp, `typeChecker: 'tsrs'`",
   cli: 'Angular CLI',
   nx: 'Nx',
   analog: 'Analog',

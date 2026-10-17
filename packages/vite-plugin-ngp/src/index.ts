@@ -80,6 +80,11 @@ export interface NgpPluginOptions {
    */
   typeCheck?: boolean;
   /**
+   * Which TypeScript 7 runs the check: `tsgo`, Microsoft's Go port, which the plugin installs, or
+   * `tsrs`, Oxc's Rust port, which your app installs (`npm install -D tsrs`). Defaults to `tsgo`.
+   */
+  typeChecker?: 'tsgo' | 'tsrs';
+  /**
    * Swap source files, like angular.json's `fileReplacements`: every import of `replace` gets the
    * content of `with`, in Vite and in ngp's analyzer. Paths are relative to Vite's root. Applies in
    * dev and in builds, so pick the list by `mode` in your Vite config.
@@ -225,6 +230,10 @@ function compilerPlugin(
    */
   const componentUpdates = new Map<string, string>();
   const typeCheck = options.typeCheck ?? !testing;
+  const typeChecker = options.typeChecker ?? 'tsgo';
+  if (typeChecker !== 'tsgo' && typeChecker !== 'tsrs') {
+    throw new Error(`[vite-plugin-ngp] typeChecker must be 'tsgo' or 'tsrs', not ${JSON.stringify(typeChecker)}`);
+  }
   let checker: TypeChecker | null = null;
   let devCheck: ReturnType<typeof startDevTypeCheck> | null = null;
   let typeCheckOverlay = false;
@@ -328,6 +337,7 @@ function compilerPlugin(
       tsconfig: resolveTsconfig(config.root, options.tsconfig, testing),
       outDir: path.join(config.cacheDir, 'vite-plugin-ngp/type-check'),
       cwd: config.root,
+      checker: typeChecker,
     });
     // The browser's compiler: type-check blocks don't depend on HMR, and it always exists.
     const ngp = await getCompiler('client');

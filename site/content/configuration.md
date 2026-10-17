@@ -43,6 +43,7 @@ export default defineConfig({
 | `i18n` | `I18nOptions`<br>Off by default | Angular i18n: `sourceLocale`, `locales`, `devLocale` and `missingTranslation`. `vite build` writes one translated folder per locale, and the dev server serves `devLocale`. See [Internationalization](i18n). |
 | `ssr` | `boolean \| {entry?: string}`<br>Default `false` | Server rendering. `true` uses `src/main.server.ts` as the server entry, and `{entry: 'path'}` names another. Vitest ignores it. See [Server rendering](server-rendering). |
 | `typeCheck` | `boolean`<br>Default `true`, except under Vitest | Type-check templates and TypeScript with TypeScript 7, in a separate process. The dev server reports errors in the terminal and the overlay, and `vite build` fails on them. See [Type-checking](type-checking). |
+| `typeChecker` | `'tsgo' \| 'tsrs'`<br>Default `'tsgo'` | Which TypeScript 7 runs the check: `tsgo`, Microsoft's Go port, which the plugin installs, or `tsrs`, Oxc's Rust port, which you install yourself. See [Checking with tsrs](type-checking#checking-with-tsrs). |
 | `fileReplacements` | `{replace: string; with: string}[]`<br>Default `[]` | angular.json's `fileReplacements`, relative to Vite's root. Every import of `replace` gets the content of `with`, in Vite and in ngp's analyzer, in dev and in builds. |
 | `budgets` | `Budget[]`<br>Default `[]` | angular.json's `budgets`: size limits checked after `vite build`, with the CLI's types and messages. An error budget fails the build. |
 | `polyfills` | `string[]`<br>Default `[]` | angular.json's `polyfills`: packages or files imported before your app. `zone.js` also makes the plugin rewrite `async`/`await` so zone.js can track it. |
@@ -58,6 +59,8 @@ export default defineConfig({
 **`ssr: true`** renders every page on the server in the dev server, and makes `vite build` build two bundles: `dist/client` for the browser and `dist/server/main.server.js` for the server. The entry's default export must be `render(url, document)`.
 
 **`typeCheck: false`** skips the check in the dev server and in builds. Use it if you already run `tsc` or `ng build` in CI and the dev-server check is too slow on your app, or if your `cacheDir` is outside the project. Builds then succeed with type errors in them.
+
+**`typeChecker: 'tsrs'`** runs the same check with tsrs, a pre-1.0 Rust port of TypeScript 7, after `npm install -D tsrs`. On a 5,000-component app it reported a planted error in 1.12 s against `tsgo`'s 1.56 s; on a small app there's nothing to gain. No package for Intel Macs. See [Checking with tsrs](type-checking#checking-with-tsrs).
 
 **`fileReplacements`** is for environment files. Pick the list by Vite's `mode`, the way angular.json picks it by configuration:
 

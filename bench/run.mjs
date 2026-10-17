@@ -315,6 +315,7 @@ async function editSeries(app, tool) {
 const TYPECHECK = {
   // vite-plugin-ngp logs a check when its result changes: the error, then "no errors".
   ngp: {clean: /type-check: no errors/},
+  'ngp-tsrs': {clean: /type-check: no errors/},
   // The CLI rebuilds with type-checking; a clean rebuild ends with this line. Nx runs the CLI.
   cli: {clean: /Application bundle generation complete/},
   nx: {clean: /Application bundle generation complete/},

@@ -75,7 +75,7 @@ Every tool runs from `bench/node_modules` with Angular 22.3.0-next.2, the versio
 | Analog | `vite` with `angular()` and `resolve.mainFields: ['module']` | `vite build` | no: `disableTypeChecking` defaults to true |
 | @oxc-angular/vite | `vite` with `angular()` | `vite build` | no, by design |
 
-Two variants are opt-in, for questions the defaults can't answer: `ngp-notc` (`typeCheck: false`, to compare builds with the tools that don't type-check) and `analog-hmr` (`liveReload: true`, Analog's opt-in component HMR).
+Three variants are opt-in, for questions the defaults can't answer: `ngp-notc` (`typeCheck: false`, to compare builds with the tools that don't type-check), `ngp-tsrs` (`typeChecker: 'tsrs'`, the plugin's check with Oxc's Rust port of TypeScript 7 instead of `tsgo`; the bench installs `tsrs` for it) and `analog-hmr` (`liveReload: true`, Analog's opt-in component HMR).
 
 Where the setup isn't what a user would get from `npm install`, and why:
 

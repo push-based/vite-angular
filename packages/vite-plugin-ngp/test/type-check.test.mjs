@@ -1,20 +1,34 @@
-// Type-checking (decisions 29 to 31 in docs/decisions.md): tsgo checks the app plus ngp's
-// type-check blocks, and errors inside a block are mapped back to the template. The unit tests pin
-// the mapping rules. The end-to-end test plants errors in a small app and checks they land where
-// ngc puts them.
+// Type-checking (decisions 29 to 31 and 53 in docs/decisions.md): tsgo, or tsrs when asked, checks
+// the app plus ngp's type-check blocks, and errors inside a block are mapped back to the template.
+// The unit tests pin the mapping rules. The end-to-end test plants errors in a small app and checks
+// they land where ngc puts them, once per checker.
 // Run `pnpm build` first; the end-to-end test needs an ngp toolchain build.
 
 import assert from 'node:assert/strict';
 import * as fs from 'node:fs/promises';
+import {createRequire} from 'node:module';
+import * as os from 'node:os';
 import * as path from 'node:path';
 import {test} from 'node:test';
-import {fileURLToPath} from 'node:url';
+import {fileURLToPath, pathToFileURL} from 'node:url';
 import {NgpCompiler} from '../dist/compiler.js';
 import {TypeChecker} from '../dist/type-check.js';
 import {codeFrame, locateInTemplate, parseTscOutput} from '../dist/type-check-diagnostics.js';
 
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const toolchainDir = process.env.NGP_TOOLCHAIN ?? path.join(repo, 'toolchain/out');
+
+/** Why tsrs can't run here, or null: it ships its binary in a per-platform optional package. */
+const tsrsUnavailable = await (async () => {
+  try {
+    const pkg = createRequire(import.meta.url).resolve('tsrs/package.json');
+    const {default: getExePath} = await import(pathToFileURL(path.join(path.dirname(pkg), 'lib/getExePath.js')));
+    getExePath();
+    return null;
+  } catch (e) {
+    return `tsrs isn't runnable here: ${e.message.split('\n')[0]}`;
+  }
+})();
 
 /** A block shaped like ngp's, for a component at /app/cmp.ts. */
 function block(body, sources) {
@@ -128,8 +142,9 @@ export function unused() {
 }
 `;
 
-test('reports planted errors at template locations, and nothing for a clean app', async (t) => {
-  // Inside the repo, so the app resolves @angular/core from the repo's node_modules.
+for (const checker of ['tsgo', 'tsrs']) {
+test(`reports planted errors at template locations, and nothing for a clean app, with ${checker}`, {skip: checker === 'tsrs' && tsrsUnavailable ? tsrsUnavailable : false}, async (t) => {
+  // Inside the repo, so the app resolves @angular/core, and tsrs, from the repo's node_modules.
   const dir = await fs.mkdtemp(path.join(repo, 'node_modules/.cache-type-check-'));
   t.after(() => fs.rm(dir, {recursive: true, force: true}));
   const src = path.join(dir, 'src');
@@ -150,9 +165,10 @@ test('reports planted errors at template locations, and nothing for a clean app'
 
   const compiler = await NgpCompiler.create({toolchainDir, engine: 'native', tsconfig, analyzerTsconfig: tsconfig, enableHmr: false});
   t.after(() => compiler.close());
-  const checker = new TypeChecker({tsconfig, outDir: path.join(dir, 'node_modules/.vite/type-check'), cwd: dir});
+  const outDir = path.join(dir, 'node_modules/.vite/type-check');
+  const typeChecker = new TypeChecker({tsconfig, outDir, cwd: dir, checker});
   const check = async () => {
-    const {diagnostics} = await checker.check(await compiler.typeCheckBlocks(checker.programFiles()));
+    const {diagnostics} = await typeChecker.check(await compiler.typeCheckBlocks(typeChecker.programFiles()));
     return diagnostics.map((d) => `${path.relative(dir, d.file ?? '')}:${d.line}:${d.column} ${d.code}`);
   };
 
@@ -178,4 +194,20 @@ test('reports planted errors at template locations, and nothing for a clean app'
     await compiler.update(file, fixed, 'watcher');
   }
   assert.deepEqual(await check(), []);
+  // Each checker keeps its own incremental cache, so switching never reads the other's.
+  assert.ok((await fs.readdir(outDir)).includes(`tsconfig.${checker}.tsbuildinfo`));
+});
+}
+
+test('a missing tsrs is one error naming the option, not a crash', async (t) => {
+  // Outside the repo, where nothing resolves tsrs.
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'ngp-no-tsrs-'));
+  t.after(() => fs.rm(dir, {recursive: true, force: true}));
+  const tsconfig = path.join(dir, 'tsconfig.json');
+  await fs.writeFile(tsconfig, JSON.stringify({compilerOptions: {strict: true}, include: ['src/**/*.ts']}));
+  const checker = new TypeChecker({tsconfig, outDir: path.join(dir, 'type-check'), cwd: dir, checker: 'tsrs'});
+  const {diagnostics} = await checker.check(new Map());
+  assert.equal(diagnostics.length, 1);
+  assert.match(diagnostics[0].message, /typeChecker: 'tsrs' needs the tsrs package, which isn't installed in .*npm install -D tsrs/s);
+  assert.equal(diagnostics[0].file, undefined);
 });

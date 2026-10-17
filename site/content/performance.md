@@ -5,7 +5,7 @@ description: How fast vite-plugin-ngp starts, updates and builds next to ng serv
 
 # Performance
 
-On a 5,000-component app, vite-plugin-ngp shows the first page 1.9 seconds after you start the dev server, where `ng serve` takes 28.5 seconds. A template edit reaches the page in about 150 ms, where `ng serve` takes 1.8 seconds and Analog reloads the page in 2.8 seconds. Both grow far more slowly with the app than the CLI's, and the plugin type-checks the whole time. `@oxc-angular/vite` is faster still at everything, but it uses its own compiler, doesn't type-check, and its builds don't split `@defer` blocks into their own chunks. Production builds are where the plugin gains least: 20 seconds against `ng build`'s 30, both type-checking.
+On a 5,000-component app, vite-plugin-ngp shows the first page 1.9 seconds after you start the dev server, where `ng serve` takes 28.5 seconds. A template edit reaches the page in about 150 ms, where `ng serve` takes 1.8 seconds and Analog reloads the page in 2.8 seconds. Neither grows much with the app, where the CLI's times grow with every component, and the plugin type-checks the whole time. `@oxc-angular/vite` is faster still at everything, but it uses its own compiler, doesn't type-check, and its builds don't split `@defer` blocks into their own chunks. Production builds are where the plugin gains least: 20 seconds against `ng build`'s 30, both type-checking.
 
 This page is for you if you're deciding whether to try vite-plugin-ngp instead of the Angular CLI or Analog, and want to know what you'd gain and what you'd give up. Every number here was measured on one laptop on 16 October 2026, with the benchmark in the repo's `bench/` folder. The last sections say how, and where these numbers are weak.
 
@@ -22,7 +22,7 @@ Four toolchains, each with its own README's setup and nothing else, on the same 
 
 The three Vite plugins ran on Vite 8.3.4. The apps are generated Angular CLI workspaces of 100, 1,000 and 5,000 components, the same ones the [ngp benchmark](https://github.com/push-based/ng-hybrid-preprocessor-bench) uses (private repo): standalone components with signals, control flow, `@defer`, pipes and directives, half of them with external templates. The fourth app is the repo's playground, 21 components. The Angular CLI can't run the playground, because it reads `import.meta.env`, which only Vite defines.
 
-Each start and build ran once to warm up and 5 times measured. Each edit ran twice to warm up and 10 times measured. The tables show medians. A number marked ±N% varied by more than 5% from run to run (median absolute deviation).
+Each start and build ran once to warm up, then 5 measured times. Each edit ran twice to warm up, then 10 measured times. The tables show medians. A number marked ±N% varied by more than 5% from run to run, as median absolute deviation.
 
 No number counts unless the app worked: the shell rendered every feature link and the first lazy route rendered its heading in headless Chrome, with no console errors, failed requests or exceptions. An edit counts only once the new content is in the DOM and still there 800 ms later. A build counts only if it boots and a second lazy route renders after a router navigation. Every one of these checks passed for every toolchain on every app. The one failure was Analog with its opt-in HMR turned on, described under [Template edits](performance#template-edits).
 
@@ -37,7 +37,7 @@ From starting the process to the first contentful paint of the rendered app.
 | Analog | 1.10 s | 1.95 s | 6.55 s | 1.07 s |
 | `@oxc-angular/vite` | 378 ms | 515 ms | 1.13 s | 357 ms |
 
-That's a cold start: every cache the toolchain keeps was deleted first. A restart, which keeps those caches, is what you do every morning:
+That's a cold start: every cache the toolchain keeps was deleted first. A restart keeps those caches, and is what you do every morning:
 
 | Toolchain | 100 | 1,000 | 5,000 | playground |
 |---|---:|---:|---:|---:|
@@ -65,7 +65,7 @@ From writing an external template to the new element in the page. "reload" means
 
 The plugin's time stays flat from 100 to 5,000 components, because an edit regenerates only the edited component's update. `ng serve` rebuilds, and its time grows to 1.8 seconds. Analog reloads the page by default, and its time grows with the app too.
 
-The fastest edit matters here because of macOS. Vite's file watcher noticed a write after either about 10–35 ms or about 113 ms, unpredictably, in a test with no plugin at all. Every Vite toolchain's times have that in them, which is why the plugin's edits cluster around 75 ms and 175 ms, and `@oxc-angular/vite`'s around 15 ms and 117 ms. Take the fastest edit as the toolchain's own work: about 70 ms for the plugin against 5–20 ms for `@oxc-angular/vite`. The bench measured ngp's analyzer and code generation at about 4 ms per edit, so most of the plugin's 70 ms is elsewhere in its update path. Nobody has profiled it yet.
+The fastest edit matters here because of macOS. In a test with no plugin at all, Vite's file watcher noticed a write after either about 10–35 ms or about 113 ms, unpredictably. Every Vite toolchain's times have that in them, which is why the plugin's edits cluster around 75 ms and 175 ms, and `@oxc-angular/vite`'s around 15 ms and 117 ms. Take the fastest edit as the toolchain's own work: about 70 ms for the plugin against 5–20 ms for `@oxc-angular/vite`. The bench measured ngp's analyzer and code generation at about 4 ms per edit, so most of the plugin's 70 ms is elsewhere in its update path. Nobody has profiled it yet.
 
 Analog's component HMR is off by default, and turning it on didn't work here. With `liveReload: true`, template edits on the playground updated in place in 262 ms (194 ms fastest). But on the generated apps, Analog logged an update for every template edit and the page never changed: the browser never asked for the component's new code. And on the playground, a `.ts` edit that changed a class field was sent as an update instead of a reload, so the page kept the old value. Those are the only checks that failed in the whole run, so `liveReload: true` has no row in the tables.
 

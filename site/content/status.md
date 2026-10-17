@@ -5,7 +5,7 @@ description: What vite-plugin-ngp does today, what it doesn't do yet, and where 
 
 # Status and limits
 
-vite-plugin-ngp is a first version on top of a prototype compiler. This page says exactly what works, so you can decide whether your app can try it. Everything marked as working was checked in the repo's playground or on this site.
+vite-plugin-ngp is a first version on top of a prototype compiler. This page says exactly what works and what doesn't, so you can decide whether your app can try it. Everything marked as working was checked in the repo's playground or on this site.
 
 ## What works
 
@@ -37,7 +37,7 @@ vite-plugin-ngp is a first version on top of a prototype compiler. This page say
 ## Where it's weakest
 
 - **ngp is a prototype, and the plugin uses it as one.** ngp's API isn't public, and the plugin reaches below it in two places to skip work it doesn't need. Any Angular commit can break that, which is why every Angular package is pinned to exactly `22.3.0-next.2`.
-- **Nobody can `npm install` it.** You build ngp from Angular's source with a Rust toolchain the build installs for you. That works on macOS and Linux, and it's a blocker for most teams until Angular publishes ngp.
+- **Nobody can `npm install` it.** You build ngp from Angular's source with a Rust toolchain the build installs for you. That works on macOS and Linux, and it rules the plugin out for most teams until Angular publishes ngp.
 - **File changes are tested on one small app.** Adding, renaming and deleting components and templates is covered by a test on a three-component app, not on a large one. Deleting a component that's still used gives Angular's "is not a known element" error, which names the element, not the missing file. A missing `styleUrl` file isn't reported at all.
 - **Type-checking is whole-program.** Every check runs TypeScript 7 over the whole app. That takes 100–250 ms in the dev server on the repo's 19-component playground. On a 5,000-component app, an error shows up 1.45 s after the edit, a little sooner than under `ng serve`. See [Type-checking](type-checking#where-its-weak).
 - **SSR runs two analyzers.** The browser and the server each get their own ngp compiler, because only the browser's has HMR code. A dev server with SSR needs about twice the analyzer memory, and analyzes every edit twice.

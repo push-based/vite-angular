@@ -58,6 +58,7 @@ export default defineConfig({
 **`ssr: true`** renders every page on the server in the dev server, and makes `vite build` build two bundles: `dist/client` for the browser and `dist/server/main.server.js` for the server. The entry's default export must be `render(url, document)`.
 
 **`typeCheck: false`** skips the check in the dev server and in builds. Use it if you already run `tsc` or `ng build` in CI and the dev-server check is too slow on your app, or if your `cacheDir` is outside the project. Builds then succeed with type errors in them.
+
 **`fileReplacements`** is for environment files. Pick the list by Vite's `mode`, the way angular.json picks it by configuration:
 
 ```ts
@@ -96,11 +97,11 @@ On the server, `zone.js` becomes `zone.js/node`. A zoneless app, which is what `
 
 **`i18n`** is for apps with translated text. `locales` maps each locale code to its translation file, for example `{de: 'src/locale/messages.de.xlf'}`. Leave it out while the app has a single language: without it, a `$localize` message needs `@angular/localize/init` imported by the app, as with the CLI.
 
-**`hmr: false`** makes every edit reload the page. Use it if an in-place update ever leaves a component in a broken state, and tell the maintainers at [PushBased](https://push-based.io/) what you edited.
+**`hmr: false`** makes every edit reload the page. Use it if an in-place update ever leaves a component in a broken state, and tell the maintainers at [PushBased](https://push-based.io/) what you edited, so the rule that let it through can be fixed.
 
 ## What the plugin sets for you
 
-You don't configure these, but they're worth knowing when you debug:
+You don't configure these, but they explain what you see when you debug:
 
 - `define`: `ngJitMode`, `ngDevMode`, `ngServerMode`, `ngHmrMode` and `ngI18nClosureMode`, as [How it works](how-it-works) lists.
 - `optimizeDeps.rolldownOptions.plugins`: Angular's linker, for dependency pre-bundling.
@@ -110,9 +111,10 @@ You don't configure these, but they're worth knowing when you debug:
 - With `typeCheck`: a `vite-plugin-ngp/type-check` folder in Vite's cache directory, holding the type-check blocks, the check's tsconfig and its incremental build info. In the dev server, a script tag in `index.html` loads `/@ngp/type-check-client.js`, which shows type errors in Vite's overlay. It's left out when `server.hmr.overlay` is `false`.
 - A resolver for component stylesheet names in the dev server, like `card.ngp-de07cd19.css`, and a transform that scopes component stylesheets after Vite's CSS plugin has compiled them. See [Component styles](styles).
 - With `ssr`: `builder: {}` and output directories for the `client` and `ssr` environments, and a middleware that renders page requests through your server entry.
-- Under Vitest, instead of all of the above except the linker: `test.server.deps.inline` with every Angular library, from `devDependencies` too, so they get linked; a cache key generator that keeps your app's modules out of Vitest's module cache; and a watcher that sends edits to the analyzer, since Vitest turns Vite's HMR off. See [Testing with Vitest](testing).
+- Under Vitest, none of the above except the linker. Instead: `test.server.deps.inline` with every Angular library, from `devDependencies` too, so they get linked; a cache key generator that keeps your app's modules out of Vitest's module cache; and a watcher that sends edits to the analyzer, since Vitest turns Vite's HMR off. See [Testing with Vitest](testing).
 - With `fileReplacements`: a `load` hook that returns the replacement's content for the replaced file, and watches the replacement.
 - With `polyfills`: one import per polyfill at the top of each module in `entries`. With `zone.js`, a `transform` in the dev server and a `renderChunk` in builds that rewrite `async` functions with esbuild.
 - With `budgets`: on the browser build, a `transform` that measures each component stylesheet after `vite:css`, and a `generateBundle` hook that checks the sizes and logs the CLI's messages.
 - With `i18n`: any `@angular/localize` entry in `polyfills` is dropped. In the dev server: `optimizeDeps.include` with `@angular/localize`, its `init` entry and the dev locale's data, and an import added to the top of each entry module that sets up `$localize`. In `vite build` and `vite preview`: `base: './'` and `build.copyPublicDir: false`, because the plugin writes every file below `<outDir>/<locale>/` itself, including the public directory. `vite preview` gets a middleware that serves each locale's `index.html` and redirects `/` to a locale. See [Internationalization](i18n).
-- `DEBUG=vite-plugin-ngp` logs every module ngp compiles, and how long it took, to stderr.
+
+To watch the plugin work, set `DEBUG=vite-plugin-ngp`. It logs every module ngp compiles, and how long each took, to stderr.

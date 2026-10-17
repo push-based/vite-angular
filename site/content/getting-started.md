@@ -5,16 +5,16 @@ description: Build ngp, run the playground, then add vite-plugin-ngp to your own
 
 # Getting started
 
-This page takes you from nothing to an Angular app served by Vite through vite-plugin-ngp. It takes about ten minutes, most of it the one-time build of ngp. You'll need to be comfortable pinning exact Angular versions, because ngp is unreleased and only works with the Angular build it came from.
+This page takes you from nothing to an Angular app served by Vite through vite-plugin-ngp. Plan on about ten minutes, most of it the one-time build of ngp. You'll need to pin exact Angular versions, because ngp is unreleased and only works with the Angular build it came from.
 
 ## What you need
 
-| Tool | Version |
+| | |
 |---|---|
-| macOS or Linux | Windows only through WSL 2 |
+| Operating system | macOS or Linux. Windows only through WSL 2 |
 | Node | 26 |
 | pnpm | 10 |
-| git, curl, a C compiler | any recent version. On macOS, `xcode-select --install` |
+| git, curl, a C compiler | Any recent version. On macOS, `xcode-select --install` installs all three |
 
 You don't need Rust, Bazel or an Angular checkout. The build installs its own Rust inside the repo.
 
@@ -28,7 +28,7 @@ pnpm install
 pnpm toolchain
 ```
 
-`pnpm toolchain` writes ngp into `toolchain/out`. The first run took about 2 minutes on a 12-core M2 Max. Later runs reuse their caches. [Building ngp](building-ngp) explains each step and what to do when one fails.
+`pnpm toolchain` writes ngp into `toolchain/out`. The first run took about 2 minutes on a 12-core M2 Max, and longer on fewer cores. Later runs reuse their caches. [Building ngp](building-ngp) explains each step and what to do when one fails.
 
 ## 2. Try the playground
 
@@ -96,10 +96,7 @@ Vite starts from `index.html`, not from `angular.json`. Put one in your project 
 </html>
 ```
 
-Keep `main.ts` as it is.
-
-> [!NOTE]
-> Don't import `@angular/compiler`. The plugin links Angular's libraries ahead of time, so the browser never needs the JIT compiler, and importing it adds the whole compiler to your bundle.
+Keep `main.ts` as `ng new` wrote it:
 
 ```ts title="src/main.ts"
 import {bootstrapApplication} from '@angular/platform-browser';
@@ -109,13 +106,16 @@ import {appConfig} from './app/app.config';
 bootstrapApplication(App, appConfig).catch((err) => console.error(err));
 ```
 
+> [!NOTE]
+> Don't import `@angular/compiler`. The plugin links Angular's libraries ahead of time, so the browser never needs the JIT compiler, and importing it adds the whole compiler to your bundle.
+
 The plugin reads `tsconfig.app.json`, or `tsconfig.json` if that doesn't exist, for your Angular compiler options. Then run:
 
 ```bash
 pnpm vite
 ```
 
-For a production build, run `pnpm vite build`. The output in `dist/` is a static site.
+For a production build, run `pnpm vite build`. The output in `dist/` is a static site you can serve from any file host.
 
 ## Next
 

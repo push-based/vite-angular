@@ -5,7 +5,7 @@ description: How styleUrl files go through Vite's CSS pipeline, so SCSS works, s
 
 # Component styles
 
-A component's `styleUrl` and `styleUrls` files are Vite CSS modules. Vite compiles them, Sass or Less included, runs your PostCSS config and rewrites `url()`s, the way it does for any stylesheet. Then the plugin applies Angular's view encapsulation, so the selectors only match inside the component, as under `ng build`. In the dev server, editing a stylesheet updates the page without a reload, and the component keeps its state.
+A component's `styleUrl` and `styleUrls` files go through Vite like any imported stylesheet. Vite compiles them, Sass or Less included, runs your PostCSS config and rewrites `url()`s. Then the plugin applies Angular's view encapsulation, so the selectors only match inside the component, as under `ng build`. In the dev server, editing a stylesheet updates the page without a reload, and the component keeps its state.
 
 This page is for you if your components use stylesheet files, and especially if they're SCSS.
 
@@ -17,11 +17,11 @@ Install the preprocessor, as for any Vite app:
 pnpm add -D sass
 ```
 
-That's all. Vite's `css` options apply to component stylesheets too, so a Sass load path goes in `css.preprocessorOptions.scss`, not in `angular.json`'s `stylePreprocessorOptions`. Global stylesheets work the Vite way: import them from `main.ts` or link them from `index.html`.
+That's all. Vite's `css` options apply to component stylesheets too, so a Sass load path goes in `css.preprocessorOptions.scss`, where angular.json had `stylePreprocessorOptions`. Global stylesheets work the Vite way: import them from `main.ts` or link them from `index.html`.
 
 ## Inline styles stay plain CSS
 
-The `styles` field and `<style>` elements in templates are compiled by ngp, not Vite, and ngp has no hook to run a preprocessor on them. They're treated as CSS: Sass variables, mixins and `@use` don't work there. The Angular CLI's `inlineStyleLanguage` option has no equivalent. Move anything that needs Sass into a file.
+The `styles` field and `<style>` elements in templates are compiled by ngp, not Vite, and ngp has no hook to run a preprocessor on them. They're shipped as plain CSS: Sass variables, mixins and `@use` don't work there. The Angular CLI's `inlineStyleLanguage` option has no equivalent. Move anything that needs Sass into a file.
 
 Inline styles still update in place when you edit them, as [How it works](how-it-works#component-hmr) describes.
 
@@ -31,7 +31,7 @@ Angular's runtime adds a `<link>` for each of a component's stylesheets, with th
 
 When you save a stylesheet, or a Sass partial it uses, the plugin reloads that stylesheet's `<link>`s in place and nothing else. Component state survives. On the playground's Styles page, a meter set to level 3 stays at level 3 while its colors change. `ShadowDom` components update in place too, where `ng serve` reloads the page for them.
 
-Without server rendering, stylesheets added by script don't block rendering, so a component can appear unstyled for a moment when it first renders. With [`ssr`](server-rendering) on, the server-rendered page already has the `<link>`s, and the browser reuses them.
+Without server rendering, a `<link>` added by script doesn't block rendering, so a component can appear unstyled for a moment the first time it renders. With [`ssr`](server-rendering) on, the server-rendered page already has the `<link>`s, and the browser reuses them.
 
 ## In builds
 

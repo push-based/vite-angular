@@ -5,7 +5,7 @@ description: Run Angular component and service specs with TestBed under Vitest, 
 
 # Testing with Vitest
 
-vite-plugin-ngp runs your Angular specs under Vitest with TestBed. It compiles them ahead of time with ngp, the same way it compiles your app in the dev server. A run only compiles the specs you asked for and what they import: run one spec, and ngp compiles that spec's components, not the whole app. Setup is the plugin in `vitest.config.ts` plus one setup file.
+vite-plugin-ngp runs your Angular specs under Vitest with TestBed. It compiles them ahead of time with ngp, the same way it compiles your app in the dev server. A run compiles only the specs you asked for and what they import: run one spec, and ngp compiles that spec's components, not the whole app. Setup is the plugin in `vitest.config.ts` plus one setup file.
 
 This page is for someone who already builds an app with the plugin and wants to test it. It covers the setup, what the plugin changes when Vitest runs it, and what hasn't been tried yet.
 
@@ -46,7 +46,7 @@ getTestBed().initTestEnvironment(BrowserTestingModule, platformBrowserTesting())
 afterEach(() => getTestBed().resetTestingModule());
 ```
 
-Don't skip the `afterEach`. Angular registers that reset itself, but only when `afterEach` is a global, and Vitest's globals are off by default. Without it, every test in a file shares one TestBed, and the second `configureTestingModule` fails with "the test module has already been instantiated".
+Don't skip the `afterEach`. Angular would register that reset itself, but only when `afterEach` is a global, and Vitest's globals are off by default. Without it, every test in a file shares one TestBed, and the second `configureTestingModule` fails with "the test module has already been instantiated".
 
 TestBed runs zoneless, Angular's default, so there's no `zone.js` import. Wait for rendering with `await fixture.whenStable()`.
 
@@ -92,7 +92,7 @@ The playground's specs are in its `src/` folder, next to the files they test: a 
 
 ## What the plugin does under Vitest
 
-The plugin knows Vitest is running from the `VITEST` environment variable, and changes five things.
+The plugin knows Vitest is running from the `VITEST` environment variable, and changes five things from how it works in the dev server.
 
 **Specs compile on demand.** In the dev server, ngp's analyzer starts from `src/main.ts`. Under Vitest it starts from nothing. Vitest asks for a spec, the plugin compiles it, and the analyzer follows that spec's imports. So a run filtered to one file compiles only that file's dependency tree. To see it, set `DEBUG=vite-plugin-ngp`:
 

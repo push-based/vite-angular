@@ -7,6 +7,13 @@ description: What changed in vite-plugin-ngp, newest first, for anyone following
 
 What changed in vite-plugin-ngp, newest first. The repository is private, so this page is how you find out what landed since you last looked. Every entry links to the page that documents it.
 
+## 17 October 2026
+
+### This site
+
+- [Migrating from ng build](migrating-from-ng-build#where-every-option-goes) now says where `localize` and `i18nMissingTranslation` go, since i18n works. It listed them as not yet possible.
+- An editing pass over every page: stale counts fixed, and the Server rendering page's prerender timing remeasured on the current 14 pages. [Server rendering](server-rendering#prerendering-for-static-hosting)
+
 ## 16 October 2026
 
 The first day: from an empty repo to a plugin that compiles, serves, renders, tests and type-checks Angular through ngp.

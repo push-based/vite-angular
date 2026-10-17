@@ -5,9 +5,9 @@ description: Where each angular.json build option goes when an app moves from ng
 
 # Migrating from ng build
 
-You have an app that `ng build` builds from angular.json, with the `@angular/build:application` builder, and you want to know whether it can move to Vite with this plugin. Most of angular.json's build options become Vite config you'd write for any Vite app. Three have no Vite equivalent, so the plugin takes them, under the same names and in the same shapes: `fileReplacements`, `budgets` and `polyfills`. A handful of options can't move at all yet.
+You have an app that `ng build` builds from angular.json, with the `@angular/build:application` builder, and you want to know whether it can move to Vite with this plugin. Most of angular.json's build options become Vite config you'd write for any Vite app. Three have no Vite equivalent, so the plugin takes them, under the same names and in the same shapes: `fileReplacements`, `budgets` and `polyfills`. The project's `i18n` block and the `localize` option become the plugin's `i18n` option. A handful of options can't move at all yet.
 
-Check [Can't move yet](migrating-from-ng-build#cant-move-yet) first. If your production build depends on one of those, stay on `ng build` for now. Then follow [Getting started](getting-started) for the toolchain, the pinned Angular version and `index.html`, and come back here for the rest.
+Check [Can't move yet](migrating-from-ng-build#cant-move-yet) first. If your production build depends on any of those, stay on `ng build` for now. Then follow [Getting started](getting-started) for the toolchain, the pinned Angular version and `index.html`, and come back here for the rest.
 
 ## Configurations become modes
 
@@ -38,11 +38,11 @@ The plugin doesn't read angular.json. Copy the options over, and delete angular.
 
 `fileReplacements` takes angular.json's array unchanged. Paths are relative to Vite's root, which is your project root if `index.html` sits there.
 
-Vite alone can't do this for an Angular app. ngp's analyzer reads your sources from disk, following imports, so if only Vite swapped `environment.ts` for `environment.prod.ts`, the analyzer would still read `environment.ts`. Any decorator that reads a value from that file, like a template or a `providers` list built from an environment constant, would compile against the development file. The plugin gives both Vite and the analyzer the replacement's content, under the replaced file's name. The plugin's tests check this with a component whose template comes from the environment file.
+Vite alone can't do this for an Angular app. ngp's analyzer reads your sources from disk, following imports, so if only Vite swapped `environment.ts` for `environment.prod.ts`, the analyzer would still read `environment.ts`. Any decorator that reads a value from that file, like a template or a `providers` list built from an environment constant, would compile against the development file. The plugin gives both Vite and the analyzer the replacement's content, under the replaced file's name. The plugin's tests cover this with a component whose template comes from the environment file.
 
 Two things differ from the CLI:
 
-- **The replacement's relative imports resolve from the replaced file's directory.** If `environment.prod.ts` sits next to `environment.ts`, as it does in every CLI project, nothing changes. A replacement in another directory that imports something relatively would resolve that import from the wrong place.
+- **The replacement's relative imports resolve from the replaced file's directory.** If `environment.prod.ts` sits next to `environment.ts`, as it does in every CLI project, nothing changes. A replacement in another directory whose relative imports expect its own location would resolve them from the wrong place.
 - **Errors and source maps name the replaced file**, `environment.ts`, even though its code is the replacement's.
 
 In the dev server, an edit to the replacement reloads the page with the new content. An edit to the replaced file does nothing while the replacement applies.
@@ -119,7 +119,8 @@ Every option of `@angular/build:application`, as of Angular 22.3:
 | `statsJson` | No equivalent. `build.manifest` lists the chunks; a bundle visualizer plugin shows their contents |
 | `stylePreprocessorOptions` | Vite's `css.preprocessorOptions`, for example `scss: {loadPaths: ['src/styles']}`. `styleUrl` files go through Vite's CSS pipeline. See [Component styles](styles) |
 | `inlineStyleLanguage` | Not supported: inline `styles` are plain CSS, because ngp compiles them. Move preprocessed styles to a `styleUrl` file |
-| `localize`, `i18nMissingTranslation`, `i18nDuplicateTranslation` | Not yet |
+| `localize`, `i18nMissingTranslation` | The plugin's `i18n` option: `locales` names the locales to build, `missingTranslation` replaces `i18nMissingTranslation`. See [Internationalization](i18n) |
+| `i18nDuplicateTranslation` | No equivalent. A message id that appears twice in one translation file is an error. When a locale has several files, the last file's translation wins, with no warning |
 | `prerender`, `appShell`, `outputMode` | Not supported. Prerender with a script that calls your `render` function; this docs site does that |
 | `serviceWorker` | Not supported. `ngsw-config` from `@angular/service-worker` can generate the manifest from the built output, but that's untested here |
 | `subresourceIntegrity` | Not supported |
@@ -131,7 +132,6 @@ The CLI also reads `.browserslistrc` for its syntax target. Vite doesn't: set `b
 
 If your production build relies on any of these, it can't move to the plugin today:
 
-- **i18n.** `localize` and `$localize` translations at build time.
 - **Prerendering and `@angular/ssr`.** Route render modes, `AngularNodeAppEngine`, the app shell. Server rendering works through the plugin's own [`render` contract](server-rendering).
 - **Sass, Less or other preprocessors in inline `styles`.** `styleUrl` files and global styles are fine: Vite compiles those.
 - **The service worker.** `@angular/service-worker`'s manifest isn't generated.

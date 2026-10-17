@@ -6,6 +6,7 @@ dist/
 .idea/
 # Machine-specific dev-server launch config for Claude Code
 .claude/launch.json
+.claude/vite-after-build.mjs
 # ngp build: sources, local Rust and Cargo caches, and the build itself
 toolchain/.cache/
 toolchain/out/

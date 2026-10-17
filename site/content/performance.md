@@ -56,11 +56,11 @@ The plugin's background type-check was on for all of these, as it is by default,
 
 From writing an external template to the new element in the page. "reload" means the toolchain reloaded the page to show it; every other edit updated the component in place. In brackets, the fastest edit.
 
-The plugin's first row is from 17 October, after the change described below, with 20 edits per app. `@oxc-angular/vite` ran alongside it then, at 43 ms ±65% (9 ms), 117 ms (16 ms) and 118 ms (16 ms). The bench's copy of the playground no longer renders in the harness, for either toolchain, because it now needs `$localize`, so that column wasn't measured again. The other rows are from 16 October, with 10 edits.
+The plugin's first row is from 17 October, after the change described below, with 20 edits per app. `@oxc-angular/vite` ran alongside it then, at 43 ms ±65% (9 ms), 117 ms (16 ms), 118 ms (16 ms) and 117 ms (17 ms). The other rows are from 16 October, with 10 edits.
 
 | Toolchain | 100 | 1,000 | 5,000 | playground |
 |---|---:|---:|---:|---:|
-| vite-plugin-ngp | 69 ms ±12% (60 ms) | 120 ms (58 ms) | 118 ms ±10% (60 ms) | not measured |
+| vite-plugin-ngp | 69 ms ±12% (60 ms) | 120 ms (58 ms) | 118 ms ±10% (60 ms) | 74 ms ±9% (67 ms) |
 | vite-plugin-ngp, 16 October | 174 ms (71 ms) | 173 ms (96 ms) | 154 ms ±32% (74 ms) | 177 ms (74 ms) |
 | `ng serve` | 184 ms (183 ms) | 472 ms (452 ms) | 1.81 s (1.76 s) | n/a |
 | Analog, default | 289 ms ±15% (228 ms), reload | 783 ms ±6% (650 ms), reload | 2.76 s (2.67 s), reload | 247 ms ±20% (198 ms), reload |
@@ -68,7 +68,7 @@ The plugin's first row is from 17 October, after the change described below, wit
 
 The plugin's time stays flat from 100 to 5,000 components, because an edit regenerates only the edited component's update. `ng serve` rebuilds, and its time grows to 1.8 seconds. Analog reloads the page by default, and its time grows with the app too.
 
-The fastest edit matters here because of macOS. In a test with no plugin at all, Vite's file watcher noticed a write after either about 10–35 ms or about 113 ms, unpredictably. Every Vite toolchain's times have that in them, so each toolchain's edits cluster around two values, and a median depends on how many of a run's edits got the slow report. That's why the plugin's median at 100 components is about half its median at 1,000: more fast reports in that run, not a faster plugin.
+The fastest edit matters here because of macOS. In a test with no plugin at all, Vite's file watcher noticed a write after either about 10–35 ms or about 113 ms, unpredictably. Every Vite toolchain's times have that in them, so each toolchain's edits cluster around two values, and a median depends on how many of a run's edits got the slow report. That's why the plugin's medians at 100 components and on the playground are well under its median at 1,000: more fast reports in those runs, not a faster plugin.
 
 On 16 October the plugin's edits clustered around 75 ms and 175 ms. Timing each step inside the plugin showed why. It held every template update for 50 ms after the watcher's report, in case the same save also changed the component's class. Everything else, from the analyzer through ngp's update module to the message to the browser, took about 5 ms. The wait now counts from when the template was written ([How it works](how-it-works#component-hmr)), so a slow report has used it up already. The plugin's edits now cluster around 60 ms and 120 ms, and `@oxc-angular/vite`'s, in the same runs, around 16 ms and 118 ms. On a slow report the two tie. On a fast one, the plugin still waits out about 40 ms of the 50, and that, not ngp, is most of the remaining gap.
 

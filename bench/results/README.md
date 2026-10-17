@@ -159,13 +159,13 @@ Builds, sizes and edits match the main run. Cold starts are slower for both, oxc
 
 ### Template edits with the wait counted from the write (`2026-10-17-template-wait-*.json`)
 
-vite-plugin-ngp before and after decision 48 in `docs/decisions.md`, which counts the template update's 50 ms wait from the template's write instead of the watcher's report. `@oxc-angular/vite` ran alongside. 20 edits per app. `before` is the plugin at `f39a920`. The `after` files record `f39a920` with uncommitted changes: they're `c67b644`, run before it was committed. The playground failed for both tools, because the bench's copy now needs `$localize`, so it has no numbers here.
+vite-plugin-ngp before and after decision 48 in `docs/decisions.md`, which counts the template update's 50 ms wait from the template's write instead of the watcher's report. `@oxc-angular/vite` ran alongside. 20 edits per app. `before` is the plugin at `f39a920`. The `after` files record `f39a920` with uncommitted changes: they're `c67b644`, run before it was committed. The playground ran later the same day, at `aaba5ae`, which includes the change, once the bench's copy of it got the `$localize` runtime (`2026-10-17-template-wait-playground.json`).
 
-| Template edit, median (fastest) | 100 | 1,000 | 5,000 |
-|---|---:|---:|---:|
-| vite-plugin-ngp, before | | 169 ms (69 ms) | |
-| vite-plugin-ngp, after | 69 ms ±12% (60 ms) | 120 ms (58 ms) | 118 ms ±10% (60 ms) |
-| @oxc-angular/vite, with before | | 114 ms (14 ms) | |
-| @oxc-angular/vite, with after | 43 ms ±65% (9 ms) | 117 ms (16 ms) | 118 ms (16 ms) |
+| Template edit, median (fastest) | 100 | 1,000 | 5,000 | playground |
+|---|---:|---:|---:|---:|
+| vite-plugin-ngp, before | | 169 ms (69 ms) | | |
+| vite-plugin-ngp, after | 69 ms ±12% (60 ms) | 120 ms (58 ms) | 118 ms ±10% (60 ms) | 74 ms ±9% (67 ms) |
+| @oxc-angular/vite, with before | | 114 ms (14 ms) | | |
+| @oxc-angular/vite, with after | 43 ms ±65% (9 ms) | 117 ms (16 ms) | 118 ms (16 ms) | 117 ms (17 ms) |
 
-Every tool's edits cluster at two values, set by when macOS's watcher reports the write: the plugin's at about 70 and 170 ms before, about 60 and 120 ms after, and oxc's at about 16 and 118 ms. A median moves with the mix, which is why both tools' 100-component medians are low. The plugin's time per step, logged with `DEBUG=vite-plugin-ngp` at 1,000 components before the change: watcher 4–112 ms, read 0.1, analyzer update 0.6, wait 50.1, class check 0.1, ngp's update module 3.3, oxc type stripping 0.5, send 0.1 ms. The browser asked for the update module 0.8 ms after the send.
+Every tool's edits cluster at two values, set by when macOS's watcher reports the write: the plugin's at about 70 and 170 ms before, about 60 and 120 ms after, and oxc's at about 16 and 118 ms. A median moves with the mix, which is why both tools' 100-component medians, and the plugin's playground median, are low. The plugin's time per step, logged with `DEBUG=vite-plugin-ngp` at 1,000 components before the change: watcher 4–112 ms, read 0.1, analyzer update 0.6, wait 50.1, class check 0.1, ngp's update module 3.3, oxc type stripping 0.5, send 0.1 ms. The browser asked for the update module 0.8 ms after the send.

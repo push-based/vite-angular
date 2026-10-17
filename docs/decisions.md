@@ -198,7 +198,7 @@ Each entry records one choice: what we decided, why, what it costs, and when to 
 
 ## 18. Bundle @angular/* in server environments
 
-*16 October 2026. Partly superseded by 20, which widens what's bundled.*
+*16 October 2026. Partly superseded by 20, which widens what's bundled; 54 caches the bundled libraries in dev.*
 
 **Decision.** Server environments set `resolve.noExternal: [/^@angular\//]` and define `ngServerMode: true` and `ngHmrMode: false`.
 
@@ -635,3 +635,27 @@ Generating the figures at the site's build time, from the result files, was the 
 **Cost.** The first error report comes later: on Super Productivity, 8.9 s after the start instead of 7.1 s, because the check used to start at 1 s and run `tsgo` alongside the page. The idle wait is 500 ms of pure delay on a small app where the page loads in under a second. An app that keeps the dev server busy without a pause, such as one polling a file the server serves every few hundred milliseconds, waits the full 60 s for its first check; its edits are checked as before. The type-error time after an edit was measured on the generated 1,000-component app with `bench/run.mjs --metrics typecheck` before and after, 2 warm-ups and 10 measured edits each, on the same laptop the same evening: the error reached the terminal in a median of 660 ms before and 650 ms after, and the fix cleared it in 612 ms before and 659 ms after, with every sample between 554 and 691 ms. The Performance page's 639 ms for this app was measured earlier in the day on a quieter machine; the check after an edit doesn't go through the idle wait, so no change was expected.
 
 **Revisit when** ngp can generate blocks off the main thread, or when the first page's compile stops being thread-bound. Then the check can start at once again.
+
+## 54. Pre-bundle the server's Angular libraries once, without source maps
+
+*17 October 2026. Amends 18.*
+
+**Decision.** In the dev server with `ssr`, the `ssr` environment pre-bundles its dependencies the way the client does: `optimizeDeps` with discovery on, scanning the server entry, with the linker as a Rolldown plugin. Only the libraries `resolve.noExternal` names go into the bundle; a Rolldown plugin marks every other bare import from inside them external, so Node loads one copy of rxjs for the bundle and for the app, as it did before. The server's compile-time globals (`ngServerMode`, `ngJitMode`, `ngHmrMode`, `ngI18nClosureMode`) are baked into the bundle, and the bundle's source maps are deleted once Rolldown has written them. With `i18n`, the prelude's imports go into the server bundle's `include` too. The cache is `node_modules/.vite/deps_ssr`, and Vite's own rules decide when it's rebuilt: the lockfile, the resolve options or the plugin list changed, or `--force`. Builds and Vitest are untouched: both still rely on `noExternal` and the transform-time linker.
+
+**Why.** The Performance page measures the dev server without SSR, and the playground with `ssr: true`, which is what `pnpm dev` runs, took almost three times as long to show its first page. A CPU profile of a warm restart on 17 October found that the time was Vite's `ssr` environment loading Angular's packages from `fesm2022` on every start: the Babel linker about 385 ms, Vite's module-runner transform and its source-map combining about 320 ms, import analysis about 120 ms. The client never pays that twice, because its pre-bundled dependencies sit in `node_modules/.vite/deps`. Vite turns the optimizer off for server environments by default, since Node can load `node_modules` itself, but Angular libraries can't be left to Node ([decisions 18 and 20](#18-bundle-angular-in-server-environments)), so they went through the whole pipeline on every start with nothing cached.
+
+Measured on the playground, warm restarts, median of 6, first `GET /` with `accept: text/html` after the server listens, M2 Max, Node 26.12, Vite 8.3.4, before decision 53 moved the first type-check off the first page, so the check ran alongside the page in every row (`measure.mjs` in the session's scratchpad, not in the repo):
+
+| | listening | first page | start to page |
+|---|---|---|---|
+| before | 234 ms | 1,307 ms | 1,541 ms |
+| with the `deps_ssr` cache | 243 ms | 952 ms | 1,198 ms |
+| plus baked globals and no maps | 240 ms | 740 ms | 977 ms |
+
+The cache alone removed the linker. The next 210 ms were Vite reading each chunk's hidden source map (1.6 MB for core), parsing it and combining it with the module-runner transform's map, plus `vite:define` running oxc over every chunk to replace the globals. Baking the globals leaves `vite:define` nothing to match, and without a `.map` file next to the chunk Vite has nothing to combine. What's left of the 740 ms, from the profile after the change: Vite's module-runner transform of the 1.5 MB pre-bundle (130 ms, 100 of it parsing), Node linking the modules it loads itself, ngp compiling the page's own modules (about 75 ms) and evaluating them (about 65 ms). The first start after an install or a config change pre-bundles the server's libraries, about 0.35 s on the playground, and `DEBUG=vite:deps` shows it.
+
+A disk cache of the linker's output, keyed by file content and Angular version, was the alternative. It would have removed the linker's 385 ms in both environments and under Vitest, but left Vite's transform and source-map work in place, and added a cache the plugin would own, invalidate and document. Vite already has one.
+
+**Cost.** A server stack trace through Angular's code points into `node_modules/.vite/deps_ssr/core-<hash>.js`, readable and unminified, rather than into `fesm2022/core.mjs`. The app's own modules keep their maps. A library first imported while the server runs is bundled then, and Vite reloads the server program, about a second on the playground; the client does the same. The Rolldown plugin that externalizes decides like Vite's `shouldExternalize`, by whether a bare import resolves into `node_modules`, but it's a copy of that rule, not a call to it. A server environment other than `ssr` gets `noExternal` and no pre-bundling, as before.
+
+**Revisit when** Vite lets a server environment share the client's optimizer rules, or offers a way to turn off the pre-bundle's source maps instead of deleting them, or when Angular's oxc-based linker becomes usable and the linker stops being worth caching.

@@ -73,7 +73,12 @@ export interface I18nApi {
  *   into `<outDir>/<subPath>/`, with each `$localize` call replaced by its translated string. No
  *   `$localize` runtime ships.
  */
-export function i18nPlugin(options: I18nOptions, getEntries: (root: string) => string[]): Plugin {
+/**
+ * @param ssrDeps Whether the `ssr` environment pre-bundles its dependencies in the dev server, so
+ * the prelude's imports are pre-bundled there too, in the first run rather than when the first
+ * render discovers them.
+ */
+export function i18nPlugin(options: I18nOptions, getEntries: (root: string) => string[], ssrDeps = false): Plugin {
   const source = typeof options.sourceLocale === 'object' ? options.sourceLocale : {code: options.sourceLocale ?? 'en-US'};
   let config: ResolvedConfig;
   let locales: Locale[] = [];
@@ -119,7 +124,7 @@ export function i18nPlugin(options: I18nOptions, getEntries: (root: string) => s
           deps.push(data.id);
         }
         // The prelude isn't in any source file, so Vite's dependency scan can't see what it imports.
-        return {optimizeDeps: {include: deps}};
+        return {optimizeDeps: {include: deps}, ...(ssrDeps ? {environments: {ssr: {optimizeDeps: {include: deps}}}} : {})};
       }
       if (extracting()) {
         return;

@@ -18,6 +18,10 @@ What changed in vite-plugin-ngp, newest first. The plugin isn't on npm, so there
 
 - The first type-check of a dev-server session waits until the server is idle, half a second with no request and no module compile, instead of starting one second after the server starts. Generating every component's type-check block ran on Vite's thread while the first page was compiling; on Super Productivity that was 0.67 s of the thread, and first paint went from 6.72 s to 6.00 s on a warm restart once the check waits. The first errors show up later, after the page instead of alongside it. Checks after edits are unchanged. [Type-checking](type-checking#what-you-see)
 
+### Server rendering
+
+- The dev server pre-bundles and caches the server's Angular libraries, in `node_modules/.vite/deps_ssr`, instead of linking and transforming them on every start. On the playground the first server-rendered page after a warm restart went from 1.3 s to 0.74 s. The server bundle has no source maps: a stack trace from inside Angular points into the readable pre-bundle. [Server rendering](server-rendering#what-the-plugin-does)
+
 ### Editing in the dev server
 
 - A save can no longer be undone by a module Vite read just before it: components compiled afterwards see the saved file. [How it works](how-it-works#handling-an-edit)

@@ -1,0 +1,69 @@
+{
+  "name": "super-productivity",
+  "label": "Super Productivity",
+  "repo": "https://github.com/johannesjo/super-productivity.git",
+  "homepage": "https://github.com/johannesjo/super-productivity",
+  "sha": "65145cdceec75286a32215fc519b5e8e6bb89a70",
+  "angularVersion": "22.3.0-next.2",
+  "install": [
+    "npm install --legacy-peer-deps --min-release-age=0 --no-audit --no-fund",
+    "node ./packages/build-packages.js"
+  ],
+  "installNotes": "--legacy-peer-deps because libraries declare peer ranges like ^22.0.0 that npm says a prerelease doesn't satisfy; --min-release-age=0 overrides the repo's .npmrc, which refuses packages younger than three days, and the pinned Angular prerelease is newer than that. build-packages.js is the app's own prebuild step: it bundles the plugins under packages/plugin-dev into src/assets/bundled-plugins, which the app loads at startup; without them every tool logs a 404 per plugin.",
+  "notes": "Angular CLI app on the application builder, npm workspaces. Its development configuration is a JIT build (aot: false), which is what ng serve runs; its production build is AOT with a service worker.",
+  "tsconfigApp": "src/tsconfig.app.json",
+  "sourceDirs": [
+    "src",
+    "packages",
+    "electron/shared-with-frontend"
+  ],
+  "rootTag": "<app-root",
+  "gate": "() => !!document.querySelector('app-root work-view') && !!document.querySelector('app-root main-header, app-root magic-side-nav')",
+  "lazy": {
+    "path": "config",
+    "gate": "() => !!document.querySelector('app-root config-page')"
+  },
+  "template": "src/app/features/work-view/work-view.component.html",
+  "ts": null,
+  "cli": {
+    "id": "cli",
+    "label": "Angular CLI",
+    "pkg": "@angular/build",
+    "dev": [
+      "node_modules/@angular/cli/bin/ng.js",
+      "serve",
+      "--host",
+      "127.0.0.1",
+      "--port",
+      "{port}"
+    ],
+    "build": [
+      "node_modules/@angular/cli/bin/ng.js",
+      "build",
+      "--configuration",
+      "production"
+    ],
+    "outDir": ".tmp/angular-dist/browser",
+    "caches": [
+      ".angular"
+    ],
+    "devPath": "/",
+    "buildBase": "/"
+  },
+  "ngp": {
+    "outDir": "dist-ngp",
+    "caches": [
+      "node_modules/.vite-ngp"
+    ],
+    "devPath": "/",
+    "buildBase": "/"
+  },
+  "index": {
+    "from": "src/index.html",
+    "styles": [
+      "src/styles.scss"
+    ],
+    "entry": "src/main.ts"
+  },
+  "tsNotes": "No .ts edit: the Today view renders no string literal from a component class (its text comes from translation files), so there is nothing a class edit could change that the harness can see."
+}

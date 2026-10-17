@@ -1,0 +1,197 @@
+Super Productivity, patched so a per-file compiler can run it. Two kinds of change:
+
+1. `export type` on 7 re-export statements in 5 files, written by TypeScript's own quick fix for
+   its isolatedModules errors (TS1205), via bench/real/isolated-modules-fix.mjs. A per-file
+   compiler, which Vite is, can't tell that `export {SomeInterface} from './x'` names a type,
+   compiles it to a runtime re-export of nothing, and the browser refuses to link the module.
+   `ng build` emits with the whole program's types and never hits this. `ng new` has set
+   `isolatedModules: true` since Angular 19, which would have caught these as they were written.
+
+2. Two casts in datetime-picker.component.ts, so TypeScript 7 accepts it. vite-plugin-ngp
+   type-checks with TypeScript 7 (tsgo), and a `vite build` fails on type errors. TypeScript 7
+   infers `cal.activeDate` as `unknown` here (TS18046, and TS2769 at the second use), where
+   TypeScript 6, which `ng build` uses, infers `Date`. The casts say what TypeScript 6 already
+   inferred, and change nothing at runtime.
+
+Both toolchains compile the patched files; `ng build` and `ng serve` measure the same sources.
+
+diff --git a/src/app/features/issue/issue-content/issue-content-configs.const.ts b/src/app/features/issue/issue-content/issue-content-configs.const.ts
+index 840733d..80532ed 100644
+--- a/src/app/features/issue/issue-content/issue-content-configs.const.ts
++++ b/src/app/features/issue/issue-content/issue-content-configs.const.ts
+@@ -18,7 +18,8 @@ import { OPEN_PROJECT_ISSUE_CONTENT_CONFIG } from '../providers/open-project/ope
+ import { PLAINSPACE_ISSUE_CONTENT_CONFIG } from '../providers/plainspace/plainspace-issue-content.const';
+ 
+ // Re-export types for backwards compatibility
+-export { IssueFieldType, IssueFieldConfig, IssueCommentConfig, IssueContentConfig };
++export { IssueFieldType };
++export type { IssueFieldConfig,IssueCommentConfig,IssueContentConfig };
+ 
+ export const ISSUE_CONTENT_CONFIGS: Record<
+   BuiltInIssueProviderKey,
+diff --git a/src/app/features/time-tracking/time-tracking.model.ts b/src/app/features/time-tracking/time-tracking.model.ts
+index 83a1a81..2f7fef4 100644
+--- a/src/app/features/time-tracking/time-tracking.model.ts
++++ b/src/app/features/time-tracking/time-tracking.model.ts
+@@ -1,7 +1,7 @@
+ // Base mapped types with clearer names
+ 
+ // Re-export ArchiveModel for backward compatibility
+-export { ArchiveModel } from '../archive/archive.model';
++export type { ArchiveModel } from '../archive/archive.model';
+ 
+ export type TTModelId = string;
+ export type TTDate = string;
+diff --git a/src/app/op-log/sync-exports.ts b/src/app/op-log/sync-exports.ts
+index 14dc4fa..0ca0577 100644
+--- a/src/app/op-log/sync-exports.ts
++++ b/src/app/op-log/sync-exports.ts
+@@ -1,7 +1,7 @@
+ // Barrel export for sync module - providers and related types
+ 
+ // Types from sync.types.ts
+-export {
++export type {
+   ValidationResult,
+   EncryptAndCompressCfg,
+   ModelBase,
+@@ -52,9 +52,11 @@ export {
+ 
+ // Provider interfaces
+ export {
+-  SyncProviderBase,
+-  FileSyncProvider,
+-  isFileSyncProvider,
++isFileSyncProvider
++} from './sync-providers/provider.interface';
++export type {
++SyncProviderBase,
++FileSyncProvider
+ } from './sync-providers/provider.interface';
+ 
+ // Provider types
+@@ -62,4 +64,4 @@ export type { DropboxPrivateCfg } from '@sp/sync-providers/dropbox';
+ export type { OneDrivePrivateCfg } from '@sp/sync-providers/onedrive';
+ 
+ // VectorClock from core
+-export { VectorClock } from '../core/util/vector-clock';
++export type { VectorClock } from '../core/util/vector-clock';
+diff --git a/src/app/plugins/plugin-api.model.ts b/src/app/plugins/plugin-api.model.ts
+index f5d3b7d..473acb9 100644
+--- a/src/app/plugins/plugin-api.model.ts
++++ b/src/app/plugins/plugin-api.model.ts
+@@ -1,41 +1,43 @@
+ // Import and re-export all types from the plugin-api package
+ export {
+-  PluginHooks,
+-  Hooks,
+-  PluginBaseCfg,
+-  DialogButtonCfg,
+-  DialogCfg,
+-  DialogResult,
+-  NotifyCfg,
+-  PluginManifest,
+-  PluginHookHandler,
+-  PluginInstance,
+-  PluginHookHandlerRegistration,
+-  PluginCreateTaskData,
+-  PluginShortcutCfg,
+-  PluginMenuEntryCfg,
+-  PluginTaskContextMenuContext,
+-  PluginTaskContextMenuEntryCfg,
+-  PluginTaskContextMenuTarget,
+-  PluginHeaderBtnCfg,
+-  PluginNodeScriptRequest,
+-  PluginNodeScriptResult,
+-  PluginRequestOptions,
+-  PluginSidePanelBtnCfg,
+-  PluginWorkContextHeaderBtnCfg,
+-  ActiveWorkContext,
+-  WorkContextChangePayload,
+-  // Export the new unified types
+-  Task,
+-  Project,
+-  Tag,
+-  // Keep legacy exports for compatibility
+-  TaskData,
+-  ProjectData,
+-  TagData,
+-  TaskCopy,
+-  ProjectCopy,
+-  TagCopy,
++PluginHooks
++} from '@super-productivity/plugin-api';
++export type {
++Hooks,
++PluginBaseCfg,
++DialogButtonCfg,
++DialogCfg,
++DialogResult,
++NotifyCfg,
++PluginManifest,
++PluginHookHandler,
++PluginInstance,
++PluginHookHandlerRegistration,
++PluginCreateTaskData,
++PluginShortcutCfg,
++PluginMenuEntryCfg,
++PluginTaskContextMenuContext,
++PluginTaskContextMenuEntryCfg,
++PluginTaskContextMenuTarget,
++PluginHeaderBtnCfg,
++PluginNodeScriptRequest,
++PluginNodeScriptResult,
++PluginRequestOptions,
++PluginSidePanelBtnCfg,
++PluginWorkContextHeaderBtnCfg,
++ActiveWorkContext,
++WorkContextChangePayload,
++// Export the new unified types
++Task,
++Project,
++Tag,
++// Keep legacy exports for compatibility
++TaskData,
++ProjectData,
++TagData,
++TaskCopy,
++ProjectCopy,
++TagCopy
+ } from '@super-productivity/plugin-api';
+ 
+ // Import app-specific types
+diff --git a/src/app/ui/datetime-picker/datetime-picker.component.ts b/src/app/ui/datetime-picker/datetime-picker.component.ts
+index fdec50a..8e75390 100644
+--- a/src/app/ui/datetime-picker/datetime-picker.component.ts
++++ b/src/app/ui/datetime-picker/datetime-picker.component.ts
+@@ -158,7 +158,7 @@ export class DateTimePickerComponent implements AfterViewInit {
+         this._lastSyncedDate = dateMs;
+ 
+         const newActiveDate = new Date(date || new Date());
+-        if (cal.activeDate.getTime() !== newActiveDate.getTime()) {
++        if ((cal.activeDate as Date).getTime() !== newActiveDate.getTime()) {
+           cal.activeDate = newActiveDate;
+         }
+       }
+@@ -177,7 +177,7 @@ export class DateTimePickerComponent implements AfterViewInit {
+       if (
+         cal &&
+         selDate &&
+-        new Date(selDate).getTime() === new Date(cal.activeDate).getTime()
++        new Date(selDate).getTime() === new Date(cal.activeDate as Date).getTime()
+       ) {
+         this.enterSubmit.emit();
+       }
+diff --git a/src/app/ui/mentions/mention-config.ts b/src/app/ui/mentions/mention-config.ts
+index d1e118f..0de535f 100644
+--- a/src/app/ui/mentions/mention-config.ts
++++ b/src/app/ui/mentions/mention-config.ts
+@@ -2,7 +2,7 @@
+ 
+ import { MentionItem } from './mention-types';
+ 
+-export { MentionItem } from './mention-types';
++export type { MentionItem } from './mention-types';
+ 
+ export interface MentionConfig<T = MentionItem> extends Mentions<T> {
+   // nested config

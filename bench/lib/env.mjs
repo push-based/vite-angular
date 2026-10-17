@@ -53,7 +53,18 @@ export function environment(chromeVersion) {
         'puppeteer-core',
       ].map((p) => [p, version(p)]),
     ),
-    patches: fs.existsSync(path.join(BENCH, 'patches')) ? fs.readdirSync(path.join(BENCH, 'patches')) : [],
+    patches: [
+      ...(fs.existsSync(path.join(BENCH, 'patches')) ? fs.readdirSync(path.join(BENCH, 'patches')) : []),
+      ...(fs.existsSync(path.join(BENCH, 'real')) ? fs.readdirSync(path.join(BENCH, 'real')).filter((f) => f.endsWith('.patch')).map((f) => `real/${f}`) : []),
+    ],
+    // On GitHub Actions: the run, so a number can be traced to its logs, and the runner image.
+    ci: process.env['GITHUB_ACTIONS']
+      ? {
+          run: `${process.env['GITHUB_SERVER_URL']}/${process.env['GITHUB_REPOSITORY']}/actions/runs/${process.env['GITHUB_RUN_ID']}`,
+          runner: process.env['RUNNER_NAME'] ?? null,
+          image: process.env['ImageOS'] ? `${process.env['ImageOS']} ${process.env['ImageVersion'] ?? ''}`.trim() : null,
+        }
+      : null,
     ngp: {
       // Relative to the repo, so result files don't carry a home directory.
       toolchain: path.relative(REPO, toolchain) || '.',

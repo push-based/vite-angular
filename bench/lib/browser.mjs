@@ -51,22 +51,33 @@ const MARKER_OBSERVER = `(() => {
  * holds. Returns the page, the epoch times of first contentful paint and of the gate passing,
  * and every error the page logged.
  */
-export async function openApp(browser, url, gate, {timeoutMs = 600_000, markers = null, settleMs = 0} = {}) {
+export async function openApp(browser, url, gate, {timeoutMs = 600_000, markers = null, settleMs = 0, ignoreHttp = []} = {}) {
   const context = await browser.createBrowserContext();
   const page = await context.newPage();
   const errors = [];
   let documents = 0;
-  // The generated apps ship no favicon and Chrome asks for one anyway: that 404 isn't the app's.
-  const favicon = (url) => new URL(url).pathname === '/favicon.ico';
+  // Failed requests that aren't the app's fault:
+  // - the generated apps ship no favicon and Chrome asks for one anyway;
+  // - Vite answers 504 "Outdated Optimize Dep" for a pre-bundled dependency it has just replaced,
+  //   then reloads the page; the harness times the document that stays (settleMs);
+  // - what the app's pin lists in ignoreHttp: Ghostfolio's API answers 401 to a visitor's
+  //   /api/v1/user, as the real one does.
+  const expected = (url, status) => {
+    const p = new URL(url).pathname;
+    if (p === '/favicon.ico') return true;
+    if (status === 504 && /\/node_modules\/\.vite[^/]*\/deps\//.test(p)) return true;
+    return ignoreHttp.some((i) => p === i || p.startsWith(i.endsWith('/') ? i : i + '/'));
+  };
   page.on('console', (msg) => {
     if (msg.type() !== 'error') return;
-    if (msg.text().startsWith('Failed to load resource') && favicon(msg.location()?.url ?? '')) return;
+    const m = msg.text().match(/^Failed to load resource: the server responded with a status of (\d+)/);
+    if (m && expected(msg.location()?.url ?? 'http://x/', Number(m[1]))) return;
     errors.push(`console: ${msg.text()} (${msg.location()?.url ?? ''})`);
   });
   page.on('pageerror', (err) => errors.push(`exception: ${err.message}`));
   page.on('domcontentloaded', () => documents++);
   page.on('response', (res) => {
-    if (res.status() >= 400 && !favicon(res.url())) errors.push(`HTTP ${res.status()}: ${res.url()}`);
+    if (res.status() >= 400 && !expected(res.url(), res.status())) errors.push(`HTTP ${res.status()}: ${res.url()}`);
   });
   if (markers) {
     await page.exposeFunction('__benchMarker', (n, at, origin) => markers(n, at, origin));

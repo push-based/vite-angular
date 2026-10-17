@@ -1,0 +1,111 @@
+Ghostfolio, patched so a per-file compiler can run it and ngp's type-check accepts it.
+
+1. `export type` on one re-export statement, libs/common/src/lib/dtos/index.ts, written by
+   TypeScript's own quick fix for its isolatedModules error (TS1205), via
+   bench/real/isolated-modules-fix.mjs. A per-file compiler, which Vite is, can't tell that
+   `export {SomeInterface} from './x'` names a type, compiles it to a runtime re-export of
+   nothing, and Rolldown stops the build with "missing export". `nx build` emits with the whole
+   program's types and never hits this.
+
+2. `$any()` on two expressions in libs/ui/src/lib/page-tabs/page-tabs.component.html. ngp's
+   type-check blocks report TS2774 ("This condition will always return true since this function
+   is always defined") for `@if (tab.onClick)`, where `tab` is a union of a tab with `onClick`
+   and a tab with `routerLink`. ngc's type-check blocks for the same template don't, and
+   `nx build` passes. The Angular team has said ngp's output can surface a few type errors ngc
+   misses; this is one, and whether it's right is between the two compilers. `$any()` is
+   Angular's own way to take an expression out of type-checking, and changes nothing at runtime.
+
+Both toolchains compile the patched files; `nx build` and `nx serve` measure the same sources.
+
+diff --git a/libs/common/src/lib/dtos/index.ts b/libs/common/src/lib/dtos/index.ts
+index 1dae2b8..e7a5d9c 100644
+--- a/libs/common/src/lib/dtos/index.ts
++++ b/libs/common/src/lib/dtos/index.ts
+@@ -32,36 +32,36 @@ import { UpdateTagDto } from './update-tag.dto';
+ import { UpdateUserSettingDto } from './update-user-setting.dto';
+ 
+ export {
+-  AuthDeviceDto,
+-  CountryDto,
+-  CreateAccessDto,
+-  CreateAccountBalanceDto,
+-  CreateAccountDto,
+-  CreateAccountWithBalancesDto,
+-  CreateAssetProfileDto,
+-  CreateAssetProfileSplitDto,
+-  CreateAssetProfileWithMarketDataDto,
+-  CreateOrderDto,
+-  CreatePlatformDto,
+-  CreateTagDto,
+-  CreateUserDto,
+-  CreateWatchlistItemDto,
+-  DeleteOwnUserDto,
+-  HoldingDto,
+-  MergeAssetProfileDto,
+-  ScraperConfigurationDto,
+-  SectorDto,
+-  TransferBalanceDto,
+-  UpdateAccessDto,
+-  UpdateAccountDto,
+-  UpdateAssetProfileDataDto,
+-  UpdateAssetProfileDto,
+-  UpdateBulkMarketDataDto,
+-  UpdateMarketDataDto,
+-  UpdateOrderDto,
+-  UpdateOwnAccessTokenDto,
+-  UpdatePlatformDto,
+-  UpdatePropertyDto,
+-  UpdateTagDto,
+-  UpdateUserSettingDto
++CountryDto,
++CreateAccessDto,
++CreateAccountBalanceDto,
++CreateAccountDto,
++CreateAccountWithBalancesDto,
++CreateAssetProfileDto,
++CreateAssetProfileSplitDto,
++CreateAssetProfileWithMarketDataDto,
++CreateOrderDto,
++CreatePlatformDto,
++CreateTagDto,
++CreateUserDto,
++CreateWatchlistItemDto,
++DeleteOwnUserDto,
++HoldingDto,
++MergeAssetProfileDto,
++ScraperConfigurationDto,
++SectorDto,
++TransferBalanceDto,
++UpdateAccessDto,
++UpdateAccountDto,
++UpdateAssetProfileDataDto,
++UpdateAssetProfileDto,
++UpdateBulkMarketDataDto,
++UpdateMarketDataDto,
++UpdateOrderDto,
++UpdateOwnAccessTokenDto,
++UpdatePlatformDto,
++UpdatePropertyDto,
++UpdateTagDto,
++UpdateUserSettingDto
+ };
++export type { AuthDeviceDto };
+diff --git a/libs/ui/src/lib/page-tabs/page-tabs.component.html b/libs/ui/src/lib/page-tabs/page-tabs.component.html
+index 343ce24..d3b7fe1 100644
+--- a/libs/ui/src/lib/page-tabs/page-tabs.component.html
++++ b/libs/ui/src/lib/page-tabs/page-tabs.component.html
+@@ -10,12 +10,12 @@
+ >
+   @for (tab of tabs(); track tab) {
+     @if (tab.showCondition !== false) {
+-      @if (tab.onClick) {
++      @if ($any(tab).onClick) {
+         <button
+           class="no-min-width overflow-hidden px-2"
+           mat-tab-link
+           type="button"
+-          (click)="tab.onClick()"
++          (click)="$any(tab).onClick()"
+         >
+           <ng-container
+             *ngTemplateOutlet="tabContent; context: { $implicit: tab }"

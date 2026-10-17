@@ -1,5 +1,7 @@
-// The four toolchains, each as its documented default setup. Every one runs from bench/node_modules
-// with the same Angular (22.3.0-next.2) and, for the Vite-based three, the same Vite (8.3.4).
+// The toolchains, each as its documented default setup. Every one runs from bench/node_modules
+// with the same Angular (22.3.0-next.2) and, for the Vite-based ones, the same Vite (8.3.4).
+// A real app (lib/apps.mjs, kind 'real') brings its own CLI in its own node_modules, as a tool
+// its pin describes, and gets vite-plugin-ngp through a link into its node_modules.
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
@@ -10,9 +12,11 @@ const NG = path.join(NM, '@angular/cli/bin/ng.js');
 const VITE = path.join(NM, 'vite/bin/vite.js');
 
 /**
- * Vite configs, written into each app as vite.config.<tool>.mjs. Each one is the plugin's README
- * setup and nothing else, plus a per-tool cache and output directory so the tools never share a
- * dependency cache or overwrite each other's builds.
+ * Vite configs, written into each generated app as vite.config.<tool>.mjs. Each one is the
+ * plugin's README setup and nothing else, plus a per-tool cache and output directory so the tools
+ * never share a dependency cache or overwrite each other's builds. A real app has a hand-written
+ * vite.config.ngp.mjs in bench/real/<name>/ instead, because it needs its CLI's build options
+ * carried over.
  */
 export const VITE_CONFIGS = {
   ngp: `import {defineConfig} from 'vite';
@@ -81,8 +85,8 @@ function viteTool(id, label, pkg) {
       args: [VITE, '--config', `vite.config.${id}.mjs`, '--host', '127.0.0.1', '--port', String(port), '--strictPort'],
     }),
     build: () => ({cmd: process.execPath, args: [VITE, 'build', '--config', `vite.config.${id}.mjs`]}),
-    outDir: (app) => path.join(app.dir, `dist-${id}`),
-    caches: (app) => [path.join(app.dir, `node_modules/.vite-${id}`)],
+    outDir: (app) => path.join(app.dir, app.kind === 'real' && id === 'ngp' ? app.ngp.outDir : `dist-${id}`),
+    caches: (app) => (app.kind === 'real' && id === 'ngp' ? app.ngp.caches : [`node_modules/.vite-${id}`]).map((c) => path.join(app.dir, c)),
   };
 }
 
@@ -93,17 +97,34 @@ export const TOOLS = {
     label: 'Angular CLI',
     pkg: '@angular/build',
     // `ng serve` and `ng build` as `ng new` configures them: development for serve, production
-    // for build, the CLI's persistent cache on.
-    dev: (app, port) => ({cmd: process.execPath, args: [NG, 'serve', '--host', '127.0.0.1', '--port', String(port)]}),
-    build: () => ({cmd: process.execPath, args: [NG, 'build']}),
-    outDir: (app) => path.join(app.dir, 'dist', projectName(app), 'browser'),
-    caches: (app) => [path.join(app.dir, '.angular')],
+    // for build, the CLI's persistent cache on. A real app's pin says how it runs its own CLI.
+    dev: (app, port) =>
+      app.kind === 'real' ? ownCommand(app, app.ownTool.dev, port) : {cmd: process.execPath, args: [NG, 'serve', '--host', '127.0.0.1', '--port', String(port)]},
+    build: (app) => (app.kind === 'real' ? ownCommand(app, app.ownTool.build) : {cmd: process.execPath, args: [NG, 'build']}),
+    outDir: (app) => path.join(app.dir, app.kind === 'real' ? app.ownTool.outDir : path.join('dist', projectName(app), 'browser')),
+    caches: (app) => (app.kind === 'real' ? app.ownTool.caches : ['.angular']).map((c) => path.join(app.dir, c)),
+  },
+  // Nx, for a real app built with it. Nothing generated runs under Nx.
+  nx: {
+    id: 'nx',
+    label: 'Nx',
+    pkg: 'nx',
+    dev: (app, port) => ownCommand(app, app.ownTool.dev, port),
+    build: (app) => ownCommand(app, app.ownTool.build),
+    outDir: (app) => path.join(app.dir, app.ownTool.outDir),
+    caches: (app) => app.ownTool.caches.map((c) => path.join(app.dir, c)),
   },
   analog: viteTool('analog', 'Analog', '@analogjs/vite-plugin-angular'),
   oxc: viteTool('oxc', '@oxc-angular/vite', '@oxc-angular/vite'),
   'ngp-notc': viteTool('ngp-notc', 'vite-plugin-ngp, typeCheck off', 'vite-plugin-ngp'),
   'analog-hmr': viteTool('analog-hmr', 'Analog, liveReload on', '@analogjs/vite-plugin-angular'),
 };
+
+/** A real app's own CLI command from its pin: a script path relative to the app, run with this Node. */
+function ownCommand(app, argv, port) {
+  const [script, ...rest] = argv.map((a) => a.replace('{port}', String(port)));
+  return {cmd: process.execPath, args: [path.join(app.dir, script), ...rest], env: app.ownTool.env ?? {}};
+}
 
 function projectName(app) {
   const ng = JSON.parse(fs.readFileSync(path.join(app.dir, 'angular.json'), 'utf8'));

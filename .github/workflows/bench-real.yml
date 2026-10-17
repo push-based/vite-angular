@@ -1,0 +1,132 @@
+# Benchmarks vite-plugin-ngp against a real open-source Angular app's own CLI, on a GitHub runner.
+#
+# One job per app, each on its own runner: it builds ngp, installs the app at its pinned commit
+# (bench/real/<app>.json), and runs bench/run.mjs for the dev server, edits and the production
+# build, with speed and memory. A last job merges the result files into one report, prints it in
+# the run's summary and keeps it as an artifact. The numbers on the docs site's Benchmarks page
+# come from these runs; the result files are committed to bench/results/.
+#
+# Runs on demand ("Run workflow"), not on every push: a full run takes about an hour per app.
+name: bench-real
+
+on:
+  workflow_dispatch:
+    inputs:
+      apps:
+        description: Apps from bench/real, comma-separated
+        default: super-productivity,ghostfolio
+      metrics:
+        description: Metrics, comma-separated (dev-cold, dev-warm, edit, build, typecheck)
+        default: dev-cold,dev-warm,edit,build
+      runs:
+        description: Measured runs per start or build
+        default: '5'
+      warmup:
+        description: Warm-up runs per start or build
+        default: '1'
+      edits:
+        description: Measured edits per kind
+        default: '10'
+
+permissions:
+  contents: read
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      apps: ${{ steps.plan.outputs.apps }}
+    steps:
+      - id: plan
+        env:
+          APPS: ${{ inputs.apps }}
+        run: echo "apps=$(echo "$APPS" | tr -d ' ' | jq -Rc 'split(",") | map(select(length > 0))')" >> "$GITHUB_OUTPUT"
+
+  bench:
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      matrix:
+        app: ${{ fromJSON(needs.plan.outputs.apps) }}
+    env:
+      NGP_TOOLCHAIN: ${{ github.workspace }}/toolchain/out
+      CHROME_PATH: /usr/bin/google-chrome
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # Same cache as ci.yml: Rust, wasm-bindgen and Cargo's build cache, keyed on the pins.
+      - uses: actions/cache@v4
+        with:
+          path: |
+            toolchain/.cache/rust
+            toolchain/.cache/target
+          key: ngp-${{ runner.os }}-${{ hashFiles('toolchain/versions.env') }}
+
+      - run: pnpm toolchain
+
+      - run: pnpm build
+
+      - run: pnpm install --frozen-lockfile
+        working-directory: bench
+
+      # The runner, for the record: the result file keeps the CPU model, cores and memory too.
+      - name: Describe the runner
+        run: |
+          nproc
+          free -h
+          df -h "$GITHUB_WORKSPACE" | tail -1
+          google-chrome --version
+
+      - name: Install ${{ matrix.app }} at its pinned commit
+        run: node real.mjs ${{ matrix.app }}
+        working-directory: bench
+
+      - name: Benchmark ${{ matrix.app }}
+        run: |
+          node run.mjs --apps ${{ matrix.app }} --tools ngp,cli,nx \
+            --metrics "${{ inputs.metrics }}" --runs "${{ inputs.runs }}" --warmup "${{ inputs.warmup }}" \
+            --edits "${{ inputs.edits }}" --out "results/ci-${{ matrix.app }}.json"
+        working-directory: bench
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bench-real-${{ matrix.app }}
+          path: bench/results/ci-${{ matrix.app }}.json
+          retention-days: 90
+
+  report:
+    needs: bench
+    if: always() && needs.bench.result != 'skipped'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: bench-real-*
+          path: downloaded
+          merge-multiple: true
+      - name: Report
+        run: |
+          ls downloaded
+          node bench/report.mjs downloaded/*.json --out downloaded/report.md
+          cat downloaded/report.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bench-real-report
+          path: downloaded
+          retention-days: 90

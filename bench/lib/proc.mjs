@@ -12,8 +12,8 @@ const ENV = {
 };
 
 /** Starts a long-running process in its own group, keeping the tail of its output. */
-export function start({cmd, args}, cwd) {
-  const child = spawn(cmd, args, {cwd, env: ENV, detached: true, stdio: ['ignore', 'pipe', 'pipe']});
+export function start({cmd, args, env = {}}, cwd) {
+  const child = spawn(cmd, args, {cwd, env: {...ENV, ...env}, detached: true, stdio: ['ignore', 'pipe', 'pipe']});
   const lines = [];
   const stamped = []; // {at, text}, for waitForLine
   const waiters = new Set();
@@ -71,22 +71,23 @@ export async function stop(proc) {
 }
 
 /** Runs a process to completion. Returns wall time in ms, the exit code and output. */
-export async function run(command, cwd) {
+export async function run(command, cwd, onStart = null) {
   const t0 = performance.now();
   const proc = start(command, cwd);
+  onStart?.(proc);
   const {code} = await proc.exited;
   return {ms: performance.now() - t0, code, output: proc.output()};
 }
 
 /** Polls a URL until it answers 200 with HTML. Resolves with the epoch time it did. */
-export async function waitForHttp(url, proc, timeoutMs) {
+export async function waitForHttp(url, proc, timeoutMs, rootTag = '<app-root') {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     if (proc.child.exitCode !== null) throw new Error(`server exited (${proc.child.exitCode}):\n${proc.output()}`);
     try {
       const res = await fetch(url, {signal: AbortSignal.timeout(timeoutMs)});
       const body = await res.text();
-      if (res.ok && body.includes('<app-root')) return Date.now();
+      if (res.ok && body.includes(rootTag)) return Date.now();
     } catch {}
     await sleep(20);
   }

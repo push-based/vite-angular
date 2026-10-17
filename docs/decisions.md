@@ -583,3 +583,17 @@ Dropping the wait was the alternative. On macOS the watcher's delay would cover 
 
 **Revisit when** CI fails on `hmr.test.mjs` again. The debug workflow that looped it with event logging is in this entry's commit message.
 
+## 50. Benchmark two real apps against their own CLI, on GitHub's runners
+
+*17 October 2026*
+
+**Decision.** `bench/` runs two open-source Angular apps, Super Productivity (Angular CLI, 252 components) and Ghostfolio (Nx, 157 components), under the plugin and under the CLI each is built with, and records memory next to time: the peak resident set of a tool's whole process tree, and what a dev server holds once the page has rendered. The apps are pinned to a commit, installed by a script, and given a `vite.config.ngp.mjs` written the way the docs tell a user to move off `ng build`. Where the plugin has no option for something the app's CLI does, the bench adds a small Vite plugin next to it in that config, never in the plugin: typia's TypeScript transformer over a TypeScript program, Angular's `ngsw-config` after the build. Where an app's sources don't compile under a per-file compiler, a patch with a header fixes them, and both tools compile the patched sources. The published numbers come from a GitHub Actions workflow, `bench-real`, one app per runner, with the result files committed to `bench/results/`. The Benchmarks page documents the runs.
+
+**Why.** The Performance page measures generated apps, and its weakest point was that no real app with third-party libraries, no Linux machine and no memory had been measured. A real app is also the only way to find what a migration costs: Super Productivity needed its `isolatedModules` violations fixed, a stub for an uninstalled dependency, its typia transformer, esbuild's CSS minifier and decorator metadata off; Ghostfolio needed its path aliases, 13 locales, a stub API and a template type error ngp reports and ngc doesn't. Each of those is now written down with the fix a Vite user would apply. Running on CI makes the numbers reproducible by anyone with the repo, on a machine nobody is also working on, which the laptop numbers never were.
+
+Putting the bench's helpers into the plugin was the alternative. A `serviceWorker` option and a typia hook may be worth having, but they'd be decided on one app each, and the bench can't wait for them. Keeping them in the app's config also keeps the comparison honest: the plugin's numbers include what a user has to add to get the same job done.
+
+**Cost.** Two patches to apps we don't own, which have to be re-made when the pin moves, and a stub API whose saved response ages. The typia program adds seconds to the plugin's start and build on Super Productivity that are typia's, not ngp's, and the tables can't separate them. GitHub's runners differ from run to run, so a number is comparable within its run, not across runs. A full run costs about an hour of CI per app, so it's run by hand, not on every push.
+
+**Revisit when** the plugin grows a service-worker option, when a third real app with a different shape (a library-heavy enterprise app, or a Nx workspace with many libs) is pinned, or when the generated apps can run on CI without the disk noise the private bench repo measured.
+

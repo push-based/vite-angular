@@ -1,4 +1,5 @@
-// Measures vite-plugin-ngp against the Angular CLI, Analog and @oxc-angular/vite on the same apps.
+// Measures vite-plugin-ngp against the Angular CLI, Analog and @oxc-angular/vite on the same apps,
+// and against a real app's own CLI (the Angular CLI or Nx) on that app.
 //
 //   dev-cold   process start to first contentful paint, every cache deleted first
 //   dev-warm   the same with the tool's caches from the previous start: a restart
@@ -7,14 +8,19 @@
 //   typecheck  (ngp and the CLI, which type-check in dev) plant a template type error, time until
 //              the dev server reports it; remove it, time until it reports the app clean
 //
-// Every sample passes its gate or isn't counted: the app rendered (every feature link and the
-// first route's heading, or the playground's overview), the page logged no errors, an edit's
-// marker reached the DOM, a build exited 0 and its output boots. The app's sources are hashed
-// before and after.
+// Every start, edit series and build also records memory: the peak resident set of the tool's
+// whole process tree while it ran, sampled every 100 ms (lib/memory.mjs), and for a dev server
+// what it held once the page had rendered and settled.
 //
-// Usage: node run.mjs [--apps standalone-100-s1,...] [--tools ngp,cli,analog,oxc]
-//          [--metrics dev-cold,dev-warm,edit,build,typecheck] [--runs 5] [--warmup 1] [--edits 10]
-//          [--edit-warmup 2] [--max-load 4] [--out results/<name>.json]
+// Every sample passes its gate or isn't counted: the app rendered (every feature link and the
+// first route's heading, or the playground's overview, or a real app's shell and first page), the
+// page logged no errors, an edit's marker reached the DOM, a build exited 0 and its output boots.
+// The app's sources are hashed before and after.
+//
+// Usage: node run.mjs [--apps standalone-100-s1,...,super-productivity,ghostfolio]
+//          [--tools ngp,cli,nx,analog,oxc] [--metrics dev-cold,dev-warm,edit,build,typecheck]
+//          [--runs 5] [--warmup 1] [--edits 10] [--edit-warmup 2] [--max-load 4]
+//          [--out results/<name>.json]
 
 import * as fs from 'node:fs';
 import * as os from 'node:os';
@@ -24,6 +30,7 @@ import {parseArgs} from 'node:util';
 import {BENCH, hashSources, loadApp} from './lib/apps.mjs';
 import {gateHolds, launch, openApp} from './lib/browser.mjs';
 import {environment, waitForQuiet} from './lib/env.mjs';
+import {sampleMemory} from './lib/memory.mjs';
 import {run, start, stop, waitForHttp} from './lib/proc.mjs';
 import {serveStatic} from './lib/serve.mjs';
 import {bundleSizes} from './lib/sizes.mjs';
@@ -51,7 +58,7 @@ const EDITS = Number(args.edits);
 const EDIT_WARMUP = Number(args['edit-warmup']);
 const MAX_LOAD = args['max-load'] ? Number(args['max-load']) : null;
 const PORT = Number(args.port);
-const URL_ = `http://127.0.0.1:${PORT}/`;
+const devUrl = (app, tool) => `http://127.0.0.1:${PORT}${app.paths[tool.id]?.dev ?? '/'}`;
 const metrics = args.metrics.split(',');
 const tools = args.tools.split(',').map((t) => {
   if (!TOOLS[t]) throw new Error(`unknown tool ${t}`);
@@ -71,6 +78,12 @@ const browser = await launch();
 const result = {
   environment: environment(await browser.version()),
   settings: {runs: RUNS, warmup: WARMUP, edits: EDITS, editWarmup: EDIT_WARMUP, maxLoad: MAX_LOAD},
+  // What ran: for a real app, the commit, the patch and the files the bench added.
+  apps: apps.map((a) =>
+    a.kind === 'real'
+      ? {id: a.id, label: a.label, kind: a.kind, components: a.components, repo: a.pin.repo, sha: a.pin.sha, angularVersion: a.pin.angularVersion, cli: a.ownTool.label, patch: fs.existsSync(path.join(BENCH, 'real', `${a.id}.patch`)) ? `real/${a.id}.patch` : null, added: a.pin.added, install: a.pin.install}
+      : {id: a.id, label: a.label, kind: a.kind, components: a.components},
+  ),
   results: [],
 };
 const save = () => fs.writeFileSync(outFile, JSON.stringify(result, null, 2) + '\n');
@@ -93,26 +106,36 @@ const rmCaches = (tool, app) => {
 };
 
 function record(app, tool, metric, data) {
-  const entry = {app: app.id, components: app.components, tool: tool.id, metric, ...data};
+  const entry = {app: app.id, label: app.label, kind: app.kind, components: app.components, tool: tool.id, toolLabel: tool.id === 'cli' || tool.id === 'nx' ? (app.ownTool?.label ?? tool.label) : tool.label, metric, ...data};
   result.results.push(entry);
   save();
   return entry;
 }
 
 const fmt = (ms) => (ms >= 1000 ? `${(ms / 1000).toFixed(2)} s` : `${Math.round(ms)} ms`);
+const mb = (bytes) => `${Math.round(bytes / 2 ** 20)} MB`;
+
+/** The paths a real app's stub API answers, for the static server that serves a build. */
+const stubProxy = (app) => (app.stub ? app.stub.proxy.map((p) => ({path: p, target: `http://127.0.0.1:${app.stub.port}`})) : []);
 
 // ---------------------------------------------------------------------------------------------
 
 /** One dev-server start: process spawn to first contentful paint of the rendered app. */
 async function devStart(app, tool) {
   const load = await waitForQuiet(MAX_LOAD);
+  const url = devUrl(app, tool);
   const t0 = Date.now();
   const proc = start(tool.dev(app, PORT), app.dir);
+  const memory = sampleMemory(proc.child.pid);
   try {
-    const answeredAt = await waitForHttp(URL_, proc, 600_000);
-    const opened = await openApp(browser, URL_, app.gate, {settleMs: 2000});
+    const answeredAt = await waitForHttp(url, proc, 600_000, app.rootTag);
+    const opened = await openApp(browser, url, app.gate, {settleMs: 2000, ignoreHttp: app.ignoreHttp});
     const errors = [...opened.errors];
     if (!(await gateHolds(opened.page, app.gate).catch(() => false))) errors.push('gate no longer holds once settled');
+    // The page has rendered and settled: what the dev server holds now is what it holds while
+    // you work, before any edit.
+    const settled = await memory.sample();
+    const {peak} = memory.stop();
     const sample = {
       fcp: opened.fcpAt - t0,
       // Differs from fcp only when the optimizer reloaded the page after its first paint.
@@ -120,6 +143,7 @@ async function devStart(app, tool) {
       rendered: opened.renderedAt - t0,
       answered: answeredAt - t0,
       documents: opened.documents(),
+      memory: {peak: peak.rss, peakProcesses: peak.processes, settled: settled.rss, settledProcesses: settled.processes},
       load,
     };
     await opened.context.close();
@@ -127,6 +151,7 @@ async function devStart(app, tool) {
   } catch (e) {
     return {sample: null, errors: [`${e.message}\n${proc.output().slice(-3000)}`]};
   } finally {
+    memory.stop();
     await stop(proc);
   }
 }
@@ -153,7 +178,7 @@ async function devSeries(app, active, metric) {
       }
       const warm = round < WARMUP;
       if (!warm) samples.get(tool.id).push(sample);
-      console.log(`  ${tool.id} ${metric} ${warm ? 'warm-up' : `#${round - WARMUP + 1}`}: FCP ${fmt(sample.fcp)} (answered ${fmt(sample.answered)}, ${sample.documents} document(s), load ${sample.load[0]})`);
+      console.log(`  ${tool.id} ${metric} ${warm ? 'warm-up' : `#${round - WARMUP + 1}`}: FCP ${fmt(sample.fcp)} (answered ${fmt(sample.answered)}, ${sample.documents} document(s), memory ${mb(sample.memory.peak)} peak / ${mb(sample.memory.settled)} settled over ${sample.memory.settledProcesses} processes, load ${sample.load[0]})`);
     }
   }
   for (const tool of active) {
@@ -165,6 +190,8 @@ async function devSeries(app, active, metric) {
       fcp: summarize(s.map((x) => x.fcp)),
       rendered: summarize(s.map((x) => x.rendered)),
       answered: summarize(s.map((x) => x.answered)),
+      memoryPeak: summarize(s.map((x) => x.memory.peak)),
+      memorySettled: summarize(s.map((x) => x.memory.settled)),
     });
   }
 }
@@ -189,13 +216,16 @@ async function editSeries(app, tool) {
           }),
         ]);
 
+  const url = devUrl(app, tool);
   const proc = start(tool.dev(app, PORT), app.dir);
+  const memory = sampleMemory(proc.child.pid);
   const out = {template: [], ts: []};
   const errors = [];
   let opened;
+  let memoryAfter = null;
   try {
-    await waitForHttp(URL_, proc, 600_000);
-    opened = await openApp(browser, URL_, app.gate, {markers: onMarker});
+    await waitForHttp(url, proc, 600_000, app.rootTag);
+    opened = await openApp(browser, url, app.gate, {markers: onMarker, ignoreHttp: app.ignoreHttp});
     await sleep(1000);
     const page = opened.page;
     const timeOrigin = async () => {
@@ -208,7 +238,8 @@ async function editSeries(app, tool) {
       throw new Error('page never settled after the edit');
     };
     let n = 0;
-    for (const kind of ['template', 'ts']) {
+    // A real app may have no .ts edit target (its pin says why); then only templates are edited.
+    for (const kind of app.ts ? ['template', 'ts'] : ['template']) {
       const file = path.join(app.dir, kind === 'template' ? app.template : app.ts.file);
       const original = fs.readFileSync(file, 'utf8');
       pendingRestores.set(file, original);
@@ -242,19 +273,24 @@ async function editSeries(app, tool) {
       await sleep(1500);
       await timeOrigin();
     }
+    // What the dev server holds after a session of edits, against what it held after the start.
+    memoryAfter = await memory.sample();
     errors.push(...opened.errors);
   } catch (e) {
     errors.push(`${e.message}\n${proc.output().slice(-3000)}`);
   } finally {
     restoreAll();
+    const {peak} = memory.stop();
+    memoryAfter = memoryAfter ? {peak: peak.rss, afterEdits: memoryAfter.rss, processes: memoryAfter.processes} : null;
     await opened?.context.close().catch(() => {});
     await stop(proc);
   }
+  if (memoryAfter) console.log(`  ${tool.id} memory after ${2 * (EDIT_WARMUP + EDITS)} edits: ${mb(memoryAfter.afterEdits)} (peak ${mb(memoryAfter.peak)})`);
   // vite-plugin-ngp logs each background type-check with its duration; keep them.
   const typeChecks = [...proc.output().matchAll(/type-check: [^(\n]*\((\d+) ms\)/g)].map((m) => Number(m[1]));
   if (typeChecks.length) console.log(`  ${tool.id} type-checks during the session: ${typeChecks.join(', ')} ms`);
   if (errors.length) console.log(`  ${tool.id} edit: FAILED\n    ${errors.join('\n    ').slice(0, 2000)}`);
-  for (const kind of ['template', 'ts']) {
+  for (const kind of app.ts ? ['template', 'ts'] : ['template']) {
     const s = out[kind];
     const modes = [...new Set(s.map((x) => x.mode))];
     record(app, tool, `edit-${kind}`, {
@@ -264,6 +300,7 @@ async function editSeries(app, tool) {
       latency: summarize(s.map((x) => x.ms)),
       mode: modes.length === 1 ? modes[0] : modes.join('+'),
       typeChecks,
+      memory: memoryAfter,
     });
   }
 }
@@ -277,12 +314,14 @@ async function editSeries(app, tool) {
 const TYPECHECK = {
   // vite-plugin-ngp logs a check when its result changes: the error, then "no errors".
   ngp: {clean: /type-check: no errors/},
-  // The CLI rebuilds with type-checking; a clean rebuild ends with this line.
+  // The CLI rebuilds with type-checking; a clean rebuild ends with this line. Nx runs the CLI.
   cli: {clean: /Application bundle generation complete/},
+  nx: {clean: /Application bundle generation complete/},
 };
 
 async function typecheckSeries(app, tool) {
   if (!TYPECHECK[tool.id]) return;
+  const url = devUrl(app, tool);
   const proc = start(tool.dev(app, PORT), app.dir);
   const file = path.join(app.dir, app.template);
   const original = fs.readFileSync(file, 'utf8');
@@ -290,8 +329,8 @@ async function typecheckSeries(app, tool) {
   const errors = [];
   let opened;
   try {
-    await waitForHttp(URL_, proc, 600_000);
-    opened = await openApp(browser, URL_, app.gate);
+    await waitForHttp(url, proc, 600_000, app.rootTag);
+    opened = await openApp(browser, url, app.gate, {ignoreHttp: app.ignoreHttp});
     pendingRestores.set(file, original);
     for (let i = 0; i < EDIT_WARMUP + EDITS; i++) {
       const missing = `benchMissing${i}`;
@@ -340,15 +379,17 @@ async function buildSeries(app, active) {
       rmCaches(tool, app);
       fs.rmSync(tool.outDir(app), {recursive: true, force: true});
       const load = await waitForQuiet(MAX_LOAD);
-      const r = await run(tool.build(app), app.dir);
+      let memory;
+      const r = await run(tool.build(app), app.dir, (proc) => (memory = sampleMemory(proc.child.pid)));
+      const {peak} = memory.stop();
       if (r.code !== 0 || !fs.existsSync(path.join(tool.outDir(app), 'index.html'))) {
         failed.set(tool.id, [`build exited ${r.code}\n${r.output.slice(-3000)}`]);
         console.log(`  ${tool.id} build: FAILED (exit ${r.code})\n${r.output.slice(-1500)}`);
         continue;
       }
       const warm = round < WARMUP;
-      if (!warm) samples.get(tool.id).push({ms: r.ms, load});
-      console.log(`  ${tool.id} build ${warm ? 'warm-up' : `#${round - WARMUP + 1}`}: ${fmt(r.ms)} (load ${load[0]})`);
+      if (!warm) samples.get(tool.id).push({ms: r.ms, load, memory: {peak: peak.rss, peakProcesses: peak.processes}});
+      console.log(`  ${tool.id} build ${warm ? 'warm-up' : `#${round - WARMUP + 1}`}: ${fmt(r.ms)} (memory ${mb(peak.rss)} peak over ${peak.processes} processes, load ${load[0]})`);
     }
   }
   for (const tool of active) {
@@ -357,11 +398,17 @@ async function buildSeries(app, active) {
     const errors = failed.get(tool.id) ?? [];
     if (!failed.has(tool.id)) {
       const dir = tool.outDir(app);
-      const server = await serveStatic(dir);
+      const server = await serveStatic(dir, {base: app.paths[tool.id]?.build ?? '/', proxy: stubProxy(app)});
       try {
-        const opened = await openApp(browser, server.url, app.gate, {timeoutMs: 60_000});
-        // Then a lazy route, through the router like a user would get there.
-        await opened.page.evaluate((p) => document.querySelector(`a[href$="/${p}"]`).click(), app.lazy.path);
+        const opened = await openApp(browser, server.url, app.gate, {timeoutMs: 60_000, ignoreHttp: app.ignoreHttp});
+        // Then a lazy route, through the router like a user would get there: the link to it if
+        // the page has one, else the browser's own navigation, which Angular's router listens to.
+        await opened.page.evaluate((p) => {
+          const a = document.querySelector(`a[href$="/${p}"]`);
+          if (a) return a.click();
+          history.pushState({}, '', new URL(p, document.baseURI).pathname);
+          dispatchEvent(new PopStateEvent('popstate', {state: {}}));
+        }, app.lazy.path);
         await opened.page.waitForFunction(app.lazy.gate, {polling: 'mutation', timeout: 60_000});
         await sleep(500);
         boot = {errors: opened.errors, lazyRoute: app.lazy.path};
@@ -382,6 +429,7 @@ async function buildSeries(app, active) {
       errors,
       samples: s,
       time: summarize(s.map((x) => x.ms)),
+      memoryPeak: summarize(s.map((x) => x.memory.peak)),
       boot,
       sizes,
     });
@@ -394,21 +442,32 @@ try {
   for (const app of apps) {
     const active = [];
     for (const tool of tools) {
+      // A real app runs under its own CLI, so the other CLI isn't a result, just not this app's.
+      if (app.kind === 'real' && (tool.id === 'cli' || tool.id === 'nx') && tool.id !== app.ownTool.id) continue;
+      // Nothing generated runs under Nx.
+      if (app.kind !== 'real' && tool.id === 'nx') continue;
       if (app.unsupported[tool.id]) {
         for (const metric of metrics) record(app, tool, metric, {ok: false, unsupported: app.unsupported[tool.id]});
         console.log(`${app.id} / ${tool.id}: not run, ${app.unsupported[tool.id]}`);
       } else active.push(tool);
     }
-    const before = hashSources(app.dir);
+    const before = hashSources(app.dir, app.sourceDirs);
     console.log(`${app.id} (${app.components} components)`);
-    for (const metric of metrics) {
-      if (metric === 'dev-cold' || metric === 'dev-warm') await devSeries(app, active, metric);
-      else if (metric === 'edit') for (const tool of active) await editSeries(app, tool);
-      else if (metric === 'build') await buildSeries(app, active);
-      else if (metric === 'typecheck') for (const tool of active) await typecheckSeries(app, tool);
-      else throw new Error(`unknown metric ${metric}`);
+    // A real app may need a stub for the API it talks to; it runs for the whole app.
+    const stub = app.stub ? start({cmd: process.execPath, args: [path.join(app.dir, app.stub.script), String(app.stub.port)]}, app.dir) : null;
+    if (stub) await sleep(500);
+    try {
+      for (const metric of metrics) {
+        if (metric === 'dev-cold' || metric === 'dev-warm') await devSeries(app, active, metric);
+        else if (metric === 'edit') for (const tool of active) await editSeries(app, tool);
+        else if (metric === 'build') await buildSeries(app, active);
+        else if (metric === 'typecheck') for (const tool of active) await typecheckSeries(app, tool);
+        else throw new Error(`unknown metric ${metric}`);
+      }
+    } finally {
+      if (stub) await stop(stub);
     }
-    const after = hashSources(app.dir);
+    const after = hashSources(app.dir, app.sourceDirs);
     if (before !== after) throw new Error(`${app.id}: sources changed during the run`);
   }
 } finally {

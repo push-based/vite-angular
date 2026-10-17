@@ -1,0 +1,91 @@
+{
+  "name": "ghostfolio",
+  "label": "Ghostfolio",
+  "repo": "https://github.com/ghostfolio/ghostfolio.git",
+  "homepage": "https://github.com/ghostfolio/ghostfolio",
+  "sha": "204f0d857ef258a2c090780bce8b69429a094f95",
+  "angularVersion": "22.3.0-next.2",
+  "install": [
+    "npm install --legacy-peer-deps --min-release-age=0 --no-audit --no-fund"
+  ],
+  "installNotes": "--legacy-peer-deps because libraries declare peer ranges like ^22.0.0 that npm says a prerelease doesn't satisfy; --min-release-age=0 overrides the repo's .npmrc, which refuses packages younger than three days, and the pinned Angular prerelease is newer than that.",
+  "notes": "Nx monorepo. The Angular client is apps/client, importing libs/ through tsconfig path aliases, with 13 locales built from XLIFF files. The client needs the API's /api/v1/info answer before it bootstraps, so the harness runs a stub API from a saved response.",
+  "tsconfigApp": "apps/client/tsconfig.app.json",
+  "sourceDirs": [
+    "apps/client/src",
+    "libs"
+  ],
+  "rootTag": "<gf-root",
+  "gate": "() => !!document.querySelector('gf-root gf-landing-page h1') && !!document.querySelector('gf-root gf-header')",
+  "lazy": {
+    "path": "about",
+    "gate": "() => !!document.querySelector('gf-root gf-about-page')"
+  },
+  "template": "apps/client/src/app/pages/landing/landing-page.html",
+  "ts": {
+    "file": "apps/client/src/app/pages/landing/landing-page.component.ts",
+    "find": "quote: 'Great app!'"
+  },
+  "stub": {
+    "script": "api-stub.mjs",
+    "port": 3333,
+    "proxy": [
+      "/api"
+    ],
+    "notes": "Answers /api/v1/info from info.json, 401 for /api/v1/user as the API does for a visitor, a manifest, and /assets from the client sources."
+  },
+  "cli": {
+    "id": "nx",
+    "label": "Nx",
+    "pkg": "nx",
+    "dev": [
+      "node_modules/nx/dist/bin/nx.js",
+      "run",
+      "client:serve:development-en",
+      "--host",
+      "127.0.0.1",
+      "--port",
+      "{port}",
+      "--ssl=false"
+    ],
+    "build": [
+      "node_modules/nx/dist/bin/nx.js",
+      "run",
+      "client:build:production",
+      "--skip-nx-cache"
+    ],
+    "outDir": "dist/apps/client/en",
+    "caches": [
+      ".angular",
+      ".nx/cache",
+      ".nx/workspace-data",
+      "node_modules/.cache"
+    ],
+    "env": {
+      "NX_DAEMON": "false"
+    },
+    "devPath": "/en/",
+    "buildBase": "/en/"
+  },
+  "ngp": {
+    "outDir": "dist-ngp/en",
+    "caches": [
+      "node_modules/.vite-ngp"
+    ],
+    "devPath": "/",
+    "buildBase": "/en/"
+  },
+  "index": {
+    "from": "apps/client/src/index.html",
+    "styles": [
+      "apps/client/src/assets/fonts/inter.css",
+      "apps/client/src/styles/theme.scss",
+      "apps/client/src/styles.scss",
+      "node_modules/open-color/open-color.css"
+    ],
+    "entry": "apps/client/src/main.ts"
+  },
+  "ignoreHttp": [
+    "/api/v1/user"
+  ]
+}

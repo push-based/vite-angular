@@ -5,12 +5,17 @@
 // needs an ngp toolchain build.
 
 import assert from 'node:assert/strict';
+import {writeFileSync} from 'node:fs';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import {after, before, test} from 'node:test';
 import {fileURLToPath} from 'node:url';
 import {createServer} from 'vite';
-import {ngp} from '../dist/index.js';
+
+// The plugin's debug log is how the suite sees how long an update waited: the batch-window test
+// below reads it. Set before the plugin is loaded, which reads it once.
+process.env.DEBUG = [process.env.DEBUG, 'vite-plugin-ngp'].filter(Boolean).join(',');
+const {ngp} = await import('../dist/index.js');
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const repo = path.resolve(here, '../../..');
@@ -32,9 +37,16 @@ let root;
 let server;
 /** Everything the plugin and Vite sent over the client's HMR channel. */
 let sent = [];
-/** When the last of `sent` was sent, and when a delayed watcher report was last let through. */
-let lastSentAt = 0;
-let lastReportAt = 0;
+/** The plugin's debug log: one line per compile, and one per template update with its timings. */
+const logged = [];
+const stderrWrite = process.stderr.write.bind(process.stderr);
+process.stderr.write = (chunk, ...rest) => {
+  if (String(chunk).startsWith('vite-plugin-ngp ')) {
+    logged.push(String(chunk));
+    return true;
+  }
+  return stderrWrite(chunk, ...rest);
+};
 
 before(async () => {
   // Inside the repo, so Angular resolves from the root node_modules.
@@ -58,7 +70,9 @@ before(async () => {
     root,
     configFile: false,
     logLevel: 'silent',
-    plugins: [ngp({toolchain})],
+    // No type-check: nothing here looks at it, and it would run tsgo on every core 300 ms after
+    // each edit, next to the watcher and the timings this suite checks.
+    plugins: [ngp({toolchain, typeCheck: false})],
     server: {middlewareMode: true, ws: false},
   });
   // Edits made before the watcher has seen the files would go unreported.
@@ -67,7 +81,6 @@ before(async () => {
   const send = hot.send.bind(hot);
   hot.send = (payload, ...rest) => {
     sent.push(payload);
-    lastSentAt = Date.now();
     return send(payload, ...rest);
   };
   // Puts the component in the client's module graph, as a page load would.
@@ -75,6 +88,7 @@ before(async () => {
 });
 
 after(async () => {
+  process.stderr.write = stderrWrite;
   await server?.close();
   if (root) {
     await fs.rm(root, {recursive: true, force: true});
@@ -83,6 +97,13 @@ after(async () => {
 
 const updates = () => sent.filter((p) => p.type === 'custom' && p.event === 'angular:component-update');
 const reloads = () => sent.filter((p) => p.type === 'full-reload');
+/** How long the plugin's last template update waited for the rest of its save, from its log. */
+function lastWait() {
+  const line = logged.findLast((l) => l.startsWith('vite-plugin-ngp hmr '));
+  const wait = /\bwait ([\d.]+)/.exec(line ?? '')?.[1];
+  assert.ok(wait, `no template update timings in the plugin's log:\n${logged.join('')}`);
+  return Number(wait);
+}
 
 async function until(condition) {
   const deadline = Date.now() + 10_000;
@@ -207,10 +228,7 @@ function delayReports(file, ms) {
   watcher.emit = function (event, changed, ...rest) {
     if (path.basename(changed ?? '') === file && (event === 'change' || event === 'all')) {
       if (ms !== null) {
-        setTimeout(() => {
-          lastReportAt = Date.now();
-          emit.call(this, event, changed, ...rest);
-        }, ms);
+        setTimeout(() => emit.call(this, event, changed, ...rest), ms);
       }
       return true;
     }
@@ -264,16 +282,25 @@ test('a template reported after the batch window sends its update without waitin
     restore();
   }
   assert.equal(updates().length, 1);
-  // The window is 50 ms from the write, and the report came at least 100 ms after it.
-  assert.ok(lastSentAt - lastReportAt < 50, `sent ${lastSentAt - lastReportAt} ms after the report`);
+  // The window is 50 ms from the write, and the report came at least 100 ms after it, so there was
+  // nothing left to wait for. The plugin's own timing says whether it waited; the time from the
+  // report to the event can't, because on two slow cores the work in between alone took 37 ms.
+  const wait = lastWait();
+  assert.ok(wait < 25, `waited ${wait} ms after a report that came after the window`);
 });
 
 test('a template reported before a late class change sends no update', async () => {
   sent = [];
   const restore = delayReports('app.ts', 200);
   try {
-    await write('app.html', TEMPLATE('total'));
-    await write('app.ts', COMPONENT('total', 'green'));
+    // One save, as above: the template's report must not go out before the class is on disk.
+    const release = holdReports('app.html');
+    try {
+      await write('app.html', TEMPLATE('total'));
+      await write('app.ts', COMPONENT('total', 'green'));
+    } finally {
+      release();
+    }
     await settle(() => reloads().length > 0);
   } finally {
     restore();
@@ -329,7 +356,10 @@ test('a class change reported between the save truncating it and writing it relo
     await fs.truncate(file);
     emit.call(server.watcher, 'change', file);
     await new Promise((resolve) => setTimeout(resolve, 20));
-    await write('app.ts', COMPONENT('renamed', 'green'));
+    // Written on this thread, so it lands 20 ms after the report, inside the 100 ms the plugin
+    // waits for it. Through the thread pool, two slow cores let it land later than that once in
+    // 20 runs, and the plugin then rightly reloaded twice.
+    writeFileSync(file, COMPONENT('renamed', 'green'));
     await write('app.html', TEMPLATE('renamed'));
     await settle(() => reloads().length > 0);
     // A plugin that recorded the empty file waits a second for a report that never comes, then

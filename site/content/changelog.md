@@ -12,6 +12,7 @@ What changed in vite-plugin-ngp, newest first. The plugin isn't on npm, so there
 ### Docs site
 
 - The site has search. Press ⌘K (Ctrl+K off a Mac) or the search button in the header, and it finds any page and the section of it that matches, such as `allowedHosts` in [Server rendering](server-rendering#the-server-entry). The index is built with Pagefind when the site is, and nothing of it loads until you open search: about 165 kB compressed then, most of it Pagefind's WebAssembly and the index.
+- A link to a section, from "On this page", from search or from a URL with a `#`, leaves the heading below the header instead of under it, on a phone too. Try [What it checks](type-checking#what-it-checks).
 
 ### Editing in the dev server
 

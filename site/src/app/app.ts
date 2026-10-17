@@ -1,5 +1,5 @@
 import {afterNextRender, ChangeDetectionStrategy, Component, type ComponentRef, inject, signal, viewChild, ViewContainerRef} from '@angular/core';
-import {DOCUMENT} from '@angular/common';
+import {DOCUMENT, ViewportScroller} from '@angular/common';
 import {RouterLink, RouterLinkActive, RouterOutlet} from '@angular/router';
 import {Logo} from './layout/logo';
 import {PushbasedLogo} from './layout/pushbased-logo';
@@ -29,6 +29,10 @@ export class App {
   private search?: Promise<ComponentRef<SearchDialog>>;
 
   constructor() {
+    // The router scrolls to a #fragment with window.scrollTo, which ignores the scroll-padding-top
+    // that keeps headings clear of the sticky header. Give it the same offset.
+    inject(ViewportScroller).setOffset(() => [0, parseFloat(getComputedStyle(this.document.documentElement).scrollPaddingTop) || 0]);
+
     afterNextRender(() => {
       this.theme.set(this.currentTheme());
       if (/Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent)) {

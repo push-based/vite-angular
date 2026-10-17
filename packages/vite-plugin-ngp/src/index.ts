@@ -13,7 +13,7 @@ import {
 } from 'vite';
 import {findAngularLibraries, packagePathPattern, packagePattern} from './angular-libraries.js';
 import {budgetsPlugin, type Budget} from './budgets.js';
-import {NgpCompiler, type ComponentStyle, type HmrUpdate} from './compiler.js';
+import {NgpCompiler, type ComponentStyle, type HmrUpdate, type TransformResult} from './compiler.js';
 import {writeEntryTsconfig} from './entry-tsconfig.js';
 import {i18nPlugin, type I18nOptions} from './i18n.js';
 import {link, LINKER_MARKER} from './linker.js';
@@ -22,9 +22,11 @@ import type {Engine} from './ngp-api.js';
 import {polyfillsPlugin, usesZone, zoneAsyncPlugin} from './polyfills.js';
 import {
   buildReport,
+  FIRST_CHECK_QUIET_MS,
   OVERLAY_CLIENT,
   OVERLAY_CLIENT_ID,
   OVERLAY_CLIENT_URL,
+  ServerActivity,
   startDevTypeCheck,
   TypeChecker,
   type TypeCheckResult,
@@ -227,6 +229,8 @@ function compilerPlugin(
   const typeCheck = options.typeCheck ?? !testing;
   let checker: TypeChecker | null = null;
   let devCheck: ReturnType<typeof startDevTypeCheck> | null = null;
+  /** Requests and compiles in flight: the first type-check waits until there are none. */
+  const activity = new ServerActivity(FIRST_CHECK_QUIET_MS);
   let typeCheckOverlay = false;
   let buildCheck: Promise<TypeCheckResult> | null = null;
   /**
@@ -611,6 +615,7 @@ function compilerPlugin(
         typeCheckOverlay = viteHmr !== false && (typeof viteHmr !== 'object' || viteHmr.overlay !== false);
         devCheck = startDevTypeCheck({
           server,
+          activity,
           run: runTypeCheck,
           filesChanged: () => checker?.filesChanged(),
           abort: () => checker?.abort(),
@@ -741,7 +746,13 @@ function compilerPlugin(
         const key = `${this.environment.name}\0${id}`;
         const at = readAt.get(key);
         readAt.delete(key);
-        const result = await ngp.transform(file, code, at);
+        const compiling = activity.begin();
+        let result: TransformResult | null;
+        try {
+          result = await ngp.transform(file, code, at);
+        } finally {
+          compiling();
+        }
         if (debug) {
           const ms = (performance.now() - start).toFixed(1);
           // To stderr, like Vite's own DEBUG output: Vitest silences Vite's logger.

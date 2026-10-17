@@ -56,7 +56,7 @@ That's a cold start: every cache the toolchain keeps was deleted first. A restar
 
 Most of the plugin's cold start is Vite pre-bundling Angular's packages, which a restart skips: 1.2 seconds of the 1.7 at 5,000 components. That step runs Angular's Babel linker on every partially compiled package. `@oxc-angular/vite` pays 0.8 seconds for the same step, so the slower linker probably costs the plugin about 0.4 seconds there. That's an inference from the two differences, not a measurement of the linker itself.
 
-The plugin's background type-check was on for all of these, as it is by default, and it competes for the CPU while the first page loads. Turning it off saved about 150 ms of a cold start at 5,000 components, 1.96 against 2.11 seconds, measured back to back in a separate run on 16 October. It made no measurable difference to edits.
+The plugin's background type-check was on for all of these, as it is by default, and it competed for the CPU while the first page loaded. Turning it off saved about 150 ms of a cold start at 5,000 components, 1.96 against 2.11 seconds, measured back to back in a separate run on 16 October. It made no measurable difference to edits. Since this run, the first check waits until the dev server has gone idle, so it no longer runs alongside the first page ([Type-checking](type-checking#what-you-see)); the start numbers above haven't been measured again since.
 
 ## Template edits
 

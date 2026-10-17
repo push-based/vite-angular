@@ -106,7 +106,17 @@ async function settle(condition) {
 function served(id) {
   return new Promise((resolve, reject) => {
     const headers = {};
-    const res = {getHeader: (name) => headers[name], setHeader: (name, value) => (headers[name] = value), end: resolve};
+    let onClose = null;
+    // The plugin listens for the response's close event, to know when the server is idle.
+    const res = {
+      getHeader: (name) => headers[name],
+      setHeader: (name, value) => (headers[name] = value),
+      once: (_event, listener) => (onClose = listener),
+      end: (body) => {
+        resolve(body);
+        onClose?.();
+      },
+    };
     const req = {url: `/src/@ng/component?c=${id}`, method: 'GET', headers: {}};
     server.middlewares.handle(req, res, (error) => reject(error ?? new Error(`${req.url} wasn't served`)));
   });

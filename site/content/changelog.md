@@ -14,6 +14,10 @@ What changed in vite-plugin-ngp, newest first. The plugin isn't on npm, so there
 - The site has search. Press ⌘K (Ctrl+K off a Mac) or the search button in the header, and it finds any page and the section of it that matches, such as `allowedHosts` in [Server rendering](server-rendering#the-server-entry). The index is built with Pagefind when the site is, and nothing of it loads until you open search: about 165 kB compressed then, most of it Pagefind's WebAssembly and the index.
 - A link to a section, from "On this page", from search or from a URL with a `#`, leaves the heading below the header instead of under it, on a phone too. Try [What it checks](type-checking#what-it-checks).
 
+### Type-checking
+
+- The first type-check of a dev-server session waits until the server is idle, half a second with no request and no module compile, instead of starting one second after the server starts. Generating every component's type-check block ran on Vite's thread while the first page was compiling; on Super Productivity that was 0.67 s of the thread, and first paint went from 6.72 s to 6.00 s on a warm restart once the check waits. The first errors show up later, after the page instead of alongside it. Checks after edits are unchanged. [Type-checking](type-checking#what-you-see)
+
 ### Editing in the dev server
 
 - A save can no longer be undone by a module Vite read just before it: components compiled afterwards see the saved file. [How it works](how-it-works#handling-an-edit)

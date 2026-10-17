@@ -474,6 +474,8 @@ function compilerPlugin(
     // Counted from the write, not the watcher's report: on macOS the report alone often takes
     // longer than the window.
     const written = (await fs.promises.stat(file).catch(() => null))?.mtimeMs ?? Date.now();
+    // Timed apart from the wait: on a starved machine the stat alone has taken 26 ms.
+    spans?.lap('stat');
     const wait = Math.min(EDIT_BATCH_MS, written + EDIT_BATCH_MS - Date.now());
     if (wait > 0) {
       await new Promise((resolve) => setTimeout(resolve, wait));

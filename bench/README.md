@@ -62,7 +62,7 @@ That prints the markdown tables. A later file wins over an earlier one for the s
 node charts.mjs --generated results/<generated>.json --real results/ci-super-productivity.json,results/ci-ghostfolio.json
 ```
 
-That draws the figures on the docs site's Performance and Benchmarks pages into `site/content/charts/`, from the same files: horizontal bars per tool and app on one scale, the plugin's in the brand violet and the others' in gray, with the fastest edit marked on the edit figures. The site inlines them, so they take the site's colors and dark theme; [docs/decisions.md](../docs/decisions.md) entry 51 says why. Rerun it whenever the files behind a page change, and commit the SVGs with the page.
+That draws the figures on the docs site's Performance and Benchmarks pages into `site/content/charts/`, from the same files: horizontal bars per tool and app on one scale, the plugin's in the brand violet and the others' in gray, with the fastest edit marked on the edit figures and the bundle figures showing gzipped JavaScript, all of it and the initial part. The site inlines them, so they take the site's colors and dark theme; [docs/decisions.md](../docs/decisions.md) entry 51 says why. Rerun it whenever the files behind a page change, and commit the SVGs with the page.
 
 ## The tools, and how each is set up
 

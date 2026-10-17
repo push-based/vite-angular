@@ -13,7 +13,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import {parseArgs} from 'node:util';
 import {BENCH} from './lib/apps.mjs';
-import {TOOL_LABEL, loadResults, mem, time} from './lib/results.mjs';
+import {TOOL_LABEL, kb, loadResults, mem, time} from './lib/results.mjs';
 
 const {values: args} = parseArgs({
   options: {generated: {type: 'string'}, real: {type: 'string'}, out: {type: 'string', default: path.join(BENCH, '../site/content/charts')}},
@@ -53,23 +53,36 @@ function ticks(max) {
 /**
  * A figure: panels of groups of bars on one scale.
  * @param {{
- *   title: string, unit: 'time'|'memory',
+ *   title: string, unit: 'time'|'memory'|'size',
  *   series: {id: string, label: string, emphasis?: boolean}[],
  *   panels: {title: string, groups: {label: string, bars: {series: string, value?: number, min?: number, noise?: number, suffix?: string, na?: string, tooltip?: string}[]}[]}[],
  *   marker?: string,
  * }} spec
  */
 function figure(spec) {
-  const fmt = spec.unit === 'memory' ? mem : time;
+  const fmt = spec.unit === 'memory' ? mem : spec.unit === 'size' ? kb : time;
   const values = spec.panels.flatMap((p) => p.groups.flatMap((g) => g.bars.map((b) => b.value ?? 0)));
   const max = Math.max(...values, 1);
   const legend = spec.series.length > 1;
   const plotX = LABEL_W;
   const plotW = W - LABEL_W - VALUE_W;
   const x = (v) => plotX + (v / max) * plotW;
-  const tickValues = ticks(max);
-  // Axis unit: the ticks carry it once, the values carry their own.
-  const tickLabel = (v) => (spec.unit === 'memory' ? (max >= 2 ** 30 ? `${+(v / 2 ** 30).toFixed(1)} GB` : `${Math.round(v / 2 ** 20)} MB`) : max >= 2000 ? `${+(v / 1000).toFixed(1)} s` : `${Math.round(v)} ms`);
+  // Axis unit: the ticks carry it once, the values carry their own. Ticks are clean steps in the
+  // unit the axis shows, so a memory axis reads 0, 1, 2 GB and not 0, 0.9, 1.9 GB.
+  const [scale, unit] =
+    spec.unit === 'memory'
+      ? max >= 2 ** 30
+        ? [2 ** 30, 'GB']
+        : [2 ** 20, 'MB']
+      : spec.unit === 'size'
+        ? max >= 2000 * 1024
+          ? [2 ** 20, 'MB']
+          : [1024, 'kB']
+        : max >= 2000
+          ? [1000, 's']
+          : [1, 'ms'];
+  const tickValues = ticks(max / scale).map((v) => v * scale);
+  const tickLabel = (v) => `${+(v / scale).toFixed(1)} ${unit}`;
 
   let y = TOP + (legend || spec.marker ? LEGEND_H : 0);
   const out = [];
@@ -177,6 +190,19 @@ function barFrom(r, key, series, {min = false, mode = false} = {}) {
   };
 }
 
+/** A bar from a build record's output: the gzipped size of all its JavaScript, or of the initial part. */
+function sizeBar(r, part, series) {
+  if (!r) return {series, na: ''};
+  if (r.unsupported) return {series, na: 'n/a'};
+  if (!r.ok || !r.sizes) return {series, na: 'failed'};
+  const {js} = r.sizes[part];
+  return {
+    series,
+    value: js.gzip,
+    tooltip: `${plain(TOOL_LABEL[r.tool] ?? r.toolLabel)}: ${kb(js.gzip)} gzipped, ${kb(js.raw)} raw, ${js.files} file${js.files === 1 ? '' : 's'}`,
+  };
+}
+
 if (args.generated) {
   const R = loadResults(args.generated.split(','));
   const apps = R.apps.filter((a) => R.appLabel[a] !== undefined);
@@ -203,6 +229,12 @@ if (args.generated) {
     if (i > 0) p.groups.splice(1, 0, ...p.groups.splice(i, 1));
   }
   write('build', {title: 'Production build time, by tool and app size', unit: 'time', ...single(build)});
+  const sizes = (part) => ({
+    series,
+    panels: apps.map((a) => ({title: panelTitle(a), groups: tools.map((t) => ({label: TOOL_LABEL[t], bars: [sizeBar(R.get(a, t, 'build'), part, t)]}))})),
+  });
+  write('bundle', {title: 'All the JavaScript a production build writes, gzipped, by tool and app size', unit: 'size', ...single(sizes('total'))});
+  write('bundle-initial', {title: 'The initial JavaScript a production build writes, gzipped, by tool and app size', unit: 'size', ...single(sizes('initial'))});
   if ([...R.latest.values()].some((r) => r.memorySettled)) {
     write('memory-dev', {title: 'Dev server memory after a restart, once the page has rendered, by tool and app size', unit: 'memory', ...single(byTool('dev-warm', 'memorySettled'))});
     write('memory-build', {title: 'Peak memory of a production build, by tool and app size', unit: 'memory', ...single(byTool('build', 'memoryPeak'))});
@@ -235,6 +267,15 @@ if (args.real) {
     panels: panels((a) => [
       {label: 'Template edit', bars: pair(a, 'edit-template', 'latency', {min: true, mode: true})},
       ...(R.get(a, 'ngp', 'edit-ts')?.unsupported ? [] : [{label: '.ts edit', bars: pair(a, 'edit-ts', 'latency', {min: true, mode: true})}]),
+    ]),
+  });
+  write('real-bundle', {
+    title: 'JavaScript a production build writes for the real apps, gzipped: all of it, and the initial part, plugin against the app\'s own CLI',
+    unit: 'size',
+    series,
+    panels: panels((a) => [
+      {label: 'All JS, gzipped', bars: [sizeBar(R.get(a, 'ngp', 'build'), 'total', 'ngp'), sizeBar(R.own(a, 'build'), 'total', 'own')]},
+      {label: 'Initial JS, gzipped', bars: [sizeBar(R.get(a, 'ngp', 'build'), 'initial', 'ngp'), sizeBar(R.own(a, 'build'), 'initial', 'own')]},
     ]),
   });
   const editMem = (a, s) => {

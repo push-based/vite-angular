@@ -112,7 +112,9 @@ Both builds type-check: the plugin with TypeScript 7 in a child process, the CLI
 
 ## Bundle size
 
-All the JavaScript a build writes for one locale, and the initial part: what `index.html` loads plus everything it imports statically, before any lazy route. Gzip at level 9, per file.
+All the JavaScript a build writes for one locale, and the initial part: what `index.html` loads plus everything it imports statically, before any lazy route. Gzip at level 9, per file. The figure shows the gzipped sizes; the table has the raw ones and the CSS too.
+
+![JavaScript a production build writes for each app, gzipped, on GitHub's runners: all of it, and the initial part, the plugin in violet and the app's own CLI in gray.](charts/real-bundle.svg)
 
 | App | Toolchain | All JS | gzip | Initial JS | gzip | CSS |
 |---|---|---:|---:|---:|---:|---:|

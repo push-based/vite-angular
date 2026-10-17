@@ -125,7 +125,11 @@ The fair comparisons are the plugin against `ng build`, since both type-check, a
 
 ## Bundle size
 
-All the JavaScript a build writes, and the initial part: what `index.html` loads plus everything it imports statically, before any lazy route. Gzip at level 9, per file.
+All the JavaScript a build writes, and the initial part: what `index.html` loads plus everything it imports statically, before any lazy route. Gzip at level 9, per file. The figures show the gzipped sizes; the table has the raw ones too.
+
+![All the JavaScript a production build writes, gzipped, per tool and app: the output of the last of the 5 measured builds.](charts/bundle.svg)
+
+![The initial JavaScript, gzipped: what the browser downloads before any lazy route.](charts/bundle-initial.svg)
 
 | App | Toolchain | All JS | gzip | Initial JS | gzip |
 |---|---|---:|---:|---:|---:|

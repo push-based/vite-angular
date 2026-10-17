@@ -250,6 +250,27 @@ function compilerPlugin(
   const readAt = new Map<string, number>();
   /** Template updates waiting for the watcher to report a `.ts` change. */
   const editWaiters = new Map<string, Set<() => void>>();
+  /** `.ts` changes being read, so the environments' reports of one change share the read. */
+  const recordings = new Map<string, Promise<void>>();
+
+  /** Records a `.ts` change the watcher reported, unless it repeats the content already seen. */
+  async function recordEdit(tsFile: string) {
+    // Not a plain read: a read between the save's truncate and its write would record an empty
+    // file, which then never matches disk.
+    const content = await readWritten(tsFile);
+    // FSEvents on macOS reports some writes twice, about 100 ms apart. A report with nothing new
+    // in it isn't a change, and mustn't replace the outcome of the change it repeats.
+    if (content !== undefined && content === lastSeen(tsFile)) {
+      return;
+    }
+    tsEdits.get(tsFile)?.settle(false);
+    let settle!: (inPlace: boolean) => void;
+    const inPlace = new Promise<boolean>((resolve) => (settle = resolve));
+    tsEdits.set(tsFile, {at: ++clock, content, inPlace, settle});
+    for (const waiter of [...(editWaiters.get(tsFile) ?? [])]) {
+      waiter();
+    }
+  }
 
   /** The latest content the plugin has seen for a `.ts` file, from a load or a change. */
   function lastSeen(tsFile: string): string | undefined {
@@ -281,7 +302,7 @@ function compilerPlugin(
    * it never comes.
    */
   async function pageClass(tsFile: string): Promise<'current' | 'reloading' | 'unknown'> {
-    const disk = await fs.promises.readFile(tsFile, 'utf8').catch(() => undefined);
+    const disk = await readWritten(tsFile);
     const seen = lastSeen(tsFile);
     if (disk !== undefined && seen !== undefined && disk !== seen) {
       await nextTsEdit(tsFile, PENDING_EDIT_MS);
@@ -706,7 +727,7 @@ function compilerPlugin(
           // From disk, not `code`: the watcher's reports are compared with it, and another plugin
           // may have changed `code` already.
           const at = ++clock;
-          const content = await fs.promises.readFile(file, 'utf8').catch(() => code);
+          const content = (await readWritten(file)) ?? code;
           loads.set(file, {at, content});
         }
         const ngp = await getCompiler(this.environment.config.consumer);
@@ -750,26 +771,18 @@ function compilerPlugin(
 
     // Vite calls this once per environment for every change, before any hotUpdate, so a template
     // update can see a class change from the same save.
+    // Vite awaits this before any hotUpdate for the change, calling it once per environment, all
+    // at once. One read serves every call.
     watchChange(id) {
       if (!hmr || !TS_MODULE.test(id)) {
         return;
       }
-      let content: string | undefined;
-      try {
-        content = fs.readFileSync(id, 'utf8');
-      } catch {}
-      // FSEvents on macOS reports some writes twice, about 100 ms apart. A report with nothing new
-      // in it isn't a change, and mustn't replace the outcome of the change it repeats.
-      if (content !== undefined && content === lastSeen(id)) {
-        return;
+      let recording = recordings.get(id);
+      if (!recording) {
+        recording = recordEdit(id).finally(() => recordings.delete(id));
+        recordings.set(id, recording);
       }
-      tsEdits.get(id)?.settle(false);
-      let settle!: (inPlace: boolean) => void;
-      const inPlace = new Promise<boolean>((resolve) => (settle = resolve));
-      tsEdits.set(id, {at: ++clock, content, inPlace, settle});
-      for (const waiter of [...(editWaiters.get(id) ?? [])]) {
-        waiter();
-      }
+      return recording;
     },
 
     // Template edits, and .ts edits that only change inline templates or styles, update the
@@ -983,4 +996,24 @@ function isVitest(): boolean {
 
 function cleanId(id: string): string {
   return id.replace(/[?#].*$/, '');
+}
+
+/**
+ * Reads a file that may be in the middle of a write, the way Vite reads a changed file. Saving
+ * truncates the file and then writes it, and a busy thread pool can leave a gap between the two.
+ * An empty read waits up to 100 ms for the write to land. Resolves to undefined if the file is gone.
+ */
+async function readWritten(file: string): Promise<string | undefined> {
+  const content = await fs.promises.readFile(file, 'utf8').catch(() => undefined);
+  if (content !== '') {
+    return content;
+  }
+  const mtime = (await fs.promises.stat(file).catch(() => null))?.mtimeMs;
+  for (let n = 0; n < 10; n++) {
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    if ((await fs.promises.stat(file).catch(() => null))?.mtimeMs !== mtime) {
+      break;
+    }
+  }
+  return fs.promises.readFile(file, 'utf8').catch(() => undefined);
 }

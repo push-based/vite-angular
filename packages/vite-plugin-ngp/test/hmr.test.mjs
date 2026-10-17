@@ -126,8 +126,16 @@ test('a template-only edit updates the component in place', async () => {
 
 test('a template written just before its class reloads once, with no update', async () => {
   sent = [];
-  await write('app.html', TEMPLATE('total'));
-  await write('app.ts', COMPONENT('total'));
+  // One save: both files are on disk before the watcher reports either. Without the hold, a busy
+  // thread pool can land the second write more than 50 ms after the first, which the plugin
+  // rightly treats as two edits.
+  const release = holdReports('app.html');
+  try {
+    await write('app.html', TEMPLATE('total'));
+    await write('app.ts', COMPONENT('total'));
+  } finally {
+    release();
+  }
   await settle(() => reloads().length > 0);
   assert.equal(updates().length, 0);
   assert.equal(reloads().length, 1);
@@ -211,6 +219,26 @@ function delayReports(file, ms) {
   return () => (watcher.emit = emit);
 }
 
+/** Holds the watcher's change reports for `file` until the returned function sends them. */
+function holdReports(file) {
+  const watcher = server.watcher;
+  const emit = watcher.emit;
+  const held = [];
+  watcher.emit = function (event, changed, ...rest) {
+    if (path.basename(changed ?? '') === file && (event === 'change' || event === 'all')) {
+      held.push([event, changed, ...rest]);
+      return true;
+    }
+    return emit.call(this, event, changed, ...rest);
+  };
+  return () => {
+    watcher.emit = emit;
+    for (const args of held) {
+      emit.apply(watcher, args);
+    }
+  };
+}
+
 function reportAgain(file) {
   server.watcher.emit('change', path.join(root, 'src', file));
 }
@@ -282,6 +310,31 @@ test('a template whose class changed without a report reloads, with no update', 
     await write('app.ts', COMPONENT('total', 'green'));
     await write('app.html', TEMPLATE('total'));
     await settle(() => reloads().length > 0);
+  } finally {
+    restore();
+  }
+  assert.equal(updates().length, 0);
+  assert.equal(reloads().length, 1);
+});
+
+test('a class change reported between the save truncating it and writing it reloads once', async () => {
+  await server.environments.client.transformRequest('/src/app.ts');
+  sent = [];
+  const emit = server.watcher.emit;
+  const restore = delayReports('app.ts', null);
+  try {
+    // A save truncates the file, then writes it. Report the change in between, as a watcher can
+    // when the thread pool is busy.
+    const file = path.join(root, 'src/app.ts');
+    await fs.truncate(file);
+    emit.call(server.watcher, 'change', file);
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    await write('app.ts', COMPONENT('renamed', 'green'));
+    await write('app.html', TEMPLATE('renamed'));
+    await settle(() => reloads().length > 0);
+    // A plugin that recorded the empty file waits a second for a report that never comes, then
+    // reloads again.
+    await new Promise((resolve) => setTimeout(resolve, 1200));
   } finally {
     restore();
   }

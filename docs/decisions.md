@@ -415,7 +415,7 @@ The listener first came from `transformIndexHtml`. An app that serves its page w
 
 ## 35. Hold a template update only while the page's class is out of date
 
-*16 October 2026. Supersedes 22. Narrowed by 48.*
+*16 October 2026. Supersedes 22. Narrowed by 48. Amended by 49.*
 
 **Decision.** A template update still waits 50 ms. Then the plugin holds it back only if the component's `.ts` file changed after the browser last loaded it, and that change wasn't applied in place. The page reloads for that change and loads the template with it. If the `.ts` file on disk differs from every version the plugin has seen, the plugin waits up to a second for the watcher to report it, and reloads if the report never comes. A watcher report whose content the plugin has already seen isn't a change: it records nothing, and sends no update.
 
@@ -570,3 +570,16 @@ Dropping the wait was the alternative. On macOS the watcher's delay would cover 
 **Cost.** The modification time has to be the write time. A tool that keeps a file's old time (`cp -p`, `rsync -t`, unpacking an archive) gets no wait, and so does a file system that stores whole seconds (HFS+, FAT), where most writes look old. Then a class written right after its template gets decision 22's failed update and a reload. A file server whose clock is ahead can only make the plugin wait the full 50 ms, never longer. The 40 ms left on a fast report is still a guess at how far apart an editor writes one save's files, and it's why the fastest edit is 58 ms against oxc's 16.
 
 **Revisit when** someone measures how far apart editors and `git checkout` write one save's files. If it's well under 50 ms, the window can shrink, and the fastest edit with it.
+
+## 49. Read a reported `.ts` file as Vite does, waiting out an empty read
+
+*17 October 2026. Amends 35.*
+
+**Decision.** The three places that read a `.ts` file to decide about a template update (`watchChange` recording a reported change, the class check in `pageClass`, and the transform recording what the browser loaded) use one helper, `readWritten`. If the file reads empty, it waits up to 100 ms for the file's modification time to change, then reads again. That's Vite's own `readModifiedFile`. `watchChange` is async now. Vite awaits it once per environment, all at the same time, so the environments' calls for one change share a single read.
+
+**Why.** CI failed twice in a row on the dev-server HMR test, on GitHub's runner only. Neither failure reproduced in 45 instrumented CI runs, nor in about 100 local runs on macOS and Linux, loaded or starved. Writing a file truncates it and then writes it, as two separate steps on Node's thread pool, and a busy pool can leave a gap between them. `watchChange` read the file synchronously when the watcher reported it. Caught in the gap, it recorded the class as empty. That never matched disk, so the next template edit waited the full second for a report that never came, and reloaded the page a second time. The second reload landed in the next test, which is the shape of the second failure. A test now reports a change between the truncate and the write. The old code sends two reloads there, and this one sends one. The first failure was the test's own fault: its two writes landed more than 50 ms apart, which the plugin rightly treats as two edits. The test now holds the watcher's reports until both files are written.
+
+**Cost.** An empty `.ts` file now takes up to 100 ms longer to reach the plugin, because it can't be told apart from one caught mid-write. Vite pays the same price. The fix covers only the cause the evidence fits: neither failure was caught with logging on, so a third cause can't be ruled out.
+
+**Revisit when** CI fails on `hmr.test.mjs` again. The debug workflow that looped it with event logging is in this entry's commit message.
+

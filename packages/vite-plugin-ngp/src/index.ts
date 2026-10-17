@@ -250,7 +250,10 @@ function compilerPlugin(
   const readAt = new Map<string, number>();
   /** Template updates waiting for the watcher to report a `.ts` change. */
   const editWaiters = new Map<string, Set<() => void>>();
-  /** `.ts` changes being read, so the environments' reports of one change share the read. */
+  /**
+   * The latest report being recorded for each `.ts` file. Reports for one file are recorded one
+   * after another, so each reads the file only once the one before has finished.
+   */
   const recordings = new Map<string, Promise<void>>();
 
   /** Records a `.ts` change the watcher reported, unless it repeats the content already seen. */
@@ -772,16 +775,23 @@ function compilerPlugin(
     // Vite calls this once per environment for every change, before any hotUpdate, so a template
     // update can see a class change from the same save.
     // Vite awaits this before any hotUpdate for the change, calling it once per environment, all
-    // at once. One read serves every call.
+    // at once. Chained, not shared: the environments' calls for one save read the same content,
+    // and every call after the first is a repeat. A second save of the file that's reported while
+    // the first is still being read gets its own read, after it.
     watchChange(id) {
       if (!hmr || !TS_MODULE.test(id)) {
         return;
       }
-      let recording = recordings.get(id);
-      if (!recording) {
-        recording = recordEdit(id).finally(() => recordings.delete(id));
-        recordings.set(id, recording);
-      }
+      const before = recordings.get(id)?.catch(() => {}) ?? Promise.resolve();
+      const recording = before.then(() => recordEdit(id));
+      recordings.set(id, recording);
+      recording
+        .finally(() => {
+          if (recordings.get(id) === recording) {
+            recordings.delete(id);
+          }
+        })
+        .catch(() => {});
       return recording;
     },
 

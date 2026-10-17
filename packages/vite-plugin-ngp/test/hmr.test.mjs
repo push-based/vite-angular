@@ -32,6 +32,9 @@ let root;
 let server;
 /** Everything the plugin and Vite sent over the client's HMR channel. */
 let sent = [];
+/** When the last of `sent` was sent, and when a delayed watcher report was last let through. */
+let lastSentAt = 0;
+let lastReportAt = 0;
 
 before(async () => {
   // Inside the repo, so Angular resolves from the root node_modules.
@@ -64,6 +67,7 @@ before(async () => {
   const send = hot.send.bind(hot);
   hot.send = (payload, ...rest) => {
     sent.push(payload);
+    lastSentAt = Date.now();
     return send(payload, ...rest);
   };
   // Puts the component in the client's module graph, as a page load would.
@@ -195,7 +199,10 @@ function delayReports(file, ms) {
   watcher.emit = function (event, changed, ...rest) {
     if (path.basename(changed ?? '') === file && (event === 'change' || event === 'all')) {
       if (ms !== null) {
-        setTimeout(() => emit.call(this, event, changed, ...rest), ms);
+        setTimeout(() => {
+          lastReportAt = Date.now();
+          emit.call(this, event, changed, ...rest);
+        }, ms);
       }
       return true;
     }
@@ -217,6 +224,20 @@ test('a template reported twice sends one update', async () => {
   await pause();
   assert.equal(updates().length, 1);
   assert.equal(reloads().length, 0);
+});
+
+test('a template reported after the batch window sends its update without waiting again', async () => {
+  sent = [];
+  const restore = delayReports('app.html', 100);
+  try {
+    await write('app.html', TEMPLATE('count', 'Late'));
+    await settle(() => updates().length > 0);
+  } finally {
+    restore();
+  }
+  assert.equal(updates().length, 1);
+  // The window is 50 ms from the write, and the report came at least 100 ms after it.
+  assert.ok(lastSentAt - lastReportAt < 50, `sent ${lastSentAt - lastReportAt} ms after the report`);
 });
 
 test('a template reported before a late class change sends no update', async () => {

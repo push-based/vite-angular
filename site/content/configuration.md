@@ -117,4 +117,10 @@ You don't configure these, but they explain what you see when you debug:
 - With `budgets`: on the browser build, a `transform` that measures each component stylesheet after `vite:css`, and a `generateBundle` hook that checks the sizes and logs the CLI's messages.
 - With `i18n`: any `@angular/localize` entry in `polyfills` is dropped. In the dev server: `optimizeDeps.include` with `@angular/localize`, its `init` entry and the dev locale's data, and an import added to the top of each entry module that sets up `$localize`. In `vite build` and `vite preview`: `base: './'` and `build.copyPublicDir: false`, because the plugin writes every file below `<outDir>/<locale>/` itself, including the public directory. `vite preview` gets a middleware that serves each locale's `index.html` and redirects `/` to a locale. See [Internationalization](i18n).
 
-To watch the plugin work, set `DEBUG=vite-plugin-ngp`. It logs every module ngp compiles, and how long each took, to stderr.
+To watch the plugin work, set `DEBUG=vite-plugin-ngp`. It logs every module ngp compiles, and how long each took, to stderr. For each template update it also logs how long each step took, from the watcher's report to sending the update:
+
+```text
+vite-plugin-ngp hmr src/app/home.ts: watcher 111.8, read 0.1, analyze 0.6, owner 0.0, wait 0.2, class 0.1, emit 3.3, transform 0.5, send 0.1 ms
+```
+
+`watcher` is the time from the template's write to the watcher's report, and `wait` is what was left of the 50 ms after the write. See [How it works](how-it-works#component-hmr).

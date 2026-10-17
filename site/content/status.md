@@ -54,4 +54,4 @@ The [Performance](performance) page measures the plugin's dev server and builds 
 - **Real apps with third-party libraries.** The generated apps use only Angular's own packages. An app with Material or NgRx sends more packages through the Babel linker, which probably already costs the plugin about 0.4 s of a cold start at 5,000 components.
 - **Linux and Windows.** Every number is from macOS, where Vite's file watcher adds up to about 100 ms to each edit.
 - **Memory.** The plugin holds ngp's analyzer and a `tsgo` process next to Vite. Nobody has measured how much that is on a large app.
-- **Where an edit's time goes.** A template edit takes at least about 70 ms in the plugin, against 5–20 ms in `@oxc-angular/vite`, and nobody has profiled the difference.
+- **How far apart one save writes its files.** The plugin holds a template update until 50 ms after the template was written, in case the same save changes the component's class. That 50 ms is a guess, and it's why the fastest template edit takes about 60 ms in the plugin against about 16 ms in `@oxc-angular/vite`. See [Performance](performance#template-edits).

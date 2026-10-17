@@ -12,6 +12,8 @@ What changed in vite-plugin-ngp, newest first. The plugin isn't on npm, so there
 ### Editing in the dev server
 
 - A save can no longer be undone by a module Vite read just before it: components compiled afterwards see the saved file. [How it works](how-it-works#handling-an-edit)
+- Template edits reach the page about 50 ms sooner on macOS. The plugin's 50 ms wait for the rest of a save now counts from when the template was written, not from when Vite's watcher reported it, and the watcher usually reports later than that. At 1,000 components the median template edit went from 169 ms to 120 ms. [How it works](how-it-works#component-hmr), [Performance](performance#template-edits)
+- `DEBUG=vite-plugin-ngp` also logs how long each step of a template update took. [Configuration](configuration#what-the-plugin-sets-for-you)
 
 ### This site
 

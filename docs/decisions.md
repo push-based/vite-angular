@@ -415,7 +415,7 @@ The listener first came from `transformIndexHtml`. An app that serves its page w
 
 ## 35. Hold a template update only while the page's class is out of date
 
-*16 October 2026. Supersedes 22.*
+*16 October 2026. Supersedes 22. Narrowed by 48.*
 
 **Decision.** A template update still waits 50 ms. Then the plugin holds it back only if the component's `.ts` file changed after the browser last loaded it, and that change wasn't applied in place. The page reloads for that change and loads the template with it. If the `.ts` file on disk differs from every version the plugin has seen, the plugin waits up to a second for the watcher to report it, and reloads if the report never comes. A watcher report whose content the plugin has already seen isn't a change: it records nothing, and sends no update.
 
@@ -556,3 +556,17 @@ It also fixes the opposite mistake. Under 22, a template reported more than 50 m
 **Why.** The repo depends on nothing private. ngp is built from Angular's public source, and the bench results the Performance page cites are in this repo's `bench/results/`. A public repo is the only way someone outside PushBased can try per-module Angular compilation before Angular publishes ngp, and the docs site already was public.
 
 **Cost.** Everything in the repo is published the moment it's pushed, docs and decisions included, so the no-machine-paths rule and the measured-numbers-only rule now apply to every file, not just the site.
+
+## 48. Count a template update's 50 ms wait from the template's write
+
+*17 October 2026. Narrows 35.*
+
+**Decision.** A template update waits until 50 ms after the template file's modification time, not 50 ms after the watcher reports the change. When the report comes later than that, the update goes out at once. The rest of [decision 35](#35-hold-a-template-update-only-while-the-pages-class-is-out-of-date) stands: the class check, the wait for a class change the watcher hasn't reported, and ignoring repeated reports.
+
+**Why.** Timing each step of the update path (`DEBUG=vite-plugin-ngp` now logs them) on the bench's 1,000-component app showed where a template edit's time went. The watcher took 4–112 ms to report the write. The wait took 50 ms. Everything else took about 5 ms: reading the file, the analyzer update, ngp's update module (3.3 ms), oxc stripping its types and sending the event. The browser asked for the update module under 1 ms after the event. So the wait was nearly all of the gap to `@oxc-angular/vite`. It exists for one save that writes the template and then the class a few milliseconds later. That's a question about when the files were written, so it counts from the write. On macOS the watcher usually reports a write about 110 ms after it, and by then the window is long over. With 20 edits each, in one run per version, the median template edit at 1,000 components went from 169 ms to 120 ms, against 117 ms for `@oxc-angular/vite` in the same run. The fastest went from 69 ms to 58 ms, not further: when the watcher reports within about 10 ms, about 40 ms of the window is still left.
+
+Dropping the wait was the alternative. On macOS the watcher's delay would cover most saves anyway. Nobody has measured Linux, but a watcher there that reports within a millisecond would send the template update before a class written right after it, and the page would get a failed update and an error before reloading.
+
+**Cost.** The modification time has to be the write time. A tool that keeps a file's old time (`cp -p`, `rsync -t`, unpacking an archive) gets no wait, and so does a file system that stores whole seconds (HFS+, FAT), where most writes look old. Then a class written right after its template gets decision 22's failed update and a reload. A file server whose clock is ahead can only make the plugin wait the full 50 ms, never longer. The 40 ms left on a fast report is still a guess at how far apart an editor writes one save's files, and it's why the fastest edit is 58 ms against oxc's 16.
+
+**Revisit when** someone measures how far apart editors and `git checkout` write one save's files. If it's well under 50 ms, the window can shrink, and the fastest edit with it.

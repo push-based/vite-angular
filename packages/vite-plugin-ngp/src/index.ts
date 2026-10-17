@@ -149,8 +149,29 @@ const TS_MODULE = /\.[cm]?ts$/;
 const debug = /(?:^|,)vite-plugin-ngp(?:,|$)/.test(process.env['DEBUG'] ?? '');
 
 /**
- * How long a template update waits for the rest of its save. An editor saving all files, a git
- * checkout or a rename across files writes them within a few milliseconds.
+ * Times the steps of one template update, for `DEBUG=vite-plugin-ngp`. The first step is the
+ * watcher's: from the file's write to its report.
+ */
+class Spans {
+  private last = performance.now();
+  private readonly parts: string[];
+  constructor(file: string) {
+    const written = fs.statSync(file, {throwIfNoEntry: false})?.mtimeMs ?? Date.now();
+    this.parts = [`watcher ${(Date.now() - written).toFixed(1)}`];
+  }
+  lap(name: string) {
+    const now = performance.now();
+    this.parts.push(`${name} ${(now - this.last).toFixed(1)}`);
+    this.last = now;
+  }
+  toString() {
+    return this.parts.join(', ') + ' ms';
+  }
+}
+
+/**
+ * How long after its write a template update waits for the rest of its save. An editor saving all
+ * files, a git checkout or a rename across files writes them within a few milliseconds.
  */
 const EDIT_BATCH_MS = 50;
 
@@ -361,12 +382,13 @@ function compilerPlugin(
   }
 
   /** Stores update modules, invalidates `tsFile` without a reload, and tells the page. */
-  async function sendUpdates(environment: DevEnvironment, tsFile: string, updates: HmrUpdate[], timestamp: number) {
+  async function sendUpdates(environment: DevEnvironment, tsFile: string, updates: HmrUpdate[], timestamp: number, spans?: Spans) {
     for (const update of updates) {
       // Update modules name external stylesheets by path too.
       const js = await transformWithOxc(rewriteToUrls(update.code).code, `${tsFile}.hmr.ts`, {lang: 'ts'});
       componentUpdates.set(decodeURIComponent(update.id), js.code);
     }
+    spans?.lap('transform');
     // Invalidate without reloading, so the next full load compiles the new code.
     const graph = environment.moduleGraph;
     for (const mod of graph.getModulesByFile(tsFile) ?? []) {
@@ -375,6 +397,10 @@ function compilerPlugin(
     for (const update of updates) {
       environment.hot.send({type: 'custom', event: 'angular:component-update', data: {id: update.id, timestamp}});
       config.logger.info(`hmr update ${decodeURIComponent(update.id)}`, {timestamp: true});
+    }
+    if (spans) {
+      spans.lap('send');
+      process.stderr.write(`vite-plugin-ngp hmr ${path.relative(config.root, tsFile)}: ${spans}\n`);
     }
   }
 
@@ -392,6 +418,7 @@ function compilerPlugin(
     owner: string,
     stale: string[],
     timestamp: number,
+    spans?: Spans,
   ) {
     const graph = environment.moduleGraph;
     const invalidate = () => {
@@ -401,8 +428,16 @@ function compilerPlugin(
         }
       }
     };
-    await new Promise((resolve) => setTimeout(resolve, EDIT_BATCH_MS));
+    // Counted from the write, not the watcher's report: on macOS the report alone often takes
+    // longer than the window.
+    const written = (await fs.promises.stat(file).catch(() => null))?.mtimeMs ?? Date.now();
+    const wait = Math.min(EDIT_BATCH_MS, written + EDIT_BATCH_MS - Date.now());
+    if (wait > 0) {
+      await new Promise((resolve) => setTimeout(resolve, wait));
+    }
+    spans?.lap('wait');
     const page = await pageClass(owner);
+    spans?.lap('class');
     if (page === 'reloading') {
       // The page reloads for the class change, and then loads this template with it.
       invalidate();
@@ -413,8 +448,9 @@ function compilerPlugin(
         throw new Error(`${path.basename(owner)} changed on disk, and the watcher never reported it`);
       }
       const updates = await ngp.hmrUpdates(owner, file);
+      spans?.lap('emit');
       if (updates.length > 0) {
-        await sendUpdates(environment, owner, updates, timestamp);
+        await sendUpdates(environment, owner, updates, timestamp, spans);
         return;
       }
     } catch (error) {
@@ -740,6 +776,7 @@ function compilerPlugin(
     // component in place. Every other edit returns the affected modules, and since compiled
     // components don't accept updates, Vite reloads the page.
     async hotUpdate({file, type, read, timestamp, modules}) {
+      const spans = debug && file.endsWith('.html') && this.environment.name === 'client' ? new Spans(file) : undefined;
       // Each environment updates its own compiler, so the server renders the edit too.
       const compiler = compilers.get(this.environment.config.consumer);
       // The analyzer holds the replacement's content for a replaced file, so an edit to the
@@ -782,8 +819,11 @@ function compilerPlugin(
         return invalidateAll(graph, [...modulesOf(graph, stale), ...importers], modules);
       }
 
+      spans?.lap('read');
       const {stale, previous} = await ngp.update(file, content, 'watcher');
+      spans?.lap('analyze');
       const owner = file.endsWith('.html') ? await ngp.componentForTemplate(file) : null;
+      spans?.lap('owner');
       // The watcher reported a write this compiler already has. The report that brought it
       // handled it.
       const repeat = previous === content;
@@ -792,7 +832,7 @@ function compilerPlugin(
         // Decided in the background: Vite runs the other environments' hotUpdate only after this
         // one returns, and the server has to see the new template before the page reloads.
         if (!repeat) {
-          void updateTemplate(this.environment, ngp, file, owner, stale, timestamp);
+          void updateTemplate(this.environment, ngp, file, owner, stale, timestamp, spans);
         }
         // Returning [] would make Vite reload: it treats every changed .html file with no modules
         // as a page. A node for the template that Vite has never transformed stops update

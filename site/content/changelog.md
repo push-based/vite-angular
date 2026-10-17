@@ -34,6 +34,7 @@ What changed in vite-plugin-ngp, newest first. The plugin isn't on npm, so there
 
 ### This site
 
+- A new page, [Compared with alternatives](comparison), sets vite-plugin-ngp next to `ng serve`, Analog (its default path and `fastCompile`) and `@oxc-angular/vite`: when each compiles, whose compiler it runs, type-checking, HMR, SSR, linking, and how you get it, with a source for every claim and where the plugin is weaker.
 - [Migrating from ng build](migrating-from-ng-build#where-every-option-goes) now says where `localize` and `i18nMissingTranslation` go, since i18n works. It listed them as not yet possible.
 - An editing pass over every page: stale counts fixed, and the Server rendering page's prerender timing remeasured on the current 14 pages. [Server rendering](server-rendering#prerendering-for-static-hosting)
 - The repo, [push-based/vite-angular](https://github.com/push-based/vite-angular), is public. [Getting started](getting-started#1-build-ngp) now starts with `git clone` instead of asking for access, and no page calls the repo private any more.

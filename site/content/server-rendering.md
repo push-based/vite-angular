@@ -73,7 +73,7 @@ for (const route of routes) {
 }
 ```
 
-`routes` is a named export from the same server entry. It comes from the list that builds the site's router and sidebar, so a new page gets prerendered without touching the script. The site also renders a `404.html`, which GitHub Pages serves for any unknown path. Rendering the site's 14 pages took 5 to 34 ms each in the build of 17 October 2026, on an M2 Max.
+`routes` is a named export from the same server entry. It comes from the list that builds the site's router and sidebar, so a new page gets prerendered without touching the script. The site also renders a `404.html`, which GitHub Pages serves for any unknown path. Rendering the site's 16 pages took 5 to 29 ms each in the build of 17 October 2026, on an M2 Max.
 
 ## Limits
 

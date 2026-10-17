@@ -9,7 +9,7 @@ Every dev server built on Angular's compiler compiles your whole program before 
 
 ## Why per-module compilation was impossible before
 
-ngc, the compiler behind `ng serve` and `ng build`, can't compile one file until it has built a TypeScript program of the whole project and analyzed every decorator in it. So every tool built on ngc works around Vite instead of with it. `ng serve` runs esbuild and uses Vite only to serve the output. `@analogjs/vite-plugin-angular` compiles the program up front and ignores the code Vite passes to its transform.
+ngc, the compiler behind `ng serve` and `ng build`, can't compile one file until it has built a TypeScript program of the whole project and analyzed every decorator in it. So every tool built on ngc works around Vite instead of with it. `ng serve` runs esbuild and uses Vite only to serve the output. `@analogjs/vite-plugin-angular` compiles the program up front and ignores the code Vite passes to its transform. [Compared with alternatives](comparison) puts the two next to Analog's per-file `fastCompile` and `@oxc-angular/vite`.
 
 ngp, which Angular merged on 8 October 2026, splits the compiler in two. A Rust analyzer, built on [oxc](https://oxc.rs), reads decorators and resolves references across files, and it answers per file, on demand. Angular's existing template compiler, in TypeScript, then generates the code. For each file ngp returns plain TypeScript with the decorators compiled away, which is exactly what a Vite transform should return.
 

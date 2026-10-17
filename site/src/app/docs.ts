@@ -34,6 +34,7 @@ export interface DocEntry {
 export const DOCS: DocEntry[] = [
   {path: 'getting-started', label: 'Getting started', section: 'Guide', load: () => import('../../content/getting-started.md').then((m) => m.default)},
   {path: 'how-it-works', label: 'How it works', section: 'Guide', load: () => import('../../content/how-it-works.md').then((m) => m.default)},
+  {path: 'comparison', label: 'Compared with alternatives', section: 'Guide', load: () => import('../../content/comparison.md').then((m) => m.default)},
   {path: 'configuration', label: 'Configuration', section: 'Guide', load: () => import('../../content/configuration.md').then((m) => m.default)},
   {path: 'migrating-from-ng-build', label: 'Migrating from ng build', section: 'Guide', load: () => import('../../content/migrating-from-ng-build.md').then((m) => m.default)},
   {path: 'server-rendering', label: 'Server rendering', section: 'Guide', load: () => import('../../content/server-rendering.md').then((m) => m.default)},

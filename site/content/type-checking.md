@@ -9,7 +9,7 @@ ngp compiles a module without type-checking it, so a typo in a template compiles
 
 ## What you see
 
-In the dev server, a check runs a second after the server starts and again 300 ms after each edit. Errors appear in the terminal and in Vite's error overlay, at the template line and column:
+In the dev server, the first check runs once the server has gone quiet after starting: half a second with no request to answer and no module to compile, which on a big app is once your first page has loaded. After that, a check runs 300 ms after each edit. Errors appear in the terminal and in Vite's error overlay, at the template line and column:
 
 ```text
 [vite-plugin-ngp] type-check: 1 error (156 ms)
@@ -80,7 +80,7 @@ Then it runs `tsgo` on that tsconfig, in a child process. For an error inside a 
 ## Where it's weak
 
 - **Every check is a whole-program check.** `tsgo` keeps an incremental cache between runs, but each run still loads the whole program. On the repo's playground, 19 components at the time, a check takes 100–250 ms in the dev server. On a 5,000-component app, a planted template error reached the terminal 1.45 s after the edit, 300 ms of it the wait before the check starts. `ng serve` took 1.66 s for the same error ([Performance](performance#type-errors-in-the-dev-server)). So on a large app expect errors a second or two after the edit, not milliseconds.
-- **Startup does extra work on Vite's thread.** The first check generates every component's block, one file at a time, while your first page loads. On the playground's 19 components that took 60 ms. It hasn't been measured on a large app.
+- **The first errors come after the first page.** The first check generates every component's block on Vite's thread, one file at a time, and that used to run while your first page was compiling. On Super Productivity, 252 components, the blocks took 0.67 s of the thread and everything the page needed waited behind them. So the first check now waits until the server has been idle for half a second. Measured on 17 October 2026 on a laptop, warm restarts of that app, medians of 5: first paint went from 6.72 s to 6.00 s, and the first error report moved from 7.1 s after the start to 8.9 s, since the check now starts after the page instead of alongside it. An app that never leaves the server idle, say one polling a file it serves every few hundred milliseconds, gets its first check 60 s after the start instead. Checks after edits are unchanged.
 - **Your Vite cache directory has to be inside the project.** The check's tsconfig lives there, and TypeScript resolves `types` entries like `vite/client` from it. The default, `node_modules/.vite`, works. If you set `cacheDir` outside the project and your tsconfig lists `types`, every check fails with TS2688.
 - **One position differs from `ng build`.** A template given as an expression, like `template: TEMPLATE`, gets its errors at that expression, not inside the string.
 - **It installs TypeScript 7.** The plugin depends on `typescript@7.0.2`, under the name `typescript7`, because Angular needs TypeScript 6 under the name `typescript`. That's a 26 MB native binary on macOS arm64.

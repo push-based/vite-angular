@@ -198,7 +198,7 @@ Each entry records one choice: what we decided, why, what it costs, and when to 
 
 ## 18. Bundle @angular/* in server environments
 
-*16 October 2026. Partly superseded by 20, which widens what's bundled.*
+*16 October 2026. Partly superseded by 20, which widens what's bundled; 54 caches the bundled libraries in dev.*
 
 **Decision.** Server environments set `resolve.noExternal: [/^@angular\//]` and define `ngServerMode: true` and `ngHmrMode: false`.
 
@@ -345,7 +345,7 @@ The `ng build` row is the playground copied into a CLI project with an `angular.
 
 *16 October 2026*
 
-**Decision.** The plugin type-checks with TypeScript 7's CLI (`tsgo`, installed as the `typescript7` alias of `typescript@7.0.2`), spawned as a child process with `--pretty false`. Its program is the app's own tsconfig, extended: the app's `include` stays, the type-check block of every component file is added under `files`, and `rootDirs` lists the blocks' directory next to the filesystem root. The blocks come from `HybridCompiler.getTcbForFile`, per file, cached until the analyzer marks a file stale. They're written under Vite's cache directory at each component's absolute path. A block's `import * as i0 from './app'` then resolves to the app's own `app.ts`, not to ngp's compiled output. Errors inside a block are mapped to the template with Angular's own rule (compiler-cli's `findSourceLocation`): from the node at the error, walk up to the first node followed by a `/*start,end*/` span comment, and take the template file from the block's `ngp-tcb-template-sources` comment. Errors in host bindings map to the component's `.ts`. In dev, a check runs 1 s after the server starts and 300 ms after the last edit, never two at once, and reports to the terminal and to Vite's error overlay when the set of errors changes. `vite build` starts the check after the last module is transformed, waits for it in `generateBundle`, and fails on any error. `typeCheck: false` turns it off, and it's off by default under Vitest.
+**Decision.** The plugin type-checks with TypeScript 7's CLI (`tsgo`, installed as the `typescript7` alias of `typescript@7.0.2`), spawned as a child process with `--pretty false`. Its program is the app's own tsconfig, extended: the app's `include` stays, the type-check block of every component file is added under `files`, and `rootDirs` lists the blocks' directory next to the filesystem root. The blocks come from `HybridCompiler.getTcbForFile`, per file, cached until the analyzer marks a file stale. They're written under Vite's cache directory at each component's absolute path. A block's `import * as i0 from './app'` then resolves to the app's own `app.ts`, not to ngp's compiled output. Errors inside a block are mapped to the template with Angular's own rule (compiler-cli's `findSourceLocation`): from the node at the error, walk up to the first node followed by a `/*start,end*/` span comment, and take the template file from the block's `ngp-tcb-template-sources` comment. Errors in host bindings map to the component's `.ts`. In dev, a check runs 1 s after the server starts (changed by decision 53: now once the server is idle) and 300 ms after the last edit, never two at once, and reports to the terminal and to Vite's error overlay when the set of errors changes. `vite build` starts the check after the last module is transformed, waits for it in `generateBundle`, and fails on any error. `typeCheck: false` turns it off, and it's off by default under Vitest.
 
 **Why.** ngp doesn't type-check, by design: its CLI writes `.ngtypecheck.ts` files for a separate TypeScript run. The bench measured that pipeline (S3/S4) on two real apps at 1.87× and 2.04× ngc's speed with `tsgo`, and at 0.90× and 0.97× with `tsc` 6, so TypeScript 7 it is. A child process keeps the Go checker off Vite's thread, so transforms and HMR never wait for it. Checking the app's original sources rather than ngp's compiled output means TypeScript errors need no source map: they're already at the right line and column, and ngp's output, which carries `// @ts-ignore` imports and template functions, never enters the program. The bench checked ngp's output because it also emitted from it. The plugin doesn't emit, Vite does. Getting blocks per file from the compiler, instead of running ngp's CLI, means an edit regenerates only the stale files' blocks. On the playground, a check after an edit takes 100–250 ms in dev, and 90–110 ms in `vite build` for the playground and the docs site. Vite's overlay closes only on the next module update or page reload, and an in-place template update is neither, so a 20-line client module opens and closes the overlay itself, and a page that loads later asks for the current errors.
 
@@ -624,7 +624,55 @@ Generating the figures at the site's build time, from the result files, was the 
 
 **Revisit when** the index grows enough that its first load is noticeable on a phone, or when the site gets a second language.
 
-## 53. tsrs as an opt-in type-checker, tsgo as the default
+## 53. Start the first type-check once the dev server is idle, not 1 s after it starts
+
+*17 October 2026*
+
+**Decision.** In the dev server, the first type-check starts once the server has been idle for 500 ms: no HTTP request being answered, counted by a middleware installed ahead of Vite's own, and no module in the plugin's transform hook. If the server never goes idle for that long, the check starts 60 s after the server began listening. Checks after edits keep their 300 ms debounce, two checks never run at once, and `vite build` is unchanged. Decision 29's fixed 1 s delay is superseded.
+
+**Why.** Generating a type-check block is synchronous ngp work on Vite's thread, and the first check generates one for every component file in the program. On the playground that's 20 blocks in 60 ms, which the 1 s delay hid. On Super Productivity, 252 components and about 1,300 modules on the first page, a CPU profile on 17 October 2026 put `getTcbForFile` at 671 ms inside the 7.6 s to first paint, with the thread saturated the whole time: every module the page was waiting for, including the global Sass stylesheet, queued behind the blocks. The 1 s delay only decides when that contention starts. Waiting for the server to go idle moves the whole of it after the page. Measured on the laptop (M2 Max, load average 3 to 7 from other sessions), warm restarts of Super Productivity through the bench's Chrome harness, one warm-up and 5 measured, medians: first contentful paint 6.72 s before and 6.00 s after, the page rendered at 7.46 s before and 6.58 s after. The 0.72 s gained matches the profile's 671 ms. Other options: generating the blocks in a worker thread would keep the first error report where it was, at the cost of a second analyzer's memory and a second tsconfig read, and generating each block as its file is compiled would still run on the thread during the page. Idle is a request count rather than only the plugin's own transforms because a single long transform, like a 4 s Sass compile that is mostly waiting on the Sass process, has no plugin transform in flight and would look idle.
+
+**Cost.** The first error report comes later: on Super Productivity, 8.9 s after the start instead of 7.1 s, because the check used to start at 1 s and run `tsgo` alongside the page. The idle wait is 500 ms of pure delay on a small app where the page loads in under a second. An app that keeps the dev server busy without a pause, such as one polling a file the server serves every few hundred milliseconds, waits the full 60 s for its first check; its edits are checked as before. The type-error time after an edit was measured on the generated 1,000-component app with `bench/run.mjs --metrics typecheck` before and after, 2 warm-ups and 10 measured edits each, on the same laptop the same evening: the error reached the terminal in a median of 660 ms before and 650 ms after, and the fix cleared it in 612 ms before and 659 ms after, with every sample between 554 and 691 ms. The Performance page's 639 ms for this app was measured earlier in the day on a quieter machine; the check after an edit doesn't go through the idle wait, so no change was expected.
+
+**Revisit when** ngp can generate blocks off the main thread, or when the first page's compile stops being thread-bound. Then the check can start at once again.
+
+## 54. Pre-bundle the server's Angular libraries once, without source maps
+
+*17 October 2026. Amends 18.*
+
+**Decision.** In the dev server with `ssr`, the `ssr` environment pre-bundles its dependencies the way the client does: `optimizeDeps` with discovery on, scanning the server entry, with the linker as a Rolldown plugin. Only the libraries `resolve.noExternal` names go into the bundle; a Rolldown plugin marks every other bare import from inside them external, so Node loads one copy of rxjs for the bundle and for the app, as it did before. The server's compile-time globals (`ngServerMode`, `ngJitMode`, `ngHmrMode`, `ngI18nClosureMode`) are baked into the bundle, and the bundle's source maps are deleted once Rolldown has written them. With `i18n`, the prelude's imports go into the server bundle's `include` too. The cache is `node_modules/.vite/deps_ssr`, and Vite's own rules decide when it's rebuilt: the lockfile, the resolve options or the plugin list changed, or `--force`. Builds and Vitest are untouched: both still rely on `noExternal` and the transform-time linker.
+
+**Why.** The Performance page measures the dev server without SSR, and the playground with `ssr: true`, which is what `pnpm dev` runs, took almost three times as long to show its first page. A CPU profile of a warm restart on 17 October found that the time was Vite's `ssr` environment loading Angular's packages from `fesm2022` on every start: the Babel linker about 385 ms, Vite's module-runner transform and its source-map combining about 320 ms, import analysis about 120 ms. The client never pays that twice, because its pre-bundled dependencies sit in `node_modules/.vite/deps`. Vite turns the optimizer off for server environments by default, since Node can load `node_modules` itself, but Angular libraries can't be left to Node ([decisions 18 and 20](#18-bundle-angular-in-server-environments)), so they went through the whole pipeline on every start with nothing cached.
+
+Measured on the playground, warm restarts, median of 6, first `GET /` with `accept: text/html` after the server listens, M2 Max, Node 26.12, Vite 8.3.4, before decision 53 moved the first type-check off the first page, so the check ran alongside the page in every row (`measure.mjs` in the session's scratchpad, not in the repo):
+
+| | listening | first page | start to page |
+|---|---|---|---|
+| before | 234 ms | 1,307 ms | 1,541 ms |
+| with the `deps_ssr` cache | 243 ms | 952 ms | 1,198 ms |
+| plus baked globals and no maps | 240 ms | 740 ms | 977 ms |
+
+The cache alone removed the linker. The next 210 ms were Vite reading each chunk's hidden source map (1.6 MB for core), parsing it and combining it with the module-runner transform's map, plus `vite:define` running oxc over every chunk to replace the globals. Baking the globals leaves `vite:define` nothing to match, and without a `.map` file next to the chunk Vite has nothing to combine. What's left of the 740 ms, from the profile after the change: Vite's module-runner transform of the 1.5 MB pre-bundle (130 ms, 100 of it parsing), Node linking the modules it loads itself, ngp compiling the page's own modules (about 75 ms) and evaluating them (about 65 ms). The first start after an install or a config change pre-bundles the server's libraries, about 0.35 s on the playground, and `DEBUG=vite:deps` shows it.
+
+A disk cache of the linker's output, keyed by file content and Angular version, was the alternative. It would have removed the linker's 385 ms in both environments and under Vitest, but left Vite's transform and source-map work in place, and added a cache the plugin would own, invalidate and document. Vite already has one.
+
+**Cost.** A server stack trace through Angular's code points into `node_modules/.vite/deps_ssr/core-<hash>.js`, readable and unminified, rather than into `fesm2022/core.mjs`. The app's own modules keep their maps. A library first imported while the server runs is bundled then, and Vite reloads the server program, about a second on the playground; the client does the same. The Rolldown plugin that externalizes decides like Vite's `shouldExternalize`, by whether a bare import resolves into `node_modules`, but it's a copy of that rule, not a call to it. A server environment other than `ssr` gets `noExternal` and no pre-bundling, as before.
+
+**Revisit when** Vite lets a server environment share the client's optimizer rules, or offers a way to turn off the pre-bundle's source maps instead of deleting them, or when Angular's oxc-based linker becomes usable and the linker stops being worth caching.
+
+## 55. Compile apps, not libraries
+
+*17 October 2026*
+
+**Decision.** The plugin builds and serves applications. It doesn't write a library: no `.d.ts` emit, no partially compiled `ɵɵngDeclare` output, no Angular Package Format bundle. A library inside a workspace compiles as part of the app that imports it, from source, through the same per-file transform, with the app's tsconfig. A library that has to be published, or consumed as a built package, keeps ng-packagr through `ng build` or `nx build`. The site's Nx page and status page say so.
+
+**Why.** A library build is a different program: ngc in partial compilation mode, declaration emit, and a bundler that lays out the package format. ng-packagr does all of it against the same Angular version the plugin pins (`ng-packagr@22.3.0-next.2` is on npm), so there's nothing to gain from a second implementation. ngp, as the plugin uses it, is an app compiler in optimize mode; it offers no partial mode, and writing declarations is TypeScript's whole-program job, which the plugin only runs for type-checking. The main reason Nx users build libraries they never publish is incremental builds, so the app doesn't recompile them. The plugin compiles a file when it's asked for, so that reason goes away once the alias points at the source: checked on Ghostfolio, where both libraries compile with the client.
+
+**Cost.** A workspace that publishes libraries runs two toolchains, and ng-packagr with the pinned prerelease hasn't been tried in this repo. Consuming a built library from `dist/` is untested, though the linker runs on any module with partially compiled declarations. Nothing measures an app that imports fifty libraries from source.
+
+**Revisit when** ngp grows a partial compilation mode, or when Angular publishes ngp and ng-packagr builds on it.
+
+## 56. tsrs as an opt-in type-checker, tsgo as the default
 
 *17 October 2026*
 

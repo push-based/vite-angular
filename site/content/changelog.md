@@ -18,6 +18,14 @@ What changed in vite-plugin-ngp, newest first. The plugin isn't on npm, so there
 - The site has search. Press ⌘K (Ctrl+K off a Mac) or the search button in the header, and it finds any page and the section of it that matches, such as `allowedHosts` in [Server rendering](server-rendering#the-server-entry). The index is built with Pagefind when the site is, and nothing of it loads until you open search: about 165 kB compressed then, most of it Pagefind's WebAssembly and the index.
 - A link to a section, from "On this page", from search or from a URL with a `#`, leaves the heading below the header instead of under it, on a phone too. Try [What it checks](type-checking#what-it-checks).
 
+### Type-checking
+
+- The first type-check of a dev-server session waits until the server is idle, half a second with no request and no module compile, instead of starting one second after the server starts. Generating every component's type-check block ran on Vite's thread while the first page was compiling; on Super Productivity that was 0.67 s of the thread, and first paint went from 6.72 s to 6.00 s on a warm restart once the check waits. The first errors show up later, after the page instead of alongside it. Checks after edits are unchanged. [Type-checking](type-checking#what-you-see)
+
+### Server rendering
+
+- The dev server pre-bundles and caches the server's Angular libraries, in `node_modules/.vite/deps_ssr`, instead of linking and transforming them on every start. On the playground the first server-rendered page after a warm restart went from 1.3 s to 0.74 s. The server bundle has no source maps: a stack trace from inside Angular points into the readable pre-bundle. [Server rendering](server-rendering#what-the-plugin-does)
+
 ### Editing in the dev server
 
 - A save can no longer be undone by a module Vite read just before it: components compiled afterwards see the saved file. [How it works](how-it-works#handling-an-edit)
@@ -44,6 +52,8 @@ What changed in vite-plugin-ngp, newest first. The plugin isn't on npm, so there
 ### This site
 
 - A new page, [Compared with alternatives](comparison), sets vite-plugin-ngp next to `ng serve`, Analog (its default path and `fastCompile`) and `@oxc-angular/vite`: when each compiles, whose compiler it runs, type-checking, HMR, SSR, linking, and how you get it, with a source for every claim and where the plugin is weaker.
+- A new page, [Migrating inside an Nx workspace](nx): how to move one app of an Nx workspace to the plugin while the rest stays on Nx. Vite's root in the app's folder, `tsconfig.base.json`'s paths as Vite aliases, libraries compiled from source with the app, `export type` and decorator metadata, Nx targets, and why `nx build my-lib` stays on ng-packagr. Checked on Ghostfolio, with Vite's root at the workspace root and at the app's folder.
+- [Status and limits](status#what-doesnt-work-yet) says library builds aren't supported, and [Migrating from ng build](migrating-from-ng-build#cant-move-yet) lists a library project under what can't move.
 - [Migrating from ng build](migrating-from-ng-build#where-every-option-goes) now says where `localize` and `i18nMissingTranslation` go, since i18n works. It listed them as not yet possible.
 - An editing pass over every page: stale counts fixed, and the Server rendering page's prerender timing remeasured on the current 14 pages. [Server rendering](server-rendering#prerendering-for-static-hosting)
 - The repo, [push-based/vite-angular](https://github.com/push-based/vite-angular), is public. [Getting started](getting-started#1-build-ngp) now starts with `git clone` instead of asking for access, and no page calls the repo private any more.

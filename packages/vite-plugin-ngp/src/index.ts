@@ -1,19 +1,22 @@
 import * as fs from 'node:fs';
+import {isBuiltin} from 'node:module';
 import * as path from 'node:path';
 import {
   isRunnableDevEnvironment,
   transformWithOxc,
+  type DepOptimizationOptions,
   type DevEnvironment,
   type EnvironmentModuleGraph,
   type EnvironmentModuleNode,
   type Plugin,
   type ResolvedConfig,
+  type Rolldown,
   type UserConfig,
   type ViteDevServer,
 } from 'vite';
 import {findAngularLibraries, packagePathPattern, packagePattern} from './angular-libraries.js';
 import {budgetsPlugin, type Budget} from './budgets.js';
-import {NgpCompiler, type ComponentStyle, type HmrUpdate} from './compiler.js';
+import {NgpCompiler, type ComponentStyle, type HmrUpdate, type TransformResult} from './compiler.js';
 import {writeEntryTsconfig} from './entry-tsconfig.js';
 import {i18nPlugin, type I18nOptions} from './i18n.js';
 import {link, LINKER_MARKER} from './linker.js';
@@ -22,9 +25,11 @@ import type {Engine} from './ngp-api.js';
 import {polyfillsPlugin, usesZone, zoneAsyncPlugin} from './polyfills.js';
 import {
   buildReport,
+  FIRST_CHECK_QUIET_MS,
   OVERLAY_CLIENT,
   OVERLAY_CLIENT_ID,
   OVERLAY_CLIENT_URL,
+  ServerActivity,
   startDevTypeCheck,
   TypeChecker,
   type TypeCheckResult,
@@ -129,6 +134,7 @@ export type {I18nOptions} from './i18n.js';
 export {extractMessages, type ExtractOptions} from './extract.js';
 
 type Consumer = 'client' | 'server';
+type RolldownPlugin = Rolldown.Plugin;
 
 /**
  * The slice of Vitest's `configureVitest` hook this plugin uses, typed by hand so the plugin
@@ -202,7 +208,7 @@ export function ngp(options: NgpPluginOptions = {}): Plugin[] {
     optimizerPlugin(),
     ...(polyfills.length > 0 ? [polyfillsPlugin(polyfills, () => compiler.api.entries())] : []),
     ...(usesZone(polyfills) ? [zoneAsyncPlugin()] : []),
-    ...(options.i18n ? [i18nPlugin(options.i18n, () => compiler.api.entries())] : []),
+    ...(options.i18n ? [i18nPlugin(options.i18n, () => compiler.api.entries(), !!options.ssr && !isVitest())] : []),
   ];
 }
 
@@ -218,6 +224,7 @@ function compilerPlugin(
    * imports update modules from URLs that only a browser can load.
    */
   const compilers = new Map<Consumer, Promise<NgpCompiler>>();
+  let serve = false;
   let hmr = false;
   let root = process.cwd();
   /** Under Vitest: specs are compiled like any other module, with no HMR and no SSR. */
@@ -236,6 +243,8 @@ function compilerPlugin(
   }
   let checker: TypeChecker | null = null;
   let devCheck: ReturnType<typeof startDevTypeCheck> | null = null;
+  /** Requests and compiles in flight: the first type-check waits until there are none. */
+  const activity = new ServerActivity(FIRST_CHECK_QUIET_MS);
   let typeCheckOverlay = false;
   let buildCheck: Promise<TypeCheckResult> | null = null;
   /**
@@ -539,7 +548,8 @@ function compilerPlugin(
     // The same compile-time globals the Angular CLI defines, so Angular can drop dev-only and JIT
     // code. The linker makes every library AOT, so JIT is never needed.
     config(userConfig, env) {
-      hmr = env.command === 'serve' && options.hmr !== false && !testing;
+      serve = env.command === 'serve';
+      hmr = serve && options.hmr !== false && !testing;
       root = path.resolve(userConfig.root ?? process.cwd());
       if (testing) {
         // Vitest leaves node_modules to Node, which would load Angular libraries unlinked, and
@@ -578,7 +588,13 @@ function compilerPlugin(
       // libraries unlinked, which needs the JIT compiler. Bundling them runs the linker, and keeps
       // a single copy of @angular/core.
       const noExternal = [/^@angular\//, ...findAngularLibraries(root).map(packagePattern)];
-      return {define: {ngServerMode: 'true', ngHmrMode: 'false'}, resolve: {noExternal}};
+      return {
+        define: {ngServerMode: 'true', ngHmrMode: 'false'},
+        resolve: {noExternal},
+        // In the dev server, pre-bundle those libraries once, linked, into the cache directory,
+        // instead of linking and transforming them again on every start.
+        ...(serve && !testing && ssrEntry && name === 'ssr' ? {optimizeDeps: serverOptimizeDeps(noExternal)} : {}),
+      };
     },
 
     configResolved(resolved) {
@@ -621,6 +637,7 @@ function compilerPlugin(
         typeCheckOverlay = viteHmr !== false && (typeof viteHmr !== 'object' || viteHmr.overlay !== false);
         devCheck = startDevTypeCheck({
           server,
+          activity,
           run: runTypeCheck,
           filesChanged: () => checker?.filesChanged(),
           abort: () => checker?.abort(),
@@ -751,7 +768,13 @@ function compilerPlugin(
         const key = `${this.environment.name}\0${id}`;
         const at = readAt.get(key);
         readAt.delete(key);
-        const result = await ngp.transform(file, code, at);
+        const compiling = activity.begin();
+        let result: TransformResult | null;
+        try {
+          result = await ngp.transform(file, code, at);
+        } finally {
+          compiling();
+        }
         if (debug) {
           const ms = (performance.now() - start).toFixed(1);
           // To stderr, like Vite's own DEBUG output: Vitest silences Vite's logger.
@@ -922,26 +945,83 @@ function fileReplacementsPlugin(fileReplacements: NonNullable<NgpPluginOptions['
   };
 }
 
+const LINKER_FILTER = {
+  id: {include: /\.[cm]?js$/, exclude: /[\\/]node_modules[\\/]\.vite[\\/]/},
+  code: LINKER_MARKER,
+};
+
+/** The linker as a Rolldown plugin, for Vite's dependency pre-bundling. */
+function linkerRolldownPlugin(): RolldownPlugin {
+  return {name: 'vite-plugin-ngp:linker', transform: {filter: LINKER_FILTER, handler: (code: string, id: string) => link(code, id) as never}};
+}
+
 /** Runs Angular's linker on library code, both where Vite pre-bundles it and where it doesn't. */
 function linkerPlugin(): Plugin {
-  const filter = {
-    id: {include: /\.[cm]?js$/, exclude: /[\\/]node_modules[\\/]\.vite[\\/]/},
-    code: LINKER_MARKER,
-  };
   return {
     name: 'vite-plugin-ngp:linker',
     config() {
-      // In dev, Vite pre-bundles dependencies with Rolldown, outside the plugin pipeline.
-      return {
-        optimizeDeps: {
-          rolldownOptions: {
-            plugins: [{name: 'vite-plugin-ngp:linker', transform: {filter, handler: (code: string, id: string) => link(code, id) as never}}],
-          },
-        },
-      };
+      // In dev, Vite pre-bundles the client's dependencies with Rolldown, outside the plugin
+      // pipeline. This reaches the client environment only; server environments get theirs from
+      // `configEnvironment`.
+      return {optimizeDeps: {rolldownOptions: {plugins: [linkerRolldownPlugin()]}}};
     },
     // Production builds, and dependencies Vite serves without pre-bundling.
-    transform: {filter, handler: (code, id) => link(code, id) as never},
+    transform: {filter: LINKER_FILTER, handler: (code, id) => link(code, id) as never},
+  };
+}
+
+/**
+ * Dependency pre-bundling for the `ssr` environment in the dev server. Vite turns it off for
+ * server environments: Node loads `node_modules` itself. Angular libraries can't be left to
+ * Node (`resolve.noExternal`, above), and without pre-bundling Vite linked and transformed every
+ * one of them on every start, which was most of the first page's time. Discovery scans the server
+ * entry, Vite's input for this environment. The bundle holds only the libraries Vite wouldn't
+ * externalize: everything else they import stays an import, so Node loads one copy of rxjs for
+ * the bundle and for the app. The cache lives in `node_modules/.vite/deps_ssr`, keyed by the
+ * lockfile and the config, like the client's.
+ */
+function serverOptimizeDeps(noExternal: RegExp[]): DepOptimizationOptions {
+  const bundled = (id: string) => noExternal.some((pattern) => pattern.test(id));
+  const externalizer: RolldownPlugin = {
+    name: 'vite-plugin-ngp:ssr-external',
+    resolveId: {
+      // Bare imports from inside a bundled library. Entries have no importer.
+      filter: {id: /^[\w@][^:]/},
+      async handler(id, importer, options) {
+        if (!importer || bundled(id) || isBuiltin(id)) {
+          return null;
+        }
+        // What Vite externalizes for the ssr environment: a bare import that resolves into
+        // node_modules. A linked workspace package resolves outside and stays bundled.
+        const resolved = await this.resolve(id, importer, {...options, skipSelf: true});
+        return resolved && /[\\/]node_modules[\\/]/.test(resolved.id) ? {id, external: true} : null;
+      },
+    },
+  };
+  // Vite writes a hidden source map next to each chunk, and parses and combines it with every
+  // transform's map on every start: about 170 ms of the playground's first page, for stack traces
+  // that point into fesm2022 instead of the readable pre-bundle. Rolldown writes the maps after
+  // `generateBundle`, so they're removed once written.
+  const noSourcemaps: RolldownPlugin = {
+    name: 'vite-plugin-ngp:ssr-no-sourcemaps',
+    async writeBundle(options, bundle) {
+      await Promise.all(
+        Object.values(bundle).map((chunk) =>
+          chunk.type === 'chunk' && chunk.sourcemapFileName && options.dir
+            ? fs.promises.rm(path.join(options.dir, chunk.sourcemapFileName), {force: true})
+            : undefined,
+        ),
+      );
+    },
+  };
+  return {
+    noDiscovery: false,
+    rolldownOptions: {
+      // The server environment's `define` (the `config` and `configEnvironment` hooks), baked in
+      // so Vite's define transform finds nothing to replace in the pre-bundle on each start.
+      transform: {define: {ngJitMode: 'false', ngI18nClosureMode: 'false', ngHmrMode: 'false', ngServerMode: 'true'}},
+      plugins: [externalizer, linkerRolldownPlugin(), noSourcemaps],
+    },
   };
 }
 

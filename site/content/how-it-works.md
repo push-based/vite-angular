@@ -69,7 +69,7 @@ Compiling a module doesn't check its types. Separately, after startup and after 
 
 Angular libraries, Angular's own packages included, ship partially compiled: `ɵɵngDeclareComponent(...)` calls that describe a component without being its runtime code. The linker rewrites them into the final code for your Angular version, as the CLI does. ngp only compiles your own sources, so the plugin runs Angular's linker on every module in `node_modules` that needs it:
 
-- In development, inside Vite's dependency pre-bundling, which runs outside the normal plugin pipeline.
+- In development, inside Vite's dependency pre-bundling, which runs outside the normal plugin pipeline. With `ssr`, the server's libraries are pre-bundled too, into `node_modules/.vite/deps_ssr`; see [Server rendering](server-rendering#what-the-plugin-does).
 - In production builds and server bundles, in the normal transform. On the server, the plugin bundles every Angular library it finds in your `dependencies`, so the linker sees them too.
 - Under Vitest, in the normal transform. The plugin has Vitest inline every Angular library instead of leaving it to Node, so the linker sees them. See [Testing with Vitest](testing).
 

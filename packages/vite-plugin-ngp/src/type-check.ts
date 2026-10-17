@@ -290,6 +290,71 @@ export class CheckScheduler {
   }
 }
 
+/**
+ * Whether the dev server is busy: answering a request, or compiling a module. `whenIdle` tells
+ * when it has done neither for a while, which on a big app is when the first page has loaded.
+ */
+export class ServerActivity {
+  private inFlight = 0;
+  private timer: NodeJS.Timeout | null = null;
+  private readonly waiters = new Set<() => void>();
+
+  /** @param quietMs how long nothing has to be in flight before the server counts as idle. */
+  constructor(private readonly quietMs: number) {}
+
+  /** Marks the start of a request or a compile. Returns what marks its end; calling it twice is fine. */
+  begin(): () => void {
+    this.inFlight++;
+    if (this.timer) {
+      clearTimeout(this.timer);
+      this.timer = null;
+    }
+    let ended = false;
+    return () => {
+      if (ended) {
+        return;
+      }
+      ended = true;
+      this.inFlight--;
+      this.arm();
+    };
+  }
+
+  /** A middleware that counts every request the server answers, until its response closes. */
+  middleware = (_req: unknown, res: {once(event: 'close', listener: () => void): unknown}, next: () => void): void => {
+    res.once('close', this.begin());
+    next();
+  };
+
+  /** Resolves once nothing has been in flight for `quietMs`, or after `maxWaitMs`, whichever is first. */
+  whenIdle(maxWaitMs: number): Promise<void> {
+    return new Promise((resolve) => {
+      const done = () => {
+        clearTimeout(cap);
+        this.waiters.delete(done);
+        resolve();
+      };
+      const cap = setTimeout(done, maxWaitMs);
+      cap.unref();
+      this.waiters.add(done);
+      this.arm();
+    });
+  }
+
+  private arm(): void {
+    if (this.inFlight > 0 || this.waiters.size === 0 || this.timer) {
+      return;
+    }
+    this.timer = setTimeout(() => {
+      this.timer = null;
+      for (const waiter of [...this.waiters]) {
+        waiter();
+      }
+    }, this.quietMs);
+    this.timer.unref();
+  }
+}
+
 /** The browser module that shows type errors in Vite's overlay, served at this URL in dev. */
 export const OVERLAY_CLIENT_URL = '/@ngp/type-check-client.js';
 export const OVERLAY_CLIENT_ID = '\0vite-plugin-ngp:type-check-client';
@@ -334,13 +399,20 @@ export function buildReport(result: TypeCheckResult, root: string): {error?: str
   return result.diagnostics.length > 0 ? {info, error: `${info}\n\n${formatReport(result.diagnostics, root, true)}`} : {info};
 }
 
+/** The first check starts this long after the dev server last answered a request or compiled a module. */
+export const FIRST_CHECK_QUIET_MS = 500;
+/** Or this long after the server started listening, if it never goes quiet for that long. */
+export const FIRST_CHECK_MAX_WAIT_MS = 60_000;
+
 /**
- * Checks after the dev server starts and after every edit, debounced, and reports to the terminal
- * and the overlay. Reports go out only when the set of errors changes, so an unrelated edit doesn't
- * print the same errors again.
+ * Checks once the dev server has gone idle after starting, and after every edit, debounced, and
+ * reports to the terminal and the overlay. Reports go out only when the set of errors changes, so
+ * an unrelated edit doesn't print the same errors again.
  */
 export function startDevTypeCheck(options: {
   server: ViteDevServer;
+  /** What the server is doing. The middleware is installed here; compiles are marked by the caller. */
+  activity: ServerActivity;
   run: () => Promise<TypeCheckResult>;
   /** Called when a .ts file is added or deleted. */
   filesChanged: () => void;
@@ -410,11 +482,17 @@ export function startDevTypeCheck(options: {
   };
   server.watcher.on('add', filesChanged);
   server.watcher.on('unlink', filesChanged);
-  // Give the first page load a head start: generating the blocks shares its thread.
+  // The first check waits until the server is idle. Generating every component's block runs on the
+  // server's thread, and while the first page is compiling, everything on that thread waits for it.
+  // In the middleware chain this runs before Vite's own, so it sees every request.
+  server.middlewares.use(options.activity.middleware);
+  const first = () => {
+    void options.activity.whenIdle(FIRST_CHECK_MAX_WAIT_MS).then(() => scheduler.schedule(0));
+  };
   if (server.httpServer) {
-    server.httpServer.once('listening', () => scheduler.schedule(1000));
+    server.httpServer.once('listening', first);
   } else {
-    scheduler.schedule(1000);
+    first();
   }
   return {
     schedule: () => scheduler.schedule(),

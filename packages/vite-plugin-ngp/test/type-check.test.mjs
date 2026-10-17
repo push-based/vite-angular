@@ -1,4 +1,4 @@
-// Type-checking (decisions 29 to 31 and 53 in docs/decisions.md): tsgo, or tsrs when asked, checks
+// Type-checking (decisions 29 to 31 and 56 in docs/decisions.md): tsgo, or tsrs when asked, checks
 // the app plus ngp's type-check blocks, and errors inside a block are mapped back to the template.
 // The unit tests pin the mapping rules. The end-to-end test plants errors in a small app and checks
 // they land where ngc puts them, once per checker.
@@ -12,7 +12,7 @@ import * as path from 'node:path';
 import {test} from 'node:test';
 import {fileURLToPath, pathToFileURL} from 'node:url';
 import {NgpCompiler} from '../dist/compiler.js';
-import {TypeChecker} from '../dist/type-check.js';
+import {ServerActivity, TypeChecker} from '../dist/type-check.js';
 import {codeFrame, locateInTemplate, parseTscOutput} from '../dist/type-check-diagnostics.js';
 
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -101,6 +101,45 @@ test('drops errors under a D:ignore marker', () => {
 
 test('leaves files that are not type-check blocks alone', () => {
   assert.equal(locateInTemplate('const a: number = "x";\n', 1, 7), null);
+});
+
+test('the server counts as idle once nothing has been in flight for the quiet time', async () => {
+  const activity = new ServerActivity(40);
+  const settled = (promise) => Promise.race([promise.then(() => true), new Promise((r) => setTimeout(() => r(false), 10))]);
+
+  // Nothing in flight: idle after the quiet time.
+  let t0 = performance.now();
+  await activity.whenIdle(5000);
+  assert.ok(performance.now() - t0 >= 35, 'waited out the quiet time');
+
+  // A request in flight holds it, and ending the request restarts the quiet time.
+  const end = activity.begin();
+  const idle = activity.whenIdle(5000);
+  await new Promise((r) => setTimeout(r, 60));
+  assert.equal(await settled(idle), false, 'not idle while a request is in flight');
+  t0 = performance.now();
+  end();
+  end(); // ending twice is harmless
+  await idle;
+  assert.ok(performance.now() - t0 >= 35, 'idle only once the request has been over for the quiet time');
+
+  // A response's close event ends the request the middleware counted.
+  const listeners = [];
+  const res = {once: (_event, listener) => listeners.push(listener)};
+  let nexted = false;
+  activity.middleware({}, res, () => (nexted = true));
+  assert.ok(nexted);
+  const afterRequest = activity.whenIdle(5000);
+  await new Promise((r) => setTimeout(r, 60));
+  assert.equal(await settled(afterRequest), false);
+  listeners.forEach((l) => l());
+  await afterRequest;
+
+  // The cap: a request that never ends can't hold the first check forever.
+  activity.begin();
+  t0 = performance.now();
+  await activity.whenIdle(50);
+  assert.ok(performance.now() - t0 >= 45 && performance.now() - t0 < 1000, 'resolved by the cap');
 });
 
 test('frames the line with a caret under the column', () => {

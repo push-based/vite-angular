@@ -1,0 +1,2399 @@
+{
+  "environment": {
+    "date": "2026-10-17T22:08:35.838Z",
+    "commit": "e401c10",
+    "pluginDirty": false,
+    "machine": {
+      "cpu": "Apple M2 Max",
+      "cores": 12,
+      "memoryGB": 32,
+      "os": "Darwin 27.0.0 arm64",
+      "power": "Now drawing from 'AC Power'"
+    },
+    "node": "v26.12.0",
+    "chrome": "Chrome/155.0.8059.84",
+    "versions": {
+      "@angular/core": "22.3.0-next.2",
+      "@angular/compiler-cli": "22.3.0-next.2",
+      "@angular/build": "22.3.0-next.2",
+      "@angular/cli": "22.3.0-next.2",
+      "@analogjs/vite-plugin-angular": "2.8.2-beta.1",
+      "@oxc-angular/vite": "0.0.41",
+      "vite": "8.3.4",
+      "rolldown": "1.2.14",
+      "typescript": "6.0.3",
+      "puppeteer-core": "25.14.0"
+    },
+    "patches": [
+      "@analogjs__vite-plugin-angular@2.8.2-beta.1.patch",
+      "real/ghostfolio.patch",
+      "real/super-productivity.patch"
+    ],
+    "ci": null,
+    "ngp": {
+      "toolchain": "toolchain/out",
+      "versions": "# Everything the ngp build pins. Change a value here, then rerun `pnpm toolchain`.\n\n# Angular commit ngp is built from. 92e5aa8 is the commit behind 22.3.0-next.2.\nANGULAR_SHA=92e5aa8f154096a756757d0e295cde4299788650\n\n# The npm release built from ANGULAR_SHA. ngp's backend imports compiler-cli's private\n# hybrid_analysis API, so every @angular/* pin in this repo must equal this version.\nANGULAR_NPM_VERSION=22.3.0-next.2\n\n# Rust toolchain for both engines, installed locally by setup-rust.sh.\nRUST_TOOLCHAIN=1.96.0\n\n# Must equal the wasm-bindgen crate version in Angular's Cargo.lock (Cargo.toml pins =0.2.121).\nWASM_BINDGEN_VERSION=0.2.121",
+      "plugin": "e401c10"
+    }
+  },
+  "settings": {
+    "runs": 5,
+    "warmup": 1,
+    "edits": 10,
+    "editWarmup": 2,
+    "maxLoad": 6
+  },
+  "apps": [
+    {
+      "id": "super-productivity",
+      "label": "Super Productivity",
+      "kind": "real",
+      "components": 252,
+      "repo": "https://github.com/johannesjo/super-productivity.git",
+      "sha": "65145cdceec75286a32215fc519b5e8e6bb89a70",
+      "angularVersion": "22.3.0-next.2",
+      "cli": "Angular CLI",
+      "patch": "real/super-productivity.patch",
+      "added": [
+        "index.html",
+        "bench-ngsw.mjs",
+        "bench-stubs",
+        "bench-typia.mjs",
+        "vite.config.ngp.mjs"
+      ],
+      "install": [
+        "npm install --legacy-peer-deps --min-release-age=0 --no-audit --no-fund",
+        "node ./packages/build-packages.js"
+      ]
+    },
+    {
+      "id": "ghostfolio",
+      "label": "Ghostfolio",
+      "kind": "real",
+      "components": 157,
+      "repo": "https://github.com/ghostfolio/ghostfolio.git",
+      "sha": "204f0d857ef258a2c090780bce8b69429a094f95",
+      "angularVersion": "22.3.0-next.2",
+      "cli": "Nx",
+      "patch": "real/ghostfolio.patch",
+      "added": [
+        "index.html",
+        "bench-ngsw.mjs",
+        "api-stub.mjs",
+        "info.json",
+        "vite.config.ngp.mjs"
+      ],
+      "install": [
+        "npm install --legacy-peer-deps --min-release-age=0 --no-audit --no-fund"
+      ]
+    }
+  ],
+  "results": [
+    {
+      "app": "super-productivity",
+      "label": "Super Productivity",
+      "kind": "real",
+      "components": 252,
+      "tool": "ngp",
+      "toolLabel": "vite-plugin-ngp",
+      "metric": "dev-cold",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "fcp": 7760.5,
+          "firstPaint": 7760.5,
+          "rendered": 9601,
+          "answered": 561,
+          "documents": 1,
+          "memory": {
+            "peak": 3635314688,
+            "peakProcesses": 3,
+            "settled": 3635314688,
+            "settledProcesses": 3
+          },
+          "load": [
+            4.44,
+            4.07,
+            4.33
+          ]
+        },
+        {
+          "fcp": 7450.800048828125,
+          "firstPaint": 7450.800048828125,
+          "rendered": 9233,
+          "answered": 562,
+          "documents": 1,
+          "memory": {
+            "peak": 3243917312,
+            "peakProcesses": 3,
+            "settled": 3243917312,
+            "settledProcesses": 3
+          },
+          "load": [
+            4.42,
+            4.1,
+            4.33
+          ]
+        },
+        {
+          "fcp": 7318.10009765625,
+          "firstPaint": 7318.10009765625,
+          "rendered": 9104,
+          "answered": 475,
+          "documents": 1,
+          "memory": {
+            "peak": 3195338752,
+            "peakProcesses": 3,
+            "settled": 3195338752,
+            "settledProcesses": 3
+          },
+          "load": [
+            5.44,
+            4.41,
+            4.44
+          ]
+        },
+        {
+          "fcp": 7468.89990234375,
+          "firstPaint": 7468.89990234375,
+          "rendered": 9288,
+          "answered": 569,
+          "documents": 1,
+          "memory": {
+            "peak": 3655745536,
+            "peakProcesses": 3,
+            "settled": 3655745536,
+            "settledProcesses": 3
+          },
+          "load": [
+            5.99,
+            5.22,
+            4.77
+          ]
+        },
+        {
+          "fcp": 7436.800048828125,
+          "firstPaint": 7436.800048828125,
+          "rendered": 9253,
+          "answered": 560,
+          "documents": 1,
+          "memory": {
+            "peak": 3602694144,
+            "peakProcesses": 3,
+            "settled": 3602694144,
+            "settledProcesses": 3
+          },
+          "load": [
+            5.15,
+            5.29,
+            4.84
+          ]
+        }
+      ],
+      "fcp": {
+        "n": 5,
+        "median": 7450.800048828125,
+        "min": 7318.10009765625,
+        "max": 7760.5,
+        "madPct": 0.24292496640641667
+      },
+      "rendered": {
+        "n": 5,
+        "median": 9253,
+        "min": 9104,
+        "max": 9601,
+        "madPct": 0.37825570085377713
+      },
+      "answered": {
+        "n": 5,
+        "median": 561,
+        "min": 475,
+        "max": 569,
+        "madPct": 0.17825311942959002
+      },
+      "memoryPeak": {
+        "n": 5,
+        "median": 3602694144,
+        "min": 3195338752,
+        "max": 3655745536,
+        "madPct": 1.4725477623004124
+      },
+      "memorySettled": {
+        "n": 5,
+        "median": 3602694144,
+        "min": 3195338752,
+        "max": 3655745536,
+        "madPct": 1.4725477623004124
+      }
+    },
+    {
+      "app": "super-productivity",
+      "label": "Super Productivity",
+      "kind": "real",
+      "components": 252,
+      "tool": "cli",
+      "toolLabel": "Angular CLI",
+      "metric": "dev-cold",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "fcp": 14414.89990234375,
+          "firstPaint": 14414.89990234375,
+          "rendered": 16127,
+          "answered": 14286,
+          "documents": 1,
+          "memory": {
+            "peak": 4368531456,
+            "peakProcesses": 4,
+            "settled": 4185374720,
+            "settledProcesses": 4
+          },
+          "load": [
+            4.35,
+            4.07,
+            4.33
+          ]
+        },
+        {
+          "fcp": 14325.10009765625,
+          "firstPaint": 14325.10009765625,
+          "rendered": 15933,
+          "answered": 14187,
+          "documents": 1,
+          "memory": {
+            "peak": 4287627264,
+            "peakProcesses": 4,
+            "settled": 4142759936,
+            "settledProcesses": 4
+          },
+          "load": [
+            5.3,
+            4.3,
+            4.4
+          ]
+        },
+        {
+          "fcp": 14021,
+          "firstPaint": 14021,
+          "rendered": 15680,
+          "answered": 13890,
+          "documents": 1,
+          "memory": {
+            "peak": 4255449088,
+            "peakProcesses": 4,
+            "settled": 4205035520,
+            "settledProcesses": 4
+          },
+          "load": [
+            5.22,
+            4.4,
+            4.43
+          ]
+        },
+        {
+          "fcp": 14215.300048828125,
+          "firstPaint": 14215.300048828125,
+          "rendered": 15893,
+          "answered": 14097,
+          "documents": 1,
+          "memory": {
+            "peak": 4216193024,
+            "peakProcesses": 4,
+            "settled": 4211900416,
+            "settledProcesses": 4
+          },
+          "load": [
+            5.65,
+            5.39,
+            4.87
+          ]
+        },
+        {
+          "fcp": 14457.699951171875,
+          "firstPaint": 14457.699951171875,
+          "rendered": 16362,
+          "answered": 14295,
+          "documents": 1,
+          "memory": {
+            "peak": 3770875904,
+            "peakProcesses": 4,
+            "settled": 2356101120,
+            "settledProcesses": 4
+          },
+          "load": [
+            4.69,
+            5.18,
+            4.81
+          ]
+        }
+      ],
+      "fcp": {
+        "n": 5,
+        "median": 14325.10009765625,
+        "min": 14021,
+        "max": 14457.699951171875,
+        "madPct": 0.7664871315355734
+      },
+      "rendered": {
+        "n": 5,
+        "median": 15933,
+        "min": 15680,
+        "max": 16362,
+        "madPct": 1.2175986945333583
+      },
+      "answered": {
+        "n": 5,
+        "median": 14187,
+        "min": 13890,
+        "max": 14295,
+        "madPct": 0.6978219496722351
+      },
+      "memoryPeak": {
+        "n": 5,
+        "median": 4255449088,
+        "min": 3770875904,
+        "max": 4368531456,
+        "madPct": 0.9224893351608581
+      },
+      "memorySettled": {
+        "n": 5,
+        "median": 4185374720,
+        "min": 2356101120,
+        "max": 4211900416,
+        "madPct": 0.6337711142862735
+      }
+    },
+    {
+      "app": "super-productivity",
+      "label": "Super Productivity",
+      "kind": "real",
+      "components": 252,
+      "tool": "ngp",
+      "toolLabel": "vite-plugin-ngp",
+      "metric": "dev-warm",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "fcp": 5799.699951171875,
+          "firstPaint": 5799.699951171875,
+          "rendered": 6388,
+          "answered": 386,
+          "documents": 1,
+          "memory": {
+            "peak": 2011955200,
+            "peakProcesses": 3,
+            "settled": 1949614080,
+            "settledProcesses": 3
+          },
+          "load": [
+            5.33,
+            5.32,
+            4.9
+          ]
+        },
+        {
+          "fcp": 5819.300048828125,
+          "firstPaint": 5819.300048828125,
+          "rendered": 6402,
+          "answered": 382,
+          "documents": 1,
+          "memory": {
+            "peak": 2017181696,
+            "peakProcesses": 4,
+            "settled": 2017181696,
+            "settledProcesses": 4
+          },
+          "load": [
+            5.72,
+            5.4,
+            4.94
+          ]
+        },
+        {
+          "fcp": 6039.89990234375,
+          "firstPaint": 6039.89990234375,
+          "rendered": 6626,
+          "answered": 374,
+          "documents": 1,
+          "memory": {
+            "peak": 2003058688,
+            "peakProcesses": 4,
+            "settled": 2003058688,
+            "settledProcesses": 4
+          },
+          "load": [
+            5.2,
+            5.31,
+            4.92
+          ]
+        },
+        {
+          "fcp": 5854.5,
+          "firstPaint": 5854.5,
+          "rendered": 6438,
+          "answered": 377,
+          "documents": 1,
+          "memory": {
+            "peak": 2006171648,
+            "peakProcesses": 4,
+            "settled": 2006171648,
+            "settledProcesses": 4
+          },
+          "load": [
+            5.14,
+            5.29,
+            4.93
+          ]
+        },
+        {
+          "fcp": 5802.10009765625,
+          "firstPaint": 5802.10009765625,
+          "rendered": 6390,
+          "answered": 382,
+          "documents": 1,
+          "memory": {
+            "peak": 1952514048,
+            "peakProcesses": 4,
+            "settled": 1952514048,
+            "settledProcesses": 4
+          },
+          "load": [
+            5.33,
+            5.33,
+            4.95
+          ]
+        }
+      ],
+      "fcp": {
+        "n": 5,
+        "median": 5819.300048828125,
+        "min": 5799.699951171875,
+        "max": 6039.89990234375,
+        "madPct": 0.33681194459455677
+      },
+      "rendered": {
+        "n": 5,
+        "median": 6402,
+        "min": 6388,
+        "max": 6626,
+        "madPct": 0.21868166198063105
+      },
+      "answered": {
+        "n": 5,
+        "median": 382,
+        "min": 374,
+        "max": 386,
+        "madPct": 1.0471204188481675
+      },
+      "memoryPeak": {
+        "n": 5,
+        "median": 2006171648,
+        "min": 1952514048,
+        "max": 2017181696,
+        "madPct": 0.28828799398923616
+      },
+      "memorySettled": {
+        "n": 5,
+        "median": 2003058688,
+        "min": 1949614080,
+        "max": 2017181696,
+        "madPct": 0.7050721022109163
+      }
+    },
+    {
+      "app": "super-productivity",
+      "label": "Super Productivity",
+      "kind": "real",
+      "components": 252,
+      "tool": "cli",
+      "toolLabel": "Angular CLI",
+      "metric": "dev-warm",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "fcp": 13682.699951171875,
+          "firstPaint": 13682.699951171875,
+          "rendered": 14961,
+          "answered": 13509,
+          "documents": 1,
+          "memory": {
+            "peak": 3654467584,
+            "peakProcesses": 4,
+            "settled": 3585785856,
+            "settledProcesses": 4
+          },
+          "load": [
+            5.2,
+            5.29,
+            4.9
+          ]
+        },
+        {
+          "fcp": 13891.60009765625,
+          "firstPaint": 13891.60009765625,
+          "rendered": 15160,
+          "answered": 13721,
+          "documents": 1,
+          "memory": {
+            "peak": 3749134336,
+            "peakProcesses": 4,
+            "settled": 3531603968,
+            "settledProcesses": 4
+          },
+          "load": [
+            5.66,
+            5.4,
+            4.94
+          ]
+        },
+        {
+          "fcp": 13624.60009765625,
+          "firstPaint": 13624.60009765625,
+          "rendered": 14891,
+          "answered": 13459,
+          "documents": 1,
+          "memory": {
+            "peak": 3687399424,
+            "peakProcesses": 4,
+            "settled": 3612868608,
+            "settledProcesses": 4
+          },
+          "load": [
+            5.29,
+            5.33,
+            4.93
+          ]
+        },
+        {
+          "fcp": 13655,
+          "firstPaint": 13655,
+          "rendered": 14892,
+          "answered": 13486,
+          "documents": 1,
+          "memory": {
+            "peak": 3784114176,
+            "peakProcesses": 4,
+            "settled": 3719528448,
+            "settledProcesses": 4
+          },
+          "load": [
+            5.59,
+            5.38,
+            4.96
+          ]
+        },
+        {
+          "fcp": 13640.5,
+          "firstPaint": 13640.5,
+          "rendered": 14902,
+          "answered": 13468,
+          "documents": 1,
+          "memory": {
+            "peak": 3649536000,
+            "peakProcesses": 4,
+            "settled": 3606822912,
+            "settledProcesses": 4
+          },
+          "load": [
+            5.2,
+            5.3,
+            4.94
+          ]
+        }
+      ],
+      "fcp": {
+        "n": 5,
+        "median": 13655,
+        "min": 13624.60009765625,
+        "max": 13891.60009765625,
+        "madPct": 0.202855739083669
+      },
+      "rendered": {
+        "n": 5,
+        "median": 14902,
+        "min": 14891,
+        "max": 15160,
+        "madPct": 0.07381559522211784
+      },
+      "answered": {
+        "n": 5,
+        "median": 13486,
+        "min": 13459,
+        "max": 13721,
+        "madPct": 0.1705472341687676
+      },
+      "memoryPeak": {
+        "n": 5,
+        "median": 3687399424,
+        "min": 3649536000,
+        "max": 3784114176,
+        "madPct": 1.0268327253500162
+      },
+      "memorySettled": {
+        "n": 5,
+        "median": 3606822912,
+        "min": 3531603968,
+        "max": 3719528448,
+        "madPct": 0.5832572464261866
+      }
+    },
+    {
+      "app": "super-productivity",
+      "label": "Super Productivity",
+      "kind": "real",
+      "components": 252,
+      "tool": "ngp",
+      "toolLabel": "vite-plugin-ngp",
+      "metric": "edit-ts",
+      "ok": false,
+      "unsupported": "No .ts edit: the Today view renders no string literal from a component class (its text comes from translation files), so there is nothing a class edit could change that the harness can see.",
+      "memory": {
+        "peak": 2437611520,
+        "afterEdits": 1873985536,
+        "processes": 3
+      }
+    },
+    {
+      "app": "super-productivity",
+      "label": "Super Productivity",
+      "kind": "real",
+      "components": 252,
+      "tool": "ngp",
+      "toolLabel": "vite-plugin-ngp",
+      "metric": "edit-template",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "ms": 149,
+          "mode": "in-place",
+          "load": [
+            5.25,
+            5.32,
+            4.96
+          ]
+        },
+        {
+          "ms": 145,
+          "mode": "in-place",
+          "load": [
+            5.25,
+            5.32,
+            4.96
+          ]
+        },
+        {
+          "ms": 149,
+          "mode": "in-place",
+          "load": [
+            5.25,
+            5.32,
+            4.96
+          ]
+        },
+        {
+          "ms": 152,
+          "mode": "in-place",
+          "load": [
+            5.25,
+            5.32,
+            4.96
+          ]
+        },
+        {
+          "ms": 151,
+          "mode": "in-place",
+          "load": [
+            5.25,
+            5.32,
+            4.96
+          ]
+        },
+        {
+          "ms": 110,
+          "mode": "in-place",
+          "load": [
+            6.35,
+            5.54,
+            5.04
+          ]
+        },
+        {
+          "ms": 87,
+          "mode": "in-place",
+          "load": [
+            6.35,
+            5.54,
+            5.04
+          ]
+        },
+        {
+          "ms": 149,
+          "mode": "in-place",
+          "load": [
+            6.35,
+            5.54,
+            5.04
+          ]
+        },
+        {
+          "ms": 124,
+          "mode": "in-place",
+          "load": [
+            6.35,
+            5.54,
+            5.04
+          ]
+        },
+        {
+          "ms": 148,
+          "mode": "in-place",
+          "load": [
+            6.35,
+            5.54,
+            5.04
+          ]
+        }
+      ],
+      "latency": {
+        "n": 10,
+        "median": 148.5,
+        "min": 87,
+        "max": 152,
+        "madPct": 2.0202020202020203
+      },
+      "mode": "in-place",
+      "typeChecks": [],
+      "memory": {
+        "peak": 2437611520,
+        "afterEdits": 1873985536,
+        "processes": 3
+      }
+    },
+    {
+      "app": "super-productivity",
+      "label": "Super Productivity",
+      "kind": "real",
+      "components": 252,
+      "tool": "cli",
+      "toolLabel": "Angular CLI",
+      "metric": "edit-ts",
+      "ok": false,
+      "unsupported": "No .ts edit: the Today view renders no string literal from a component class (its text comes from translation files), so there is nothing a class edit could change that the harness can see.",
+      "memory": {
+        "peak": 3755212800,
+        "afterEdits": 3755212800,
+        "processes": 4
+      }
+    },
+    {
+      "app": "super-productivity",
+      "label": "Super Productivity",
+      "kind": "real",
+      "components": 252,
+      "tool": "cli",
+      "toolLabel": "Angular CLI",
+      "metric": "edit-template",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "ms": 1368,
+          "mode": "reload",
+          "load": [
+            5.45,
+            5.4,
+            5.01
+          ]
+        },
+        {
+          "ms": 1415,
+          "mode": "reload",
+          "load": [
+            5.45,
+            5.4,
+            5.01
+          ]
+        },
+        {
+          "ms": 1420,
+          "mode": "reload",
+          "load": [
+            5.34,
+            5.38,
+            5
+          ]
+        },
+        {
+          "ms": 1398,
+          "mode": "reload",
+          "load": [
+            5.34,
+            5.38,
+            5
+          ]
+        },
+        {
+          "ms": 1372,
+          "mode": "reload",
+          "load": [
+            5.55,
+            5.42,
+            5.02
+          ]
+        },
+        {
+          "ms": 1425,
+          "mode": "reload",
+          "load": [
+            5.55,
+            5.42,
+            5.02
+          ]
+        },
+        {
+          "ms": 1434,
+          "mode": "reload",
+          "load": [
+            5.26,
+            5.36,
+            5
+          ]
+        },
+        {
+          "ms": 1388,
+          "mode": "reload",
+          "load": [
+            5.26,
+            5.36,
+            5
+          ]
+        },
+        {
+          "ms": 1398,
+          "mode": "reload",
+          "load": [
+            5.26,
+            5.36,
+            5
+          ]
+        },
+        {
+          "ms": 1387,
+          "mode": "reload",
+          "load": [
+            5,
+            5.31,
+            4.98
+          ]
+        }
+      ],
+      "latency": {
+        "n": 10,
+        "median": 1398,
+        "min": 1368,
+        "max": 1434,
+        "madPct": 1.3948497854077253
+      },
+      "mode": "reload",
+      "typeChecks": [],
+      "memory": {
+        "peak": 3755212800,
+        "afterEdits": 3755212800,
+        "processes": 4
+      }
+    },
+    {
+      "app": "super-productivity",
+      "label": "Super Productivity",
+      "kind": "real",
+      "components": 252,
+      "tool": "ngp",
+      "toolLabel": "vite-plugin-ngp",
+      "metric": "build",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "ms": 10828.861917000031,
+          "load": [
+            5.85,
+            5.49,
+            5.06
+          ],
+          "memory": {
+            "peak": 4340711424,
+            "peakProcesses": 4
+          }
+        },
+        {
+          "ms": 10906.584250000073,
+          "load": [
+            4.97,
+            5.32,
+            5.02
+          ],
+          "memory": {
+            "peak": 4291870720,
+            "peakProcesses": 4
+          }
+        },
+        {
+          "ms": 10543.123458000016,
+          "load": [
+            4.58,
+            5.19,
+            4.98
+          ],
+          "memory": {
+            "peak": 4282089472,
+            "peakProcesses": 4
+          }
+        },
+        {
+          "ms": 10244.09379199997,
+          "load": [
+            5.94,
+            5.5,
+            5.1
+          ],
+          "memory": {
+            "peak": 4368826368,
+            "peakProcesses": 4
+          }
+        },
+        {
+          "ms": 10470.05891599995,
+          "load": [
+            5.59,
+            5.46,
+            5.1
+          ],
+          "memory": {
+            "peak": 4344283136,
+            "peakProcesses": 4
+          }
+        }
+      ],
+      "time": {
+        "n": 5,
+        "median": 10543.123458000016,
+        "min": 10244.09379199997,
+        "max": 10906.584250000073,
+        "madPct": 2.7101879261709603
+      },
+      "memoryPeak": {
+        "n": 5,
+        "median": 4340711424,
+        "min": 4282089472,
+        "max": 4368826368,
+        "madPct": 0.6477035963402482
+      },
+      "boot": {
+        "errors": [],
+        "lazyRoute": "config"
+      },
+      "sizes": {
+        "total": {
+          "js": {
+            "files": 342,
+            "raw": 8687350,
+            "gzip": 2390571
+          },
+          "css": {
+            "files": 19,
+            "raw": 542648,
+            "gzip": 112228
+          }
+        },
+        "initial": {
+          "js": {
+            "files": 190,
+            "raw": 4687244,
+            "gzip": 1290310
+          },
+          "css": {
+            "files": 1,
+            "raw": 329168,
+            "gzip": 54488
+          }
+        }
+      }
+    },
+    {
+      "app": "super-productivity",
+      "label": "Super Productivity",
+      "kind": "real",
+      "components": 252,
+      "tool": "cli",
+      "toolLabel": "Angular CLI",
+      "metric": "build",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "ms": 20570.230457999976,
+          "load": [
+            5.79,
+            5.49,
+            5.07
+          ],
+          "memory": {
+            "peak": 4873601024,
+            "peakProcesses": 4
+          }
+        },
+        {
+          "ms": 20686.63845800003,
+          "load": [
+            4.82,
+            5.27,
+            5
+          ],
+          "memory": {
+            "peak": 4888117248,
+            "peakProcesses": 4
+          }
+        },
+        {
+          "ms": 20242.120791999972,
+          "load": [
+            5.83,
+            5.45,
+            5.08
+          ],
+          "memory": {
+            "peak": 4729847808,
+            "peakProcesses": 4
+          }
+        },
+        {
+          "ms": 20345.58566699992,
+          "load": [
+            5.63,
+            5.45,
+            5.09
+          ],
+          "memory": {
+            "peak": 4782686208,
+            "peakProcesses": 4
+          }
+        },
+        {
+          "ms": 20209.390625,
+          "load": [
+            5.86,
+            5.62,
+            5.18
+          ],
+          "memory": {
+            "peak": 4823154688,
+            "peakProcesses": 4
+          }
+        }
+      ],
+      "time": {
+        "n": 5,
+        "median": 20345.58566699992,
+        "min": 20209.390625,
+        "max": 20686.63845800003,
+        "madPct": 0.669408314064041
+      },
+      "memoryPeak": {
+        "n": 5,
+        "median": 4823154688,
+        "min": 4729847808,
+        "max": 4888117248,
+        "madPct": 1.0459199271694601
+      },
+      "boot": {
+        "errors": [],
+        "lazyRoute": "config"
+      },
+      "sizes": {
+        "total": {
+          "js": {
+            "files": 364,
+            "raw": 9561410,
+            "gzip": 2658684
+          },
+          "css": {
+            "files": 19,
+            "raw": 514258,
+            "gzip": 91510
+          }
+        },
+        "initial": {
+          "js": {
+            "files": 193,
+            "raw": 5206450,
+            "gzip": 1450849
+          },
+          "css": {
+            "files": 1,
+            "raw": 300778,
+            "gzip": 33770
+          }
+        }
+      }
+    },
+    {
+      "app": "ghostfolio",
+      "label": "Ghostfolio",
+      "kind": "real",
+      "components": 157,
+      "tool": "ngp",
+      "toolLabel": "vite-plugin-ngp",
+      "metric": "dev-cold",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "fcp": 4666.89990234375,
+          "firstPaint": 4666.89990234375,
+          "rendered": 4665,
+          "answered": 367,
+          "documents": 1,
+          "memory": {
+            "peak": 3403972608,
+            "peakProcesses": 4,
+            "settled": 3029221376,
+            "settledProcesses": 3
+          },
+          "load": [
+            5.01,
+            5.43,
+            5.13
+          ]
+        },
+        {
+          "fcp": 4644.199951171875,
+          "firstPaint": 4644.199951171875,
+          "rendered": 4643,
+          "answered": 350,
+          "documents": 1,
+          "memory": {
+            "peak": 3486875648,
+            "peakProcesses": 4,
+            "settled": 3098116096,
+            "settledProcesses": 3
+          },
+          "load": [
+            5.27,
+            5.47,
+            5.15
+          ]
+        },
+        {
+          "fcp": 4559.5,
+          "firstPaint": 4559.5,
+          "rendered": 4557,
+          "answered": 369,
+          "documents": 1,
+          "memory": {
+            "peak": 3435839488,
+            "peakProcesses": 4,
+            "settled": 3054813184,
+            "settledProcesses": 3
+          },
+          "load": [
+            4.83,
+            5.36,
+            5.12
+          ]
+        },
+        {
+          "fcp": 4401,
+          "firstPaint": 4401,
+          "rendered": 4400,
+          "answered": 328,
+          "documents": 1,
+          "memory": {
+            "peak": 3404513280,
+            "peakProcesses": 4,
+            "settled": 3077046272,
+            "settledProcesses": 3
+          },
+          "load": [
+            5.22,
+            5.46,
+            5.17
+          ]
+        },
+        {
+          "fcp": 4519.699951171875,
+          "firstPaint": 4519.699951171875,
+          "rendered": 4521,
+          "answered": 344,
+          "documents": 1,
+          "memory": {
+            "peak": 3496001536,
+            "peakProcesses": 4,
+            "settled": 3180331008,
+            "settledProcesses": 3
+          },
+          "load": [
+            5.44,
+            5.5,
+            5.19
+          ]
+        }
+      ],
+      "fcp": {
+        "n": 5,
+        "median": 4559.5,
+        "min": 4401,
+        "max": 4666.89990234375,
+        "madPct": 1.8576587602121943
+      },
+      "rendered": {
+        "n": 5,
+        "median": 4557,
+        "min": 4400,
+        "max": 4665,
+        "madPct": 1.8872064955014263
+      },
+      "answered": {
+        "n": 5,
+        "median": 350,
+        "min": 328,
+        "max": 369,
+        "madPct": 4.857142857142857
+      },
+      "memoryPeak": {
+        "n": 5,
+        "median": 3435839488,
+        "min": 3403972608,
+        "max": 3496001536,
+        "madPct": 0.9274845379505692
+      },
+      "memorySettled": {
+        "n": 5,
+        "median": 3077046272,
+        "min": 3029221376,
+        "max": 3180331008,
+        "madPct": 0.7225464303970012
+      }
+    },
+    {
+      "app": "ghostfolio",
+      "label": "Ghostfolio",
+      "kind": "real",
+      "components": 157,
+      "tool": "nx",
+      "toolLabel": "Nx",
+      "metric": "dev-cold",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "fcp": 8964.89990234375,
+          "firstPaint": 8964.89990234375,
+          "rendered": 8966,
+          "answered": 7736,
+          "documents": 1,
+          "memory": {
+            "peak": 3909156864,
+            "peakProcesses": 4,
+            "settled": 3909156864,
+            "settledProcesses": 4
+          },
+          "load": [
+            5.49,
+            5.52,
+            5.17
+          ]
+        },
+        {
+          "fcp": 9693.300048828125,
+          "firstPaint": 8713.10009765625,
+          "rendered": 10803,
+          "answered": 7506,
+          "documents": 2,
+          "memory": {
+            "peak": 3894345728,
+            "peakProcesses": 4,
+            "settled": 3822927872,
+            "settledProcesses": 4
+          },
+          "load": [
+            5.09,
+            5.43,
+            5.14
+          ]
+        },
+        {
+          "fcp": 8880,
+          "firstPaint": 8880,
+          "rendered": 8878,
+          "answered": 7635,
+          "documents": 1,
+          "memory": {
+            "peak": 3649683456,
+            "peakProcesses": 4,
+            "settled": 3649683456,
+            "settledProcesses": 4
+          },
+          "load": [
+            5.68,
+            5.55,
+            5.2
+          ]
+        },
+        {
+          "fcp": 8639.300048828125,
+          "firstPaint": 8639.300048828125,
+          "rendered": 8636,
+          "answered": 7406,
+          "documents": 1,
+          "memory": {
+            "peak": 3712319488,
+            "peakProcesses": 4,
+            "settled": 3712319488,
+            "settledProcesses": 4
+          },
+          "load": [
+            5.45,
+            5.5,
+            5.18
+          ]
+        },
+        {
+          "fcp": 9494.800048828125,
+          "firstPaint": 8508.60009765625,
+          "rendered": 10603,
+          "answered": 7295,
+          "documents": 2,
+          "memory": {
+            "peak": 3768860672,
+            "peakProcesses": 4,
+            "settled": 3768844288,
+            "settledProcesses": 4
+          },
+          "load": [
+            5.35,
+            5.48,
+            5.18
+          ]
+        }
+      ],
+      "fcp": {
+        "n": 5,
+        "median": 8964.89990234375,
+        "min": 8639.300048828125,
+        "max": 9693.300048828125,
+        "madPct": 3.6319407585410004
+      },
+      "rendered": {
+        "n": 5,
+        "median": 8966,
+        "min": 8636,
+        "max": 10803,
+        "madPct": 3.6805710461744368
+      },
+      "answered": {
+        "n": 5,
+        "median": 7506,
+        "min": 7295,
+        "max": 7736,
+        "madPct": 1.7186250999200638
+      },
+      "memoryPeak": {
+        "n": 5,
+        "median": 3768860672,
+        "min": 3649683456,
+        "max": 3909156864,
+        "madPct": 3.1621549951528696
+      },
+      "memorySettled": {
+        "n": 5,
+        "median": 3768844288,
+        "min": 3649683456,
+        "max": 3909156864,
+        "madPct": 1.4997913333797037
+      }
+    },
+    {
+      "app": "ghostfolio",
+      "label": "Ghostfolio",
+      "kind": "real",
+      "components": 157,
+      "tool": "ngp",
+      "toolLabel": "vite-plugin-ngp",
+      "metric": "dev-warm",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "fcp": 1632.699951171875,
+          "firstPaint": 1632.699951171875,
+          "rendered": 1630,
+          "answered": 273,
+          "documents": 1,
+          "memory": {
+            "peak": 986202112,
+            "peakProcesses": 4,
+            "settled": 891092992,
+            "settledProcesses": 3
+          },
+          "load": [
+            4.97,
+            5.37,
+            5.16
+          ]
+        },
+        {
+          "fcp": 1638.60009765625,
+          "firstPaint": 1638.60009765625,
+          "rendered": 1639,
+          "answered": 273,
+          "documents": 1,
+          "memory": {
+            "peak": 1282523136,
+            "peakProcesses": 4,
+            "settled": 999505920,
+            "settledProcesses": 3
+          },
+          "load": [
+            5.17,
+            5.39,
+            5.16
+          ]
+        },
+        {
+          "fcp": 1647,
+          "firstPaint": 1647,
+          "rendered": 1641,
+          "answered": 278,
+          "documents": 1,
+          "memory": {
+            "peak": 1168572416,
+            "peakProcesses": 4,
+            "settled": 896745472,
+            "settledProcesses": 3
+          },
+          "load": [
+            4.68,
+            5.27,
+            5.13
+          ]
+        },
+        {
+          "fcp": 1634,
+          "firstPaint": 1634,
+          "rendered": 1634,
+          "answered": 275,
+          "documents": 1,
+          "memory": {
+            "peak": 1045741568,
+            "peakProcesses": 4,
+            "settled": 916357120,
+            "settledProcesses": 3
+          },
+          "load": [
+            4.66,
+            5.24,
+            5.12
+          ]
+        },
+        {
+          "fcp": 1645.10009765625,
+          "firstPaint": 1645.10009765625,
+          "rendered": 1639,
+          "answered": 276,
+          "documents": 1,
+          "memory": {
+            "peak": 1083342848,
+            "peakProcesses": 4,
+            "settled": 1010974720,
+            "settledProcesses": 3
+          },
+          "load": [
+            4.82,
+            5.25,
+            5.12
+          ]
+        }
+      ],
+      "fcp": {
+        "n": 5,
+        "median": 1638.60009765625,
+        "min": 1632.699951171875,
+        "max": 1647,
+        "madPct": 0.36007238696093063
+      },
+      "rendered": {
+        "n": 5,
+        "median": 1639,
+        "min": 1630,
+        "max": 1641,
+        "madPct": 0.12202562538133008
+      },
+      "answered": {
+        "n": 5,
+        "median": 275,
+        "min": 273,
+        "max": 278,
+        "madPct": 0.7272727272727273
+      },
+      "memoryPeak": {
+        "n": 5,
+        "median": 1083342848,
+        "min": 986202112,
+        "max": 1282523136,
+        "madPct": 7.8672756419951
+      },
+      "memorySettled": {
+        "n": 5,
+        "median": 916357120,
+        "min": 891092992,
+        "max": 1010974720,
+        "madPct": 2.7570177006973
+      }
+    },
+    {
+      "app": "ghostfolio",
+      "label": "Ghostfolio",
+      "kind": "real",
+      "components": 157,
+      "tool": "nx",
+      "toolLabel": "Nx",
+      "metric": "dev-warm",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "fcp": 7285.800048828125,
+          "firstPaint": 7285.800048828125,
+          "rendered": 7283,
+          "answered": 6862,
+          "documents": 1,
+          "memory": {
+            "peak": 2523365376,
+            "peakProcesses": 4,
+            "settled": 2510258176,
+            "settledProcesses": 4
+          },
+          "load": [
+            4.65,
+            5.3,
+            5.13
+          ]
+        },
+        {
+          "fcp": 7305,
+          "firstPaint": 7305,
+          "rendered": 7304,
+          "answered": 6894,
+          "documents": 1,
+          "memory": {
+            "peak": 2425585664,
+            "peakProcesses": 4,
+            "settled": 2417983488,
+            "settledProcesses": 4
+          },
+          "load": [
+            5.17,
+            5.39,
+            5.16
+          ]
+        },
+        {
+          "fcp": 7692.300048828125,
+          "firstPaint": 7692.300048828125,
+          "rendered": 7691,
+          "answered": 7279,
+          "documents": 1,
+          "memory": {
+            "peak": 2577498112,
+            "peakProcesses": 4,
+            "settled": 2563735552,
+            "settledProcesses": 4
+          },
+          "load": [
+            4.79,
+            5.29,
+            5.13
+          ]
+        },
+        {
+          "fcp": 7632.10009765625,
+          "firstPaint": 7632.10009765625,
+          "rendered": 7631,
+          "answered": 7215,
+          "documents": 1,
+          "memory": {
+            "peak": 2489368576,
+            "peakProcesses": 4,
+            "settled": 2481324032,
+            "settledProcesses": 4
+          },
+          "load": [
+            4.77,
+            5.25,
+            5.12
+          ]
+        },
+        {
+          "fcp": 7402.199951171875,
+          "firstPaint": 7402.199951171875,
+          "rendered": 7398,
+          "answered": 6978,
+          "documents": 1,
+          "memory": {
+            "peak": 2399584256,
+            "peakProcesses": 4,
+            "settled": 2385608704,
+            "settledProcesses": 4
+          },
+          "load": [
+            4.6,
+            5.19,
+            5.1
+          ]
+        }
+      ],
+      "fcp": {
+        "n": 5,
+        "median": 7402.199951171875,
+        "min": 7285.800048828125,
+        "max": 7692.300048828125,
+        "madPct": 1.572504162432443
+      },
+      "rendered": {
+        "n": 5,
+        "median": 7398,
+        "min": 7283,
+        "max": 7691,
+        "madPct": 1.5544741822114085
+      },
+      "answered": {
+        "n": 5,
+        "median": 6978,
+        "min": 6862,
+        "max": 7279,
+        "madPct": 1.6623674405273718
+      },
+      "memoryPeak": {
+        "n": 5,
+        "median": 2489368576,
+        "min": 2399584256,
+        "max": 2577498112,
+        "madPct": 2.562212466845247
+      },
+      "memorySettled": {
+        "n": 5,
+        "median": 2481324032,
+        "min": 2385608704,
+        "max": 2563735552,
+        "madPct": 2.5526913528075643
+      }
+    },
+    {
+      "app": "ghostfolio",
+      "label": "Ghostfolio",
+      "kind": "real",
+      "components": 157,
+      "tool": "ngp",
+      "toolLabel": "vite-plugin-ngp",
+      "metric": "edit-template",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "ms": 154,
+          "mode": "in-place",
+          "load": [
+            4.32,
+            5.1,
+            5.07
+          ]
+        },
+        {
+          "ms": 156,
+          "mode": "in-place",
+          "load": [
+            4.32,
+            5.1,
+            5.07
+          ]
+        },
+        {
+          "ms": 156,
+          "mode": "in-place",
+          "load": [
+            4.32,
+            5.1,
+            5.07
+          ]
+        },
+        {
+          "ms": 155,
+          "mode": "in-place",
+          "load": [
+            4.32,
+            5.1,
+            5.07
+          ]
+        },
+        {
+          "ms": 154,
+          "mode": "in-place",
+          "load": [
+            4.06,
+            5.03,
+            5.05
+          ]
+        },
+        {
+          "ms": 92,
+          "mode": "in-place",
+          "load": [
+            4.06,
+            5.03,
+            5.05
+          ]
+        },
+        {
+          "ms": 90,
+          "mode": "in-place",
+          "load": [
+            4.06,
+            5.03,
+            5.05
+          ]
+        },
+        {
+          "ms": 155,
+          "mode": "in-place",
+          "load": [
+            4.06,
+            5.03,
+            5.05
+          ]
+        },
+        {
+          "ms": 91,
+          "mode": "in-place",
+          "load": [
+            4.06,
+            5.03,
+            5.05
+          ]
+        },
+        {
+          "ms": 154,
+          "mode": "in-place",
+          "load": [
+            4.06,
+            5.03,
+            5.05
+          ]
+        }
+      ],
+      "latency": {
+        "n": 10,
+        "median": 154,
+        "min": 90,
+        "max": 156,
+        "madPct": 0.974025974025974
+      },
+      "mode": "in-place",
+      "typeChecks": [],
+      "memory": {
+        "peak": 1178714112,
+        "afterEdits": 872611840,
+        "processes": 3
+      }
+    },
+    {
+      "app": "ghostfolio",
+      "label": "Ghostfolio",
+      "kind": "real",
+      "components": 157,
+      "tool": "ngp",
+      "toolLabel": "vite-plugin-ngp",
+      "metric": "edit-ts",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "ms": 165,
+          "mode": "reload",
+          "load": [
+            3.97,
+            5,
+            5.04
+          ]
+        },
+        {
+          "ms": 181,
+          "mode": "reload",
+          "load": [
+            3.97,
+            4.98,
+            5.03
+          ]
+        },
+        {
+          "ms": 199,
+          "mode": "reload",
+          "load": [
+            3.97,
+            4.98,
+            5.03
+          ]
+        },
+        {
+          "ms": 192,
+          "mode": "reload",
+          "load": [
+            3.97,
+            4.98,
+            5.03
+          ]
+        },
+        {
+          "ms": 161,
+          "mode": "reload",
+          "load": [
+            3.97,
+            4.98,
+            5.03
+          ]
+        },
+        {
+          "ms": 237,
+          "mode": "reload",
+          "load": [
+            3.97,
+            4.98,
+            5.03
+          ]
+        },
+        {
+          "ms": 157,
+          "mode": "reload",
+          "load": [
+            3.73,
+            4.92,
+            5
+          ]
+        },
+        {
+          "ms": 235,
+          "mode": "reload",
+          "load": [
+            3.73,
+            4.92,
+            5
+          ]
+        },
+        {
+          "ms": 204,
+          "mode": "reload",
+          "load": [
+            3.73,
+            4.92,
+            5
+          ]
+        },
+        {
+          "ms": 189,
+          "mode": "reload",
+          "load": [
+            3.73,
+            4.92,
+            5
+          ]
+        }
+      ],
+      "latency": {
+        "n": 10,
+        "median": 190.5,
+        "min": 157,
+        "max": 237,
+        "madPct": 10.236220472440944
+      },
+      "mode": "reload",
+      "typeChecks": [],
+      "memory": {
+        "peak": 1178714112,
+        "afterEdits": 872611840,
+        "processes": 3
+      }
+    },
+    {
+      "app": "ghostfolio",
+      "label": "Ghostfolio",
+      "kind": "real",
+      "components": 157,
+      "tool": "nx",
+      "toolLabel": "Nx",
+      "metric": "edit-template",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "ms": 949,
+          "mode": "in-place",
+          "load": [
+            3.95,
+            4.89,
+            4.99
+          ]
+        },
+        {
+          "ms": 924,
+          "mode": "in-place",
+          "load": [
+            3.95,
+            4.89,
+            4.99
+          ]
+        },
+        {
+          "ms": 881,
+          "mode": "in-place",
+          "load": [
+            3.95,
+            4.89,
+            4.99
+          ]
+        },
+        {
+          "ms": 947,
+          "mode": "in-place",
+          "load": [
+            3.72,
+            4.82,
+            4.97
+          ]
+        },
+        {
+          "ms": 873,
+          "mode": "in-place",
+          "load": [
+            3.72,
+            4.82,
+            4.97
+          ]
+        },
+        {
+          "ms": 935,
+          "mode": "in-place",
+          "load": [
+            3.72,
+            4.82,
+            4.97
+          ]
+        },
+        {
+          "ms": 919,
+          "mode": "in-place",
+          "load": [
+            3.82,
+            4.83,
+            4.97
+          ]
+        },
+        {
+          "ms": 873,
+          "mode": "in-place",
+          "load": [
+            3.82,
+            4.83,
+            4.97
+          ]
+        },
+        {
+          "ms": 918,
+          "mode": "in-place",
+          "load": [
+            3.82,
+            4.83,
+            4.97
+          ]
+        },
+        {
+          "ms": 918,
+          "mode": "in-place",
+          "load": [
+            3.99,
+            4.84,
+            4.97
+          ]
+        }
+      ],
+      "latency": {
+        "n": 10,
+        "median": 918.5,
+        "min": 873,
+        "max": 949,
+        "madPct": 2.4496461622210126
+      },
+      "mode": "in-place",
+      "typeChecks": [],
+      "memory": {
+        "peak": 2689433600,
+        "afterEdits": 2536423424,
+        "processes": 4
+      }
+    },
+    {
+      "app": "ghostfolio",
+      "label": "Ghostfolio",
+      "kind": "real",
+      "components": 157,
+      "tool": "nx",
+      "toolLabel": "Nx",
+      "metric": "edit-ts",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "ms": 1028,
+          "mode": "reload",
+          "load": [
+            3.99,
+            4.83,
+            4.97
+          ]
+        },
+        {
+          "ms": 993,
+          "mode": "reload",
+          "load": [
+            3.99,
+            4.83,
+            4.97
+          ]
+        },
+        {
+          "ms": 1002,
+          "mode": "reload",
+          "load": [
+            3.91,
+            4.8,
+            4.96
+          ]
+        },
+        {
+          "ms": 1019,
+          "mode": "reload",
+          "load": [
+            3.91,
+            4.8,
+            4.96
+          ]
+        },
+        {
+          "ms": 1003,
+          "mode": "reload",
+          "load": [
+            3.68,
+            4.74,
+            4.93
+          ]
+        },
+        {
+          "ms": 967,
+          "mode": "reload",
+          "load": [
+            3.68,
+            4.74,
+            4.93
+          ]
+        },
+        {
+          "ms": 1017,
+          "mode": "reload",
+          "load": [
+            3.68,
+            4.74,
+            4.93
+          ]
+        },
+        {
+          "ms": 1001,
+          "mode": "reload",
+          "load": [
+            3.55,
+            4.69,
+            4.92
+          ]
+        },
+        {
+          "ms": 986,
+          "mode": "reload",
+          "load": [
+            3.55,
+            4.69,
+            4.92
+          ]
+        },
+        {
+          "ms": 1008,
+          "mode": "reload",
+          "load": [
+            3.55,
+            4.69,
+            4.92
+          ]
+        }
+      ],
+      "latency": {
+        "n": 10,
+        "median": 1002.5,
+        "min": 967,
+        "max": 1028,
+        "madPct": 1.1970074812967582
+      },
+      "mode": "reload",
+      "typeChecks": [],
+      "memory": {
+        "peak": 2689433600,
+        "afterEdits": 2536423424,
+        "processes": 4
+      }
+    },
+    {
+      "app": "ghostfolio",
+      "label": "Ghostfolio",
+      "kind": "real",
+      "components": 157,
+      "tool": "ngp",
+      "toolLabel": "vite-plugin-ngp",
+      "metric": "build",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "ms": 8921.260458000004,
+          "load": [
+            4.06,
+            4.73,
+            4.92
+          ],
+          "memory": {
+            "peak": 2354069504,
+            "peakProcesses": 3
+          }
+        },
+        {
+          "ms": 8889.63054100005,
+          "load": [
+            3.92,
+            4.66,
+            4.89
+          ],
+          "memory": {
+            "peak": 2434793472,
+            "peakProcesses": 2
+          }
+        },
+        {
+          "ms": 8966.169916999992,
+          "load": [
+            4.07,
+            4.66,
+            4.89
+          ],
+          "memory": {
+            "peak": 2387951616,
+            "peakProcesses": 2
+          }
+        },
+        {
+          "ms": 8882.30379099981,
+          "load": [
+            4.91,
+            4.8,
+            4.93
+          ],
+          "memory": {
+            "peak": 2459992064,
+            "peakProcesses": 2
+          }
+        },
+        {
+          "ms": 9026.94904200011,
+          "load": [
+            4.76,
+            4.76,
+            4.92
+          ],
+          "memory": {
+            "peak": 2561015808,
+            "peakProcesses": 2
+          }
+        }
+      ],
+      "time": {
+        "n": 5,
+        "median": 8921.260458000004,
+        "min": 8882.30379099981,
+        "max": 9026.94904200011,
+        "madPct": 0.4366722301584774
+      },
+      "memoryPeak": {
+        "n": 5,
+        "median": 2434793472,
+        "min": 2354069504,
+        "max": 2561015808,
+        "madPct": 1.9238533591731266
+      },
+      "boot": {
+        "errors": [],
+        "lazyRoute": "about"
+      },
+      "sizes": {
+        "total": {
+          "js": {
+            "files": 173,
+            "raw": 4812880,
+            "gzip": 1297821
+          },
+          "css": {
+            "files": 1,
+            "raw": 122089,
+            "gzip": 19598
+          }
+        },
+        "initial": {
+          "js": {
+            "files": 68,
+            "raw": 3233190,
+            "gzip": 823979
+          },
+          "css": {
+            "files": 1,
+            "raw": 122089,
+            "gzip": 19598
+          }
+        }
+      }
+    },
+    {
+      "app": "ghostfolio",
+      "label": "Ghostfolio",
+      "kind": "real",
+      "components": 157,
+      "tool": "nx",
+      "toolLabel": "Nx",
+      "metric": "build",
+      "ok": true,
+      "errors": [],
+      "samples": [
+        {
+          "ms": 9759.611167000141,
+          "load": [
+            4.36,
+            4.77,
+            4.93
+          ],
+          "memory": {
+            "peak": 3121004544,
+            "peakProcesses": 4
+          }
+        },
+        {
+          "ms": 9758.108207999961,
+          "load": [
+            4.01,
+            4.67,
+            4.89
+          ],
+          "memory": {
+            "peak": 2986196992,
+            "peakProcesses": 4
+          }
+        },
+        {
+          "ms": 9771.682083999971,
+          "load": [
+            4.14,
+            4.65,
+            4.88
+          ],
+          "memory": {
+            "peak": 3097231360,
+            "peakProcesses": 4
+          }
+        },
+        {
+          "ms": 9805.78137500002,
+          "load": [
+            4.62,
+            4.74,
+            4.91
+          ],
+          "memory": {
+            "peak": 3190243328,
+            "peakProcesses": 4
+          }
+        },
+        {
+          "ms": 9785.069167000009,
+          "load": [
+            4.73,
+            4.75,
+            4.91
+          ],
+          "memory": {
+            "peak": 3065724928,
+            "peakProcesses": 4
+          }
+        }
+      ],
+      "time": {
+        "n": 5,
+        "median": 9771.682083999971,
+        "min": 9758.108207999961,
+        "max": 9805.78137500002,
+        "madPct": 0.1369987570712893
+      },
+      "memoryPeak": {
+        "n": 5,
+        "median": 3097231360,
+        "min": 2986196992,
+        "max": 3190243328,
+        "madPct": 1.0172450275074059
+      },
+      "boot": {
+        "errors": [],
+        "lazyRoute": "about"
+      },
+      "sizes": {
+        "total": {
+          "js": {
+            "files": 174,
+            "raw": 4305440,
+            "gzip": 1262146
+          },
+          "css": {
+            "files": 1,
+            "raw": 126898,
+            "gzip": 20082
+          }
+        },
+        "initial": {
+          "js": {
+            "files": 68,
+            "raw": 2447703,
+            "gzip": 705496
+          },
+          "css": {
+            "files": 1,
+            "raw": 126898,
+            "gzip": 20082
+          }
+        }
+      }
+    }
+  ]
+}

@@ -12,6 +12,7 @@ What changed in vite-plugin-ngp, newest first. The plugin isn't on npm, so there
 ### Docs
 
 - The Performance page is remeasured on the plugin with the tsrs option merged and the first dev-server check waiting for an idle server: the four generated apps on the laptop, now with `typeChecker: 'tsrs'` as a row of its own in every table. tsrs shows a type error at 5,000 components in 1.02 s where `tsgo` takes 1.36 s, and takes about half a gigabyte off the dev server's peak during edits and off a production build's; starts, edits and build times are within the run-to-run drift with either. Every other number moved by a few percent either way. [Performance](performance)
+- The Benchmarks page is remeasured too, on the same plugin: the two real apps on GitHub's runners and on the laptop. The change that shows is Super Productivity's cold start on a 4-core runner, 10.5 s against `ng serve`'s 17.4 where the morning's run had 21.4 against 23.1, at a peak of 3.0 GB instead of 4.9, now that the first type-check waits for an idle server; the runners were faster this time too, and the page says how much of the drop is which. [Benchmarks](benchmarks#starting-the-dev-server)
 
 ## 17 October 2026
 

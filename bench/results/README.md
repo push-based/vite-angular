@@ -9,8 +9,9 @@ The files here are the measurements behind the docs site's [Performance page](..
 | `2026-10-17-generated.json` | The Performance page's numbers from the afternoon of 17 October until the rerun: four tools, four apps, every metric including `typecheck`, 20 edits per series, plugin at `92efd3a`. Its 100-component build rounds overlapped a load spike from runaway processes another session left behind, so the next file replaces that series |
 | `2026-10-17-generated-build-100.json` | The 100-component builds, rerun once the machine was quiet |
 | `2026-10-17-generated-ngp-notc.json` | The plugin's builds with `typeCheck: false`, same day |
-| `ci-super-productivity.json`, `ci-ghostfolio.json` | The Benchmarks page's published numbers, from the `bench-real` workflow's artifacts |
-| `2026-10-17-real-apps.json` | The real apps on the laptop, the same day, for the Benchmarks page's laptop columns |
+| `ci-super-productivity.json`, `ci-ghostfolio.json` | The Benchmarks page's published numbers, from the `bench-real` workflow's artifacts: run 39066812590 on the evening of 17 October, plugin at `e401c10`. The morning run's files, from run 39017944058 and the plugin at `92efd3a`, are in git history before 18 October |
+| `2026-10-18-rerun-real-apps.json` | The real apps on the laptop, just after midnight on 18 October, plugin at `e401c10`, for the Benchmarks page's laptop columns |
+| `2026-10-17-real-apps.json` | The real apps on the laptop on the morning of 17 October, plugin at `e49fedc`: the laptop columns until the rerun |
 | `2026-10-16-standalone-*.json`, `2026-10-16-playground.json`, `2026-10-16-ngp-notc.json` | The first full run, plugin at `33b8ecd`, 10 edits per series; the Performance page's numbers until 17 October |
 | `2026-10-16-typecheck-cost.json` | The plugin with and without its type-check at 5,000 components, back to back: the 150 ms the check costs a cold start |
 | `2026-10-16-analog-hmr.json` | Analog with `liveReload: true`: its component HMR failed the gates on the generated apps |

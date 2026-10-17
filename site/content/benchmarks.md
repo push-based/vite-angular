@@ -5,9 +5,9 @@ description: vite-plugin-ngp against the Angular CLI on Super Productivity and a
 
 # Benchmarks on real apps
 
-On GitHub's 4-core runners, vite-plugin-ngp restarts Ghostfolio's dev server in 4.5 seconds where Nx takes 21, and Super Productivity's in 11.5 seconds where `ng serve` takes 24. A template edit reaches the page in about 130 to 150 ms on both apps, in place, where the CLIs take 3.3 to 3.7 seconds. A production build takes 18 seconds against `ng build`'s 32 on Super Productivity, and 18 against Nx's 23 on Ghostfolio. Once the page has rendered after a restart, the plugin's dev server holds 0.9 GB on Ghostfolio and 1.7 GB on Super Productivity, where the CLIs hold 3.5 to 3.7 GB. The cold start is where the plugin gains least, and on Super Productivity it doesn't: 21.4 seconds against 23.1, peaking at 4.9 GB where `ng serve` peaks at 3.6.
+On GitHub's 4-core runners, vite-plugin-ngp restarts Ghostfolio's dev server in 3.2 seconds where Nx takes 16, and Super Productivity's in 8 seconds where `ng serve` takes 18. A template edit reaches the page in about 110 ms on both apps, in place, where the CLIs take 2.6 to 3 seconds. A production build takes 14 seconds against `ng build`'s 25 on Super Productivity, and 14 against Nx's 18 on Ghostfolio. Once the page has rendered after a restart, the plugin's dev server holds 0.85 GB on Ghostfolio and 1.7 GB on Super Productivity, where the CLIs hold 3.6 GB. The cold start is where the plugin gains least: on Super Productivity 10.5 seconds against 17.4, at a peak of 3.0 GB where `ng serve` peaks at 3.7. A run earlier the same day, before the plugin's first type-check waited for an idle server, had that cold start at 21.4 seconds and 4.9 GB.
 
-This page is for you if the [Performance page](performance)'s generated apps left you asking what the plugin does to an app with Material, NgRx, a Sass design system and a dozen third-party libraries, and what it costs to get such an app running on it. Every number here was measured with the benchmark in the repo's `bench/` folder, on GitHub's Ubuntu runners in [one workflow run](https://github.com/push-based/vite-angular/actions/runs/39017944058) on 17 October 2026, and again on a laptop the same day. The last sections say how, what the two apps needed, and where these numbers are weak.
+This page is for you if the [Performance page](performance)'s generated apps left you asking what the plugin does to an app with Material, NgRx, a Sass design system and a dozen third-party libraries, and what it costs to get such an app running on it. Every number here was measured with the benchmark in the repo's `bench/` folder, on GitHub's Ubuntu runners in [one workflow run](https://github.com/push-based/vite-angular/actions/runs/39066812590) on the evening of 17 October 2026, and again on a laptop just after midnight, on the plugin at commit `e401c10`. The last sections say how, what the two apps needed, and where these numbers are weak.
 
 ## What was measured
 
@@ -47,7 +47,7 @@ Two things the harness does that a developer wouldn't: it runs Nx with its daemo
 
 | | GitHub Actions | Laptop |
 |---|---|---|
-| Machine | `ubuntu-latest`, Ubuntu 24.04, 4 cores and 16 GB. Super Productivity's job landed on an AMD EPYC 9V74, Ghostfolio's on an AMD EPYC 7763 | Apple M2 Max, 12 cores, 32 GB, macOS 27 |
+| Machine | `ubuntu-latest`, Ubuntu 24.04, 4 cores and 16 GB. Super Productivity's job landed on an AMD EPYC 9V45, Ghostfolio's on an AMD EPYC 9V74 | Apple M2 Max, 12 cores, 32 GB, macOS 27 |
 | Who else was on it | nobody | other development sessions, building and testing |
 | Disk | the runner's | SSD |
 | Node, Chrome | Node 26.12.0, Chrome 155 | Node 26.12.0, Chrome 155 |
@@ -63,19 +63,19 @@ From starting the process to the first contentful paint of the rendered app, col
 
 | Toolchain | Super Productivity, CI | Ghostfolio, CI | Super Productivity, laptop | Ghostfolio, laptop |
 |---|---:|---:|---:|---:|
-| vite-plugin-ngp | 21.4 s ±6% | 10.4 s | 8.01 s | 4.52 s |
-| the app's own CLI | 23.1 s | 21.5 s | 14.3 s | 9.50 s |
+| vite-plugin-ngp | 10.5 s | 7.53 s | 7.45 s | 4.56 s |
+| the app's own CLI | 17.4 s | 16.3 s | 14.3 s | 8.96 s |
 
 A restart keeps the caches the previous start wrote, and is what you do every morning:
 
 | Toolchain | Super Productivity, CI | Ghostfolio, CI | Super Productivity, laptop | Ghostfolio, laptop |
 |---|---:|---:|---:|---:|
-| vite-plugin-ngp | 11.5 s | 4.53 s | 6.53 s | 1.79 s |
-| the app's own CLI | 24.4 s | 21.2 s | 13.7 s | 7.32 s |
+| vite-plugin-ngp | 7.96 s | 3.23 s | 5.82 s | 1.64 s |
+| the app's own CLI | 17.7 s | 16.2 s | 13.7 s | 7.40 s |
 
-Ghostfolio shows the pattern from the generated apps: the plugin compiles only what the landing page imports, so it's half of Nx's cold start and a fifth of its restart, on both machines. Nx's cache barely helps a restart, 21.2 seconds against 21.5, because its dev server builds the whole app before it serves anything, and that build is what takes the time. The plugin's server answers its first request after about half a second in every run; the rest is the browser pulling the page's modules through it.
+Ghostfolio shows the pattern from the generated apps: the plugin compiles only what the landing page imports, so it's half of Nx's cold start and a fifth of its restart, on both machines. Nx's cache barely helps a restart, 16.2 seconds against 16.3, because its dev server builds the whole app before it serves anything, and that build is what takes the time. The plugin's server answers its first request after about half a second in every run; the rest is the browser pulling the page's modules through it.
 
-Super Productivity is the surprise. On the runner the plugin's cold start, 21.4 seconds, is within two seconds of `ng serve`'s, and only the restart, 11.5 seconds against 24.4, shows the gain. On the laptop the cold start is 8.0 against 14.3. Where the plugin's cold start goes on four cores wasn't measured, and the candidates are known: Vite pre-bundling the app's dependencies through Angular's Babel linker, which is most of the plugin's cold start on the generated apps and which this app, with Material, the CDK, NgRx and Ionic, has far more of; the background `tsgo` type-check over a 2,445-file program, which since this run waits for the server to go idle, and on the laptop that took 0.7 seconds off a warm restart's first paint ([Type-checking](type-checking#where-its-weak)); and typia's TypeScript program for the bench's transformer, which took 2.4 seconds and 0.6 GB on the laptop when measured alone. A restart skips the pre-bundling and halves the time. `ng serve` here is a JIT development build, as the app configures it: the CLI compiles no templates at all and leaves that to the browser, and its restart, 24.4 seconds, is no faster than its cold start.
+Super Productivity gains less, and the cold start is where. On the runner the plugin's cold start is 10.5 seconds against `ng serve`'s 17.4, and the restart 8.0 against 17.7; on the laptop 7.4 against 14.3 and 5.8 against 13.7. The morning run of the same day had the plugin's cold start on the runner at 21.4 seconds, within two seconds of `ng serve`'s 23.1. Two things changed in between. The plugin's first type-check now waits until the dev server is idle instead of generating every component's type-check block on Vite's thread while the first page compiles ([Type-checking](type-checking#what-you-see)), and the runners were faster: `ng serve`, which didn't change, came in 25% lower too. The plugin's cold start halved while the CLI's fell by a quarter, so the wait for the idle server is the likely source of the rest, which would make it the largest single improvement on this page; that's an inference from two runs on different machines, not a measurement of the change on its own. What's left of the cold start on four cores wasn't separated out, and the candidates are known: Vite pre-bundling the app's dependencies through Angular's Babel linker, which is most of the plugin's cold start on the generated apps and which this app, with Material, the CDK, NgRx and Ionic, has far more of; and typia's TypeScript program for the bench's transformer, which took 2.4 seconds and 0.6 GB on the laptop when measured alone. A restart skips the pre-bundling. `ng serve` here is a JIT development build, as the app configures it: the CLI compiles no templates at all and leaves that to the browser, and its restart, 17.7 seconds, is no faster than its cold start.
 
 ## Editing
 
@@ -85,19 +85,19 @@ From writing a template of the first page to the new element in the page. "in pl
 
 | Toolchain | Super Productivity, CI | Ghostfolio, CI | Super Productivity, laptop | Ghostfolio, laptop |
 |---|---:|---:|---:|---:|
-| vite-plugin-ngp | 145 ms ±7% (95 ms) | 130 ms (126 ms) | 149 ms (85 ms) | 154 ms (91 ms) |
-| the app's own CLI | 3.33 s (3.17 s), reload | 3.68 s (3.60 s) | 1.39 s (1.37 s), reload | 924 ms (869 ms) |
+| vite-plugin-ngp | 112 ms ±23% (85 ms) | 111 ms (107 ms) | 149 ms (87 ms) | 154 ms (90 ms) |
+| the app's own CLI | 2.64 s (2.53 s), reload | 2.95 s (2.88 s) | 1.40 s (1.37 s), reload | 919 ms (873 ms) |
 
 The `.ts` edit, a string changed in the landing page's component class:
 
 | Toolchain | Super Productivity, CI | Ghostfolio, CI | Super Productivity, laptop | Ghostfolio, laptop |
 |---|---:|---:|---:|---:|
-| vite-plugin-ngp | n/a | 413 ms ±7% (383 ms), reload | n/a | 197 ms ±8% (157 ms), reload |
-| the app's own CLI | n/a | 4.18 s (4.05 s), reload | n/a | 998 ms (966 ms), reload |
+| vite-plugin-ngp | n/a | 297 ms ±5% (277 ms), reload | n/a | 191 ms ±10% (157 ms), reload |
+| the app's own CLI | n/a | 3.20 s (3.10 s), reload | n/a | 1.00 s (967 ms), reload |
 
-The plugin's template edit lands in 130 to 154 ms on both apps and both machines, in place, keeping the page's state, and the fastest edits in 85 to 126 ms. That's the same flat number the generated apps gave at 100 and at 5,000 components, because an edit regenerates one component's update and nothing else. The CLIs rebuild the app first. `ng serve` on Super Productivity then reloads the page, 3.3 seconds on the runner, because a JIT build has no component HMR. Nx on Ghostfolio applies the update in place, but after a 3.7-second rebuild on the runner, 0.9 seconds on the laptop.
+The plugin's template edit lands in 110 to 154 ms on both apps and both machines, in place, keeping the page's state, and the fastest edits in 85 to 107 ms. That's the same flat number the generated apps gave at 100 and at 5,000 components, because an edit regenerates one component's update and nothing else. The CLIs rebuild the app first. `ng serve` on Super Productivity then reloads the page, 2.6 seconds on the runner, because a JIT build has no component HMR. Nx on Ghostfolio applies the update in place, but after a 3-second rebuild on the runner, 0.9 seconds on the laptop.
 
-The `.ts` edit changes a testimonial string in Ghostfolio's landing page component. Every tool reloads the page for a class change: the plugin in 413 ms on the runner, Nx in 4.2 seconds. Super Productivity has no `.ts` edit because its Today view renders no string that lives in a component class; its text comes from translation files.
+The `.ts` edit changes a testimonial string in Ghostfolio's landing page component. Every tool reloads the page for a class change: the plugin in 297 ms on the runner, Nx in 3.2 seconds. Super Productivity has no `.ts` edit because its Today view renders no string that lives in a component class; its text comes from translation files.
 
 ## Production builds
 
@@ -105,10 +105,10 @@ From starting `vite build` or the CLI's production build to the process exiting,
 
 | Toolchain | Super Productivity, CI | Ghostfolio, CI | Super Productivity, laptop | Ghostfolio, laptop |
 |---|---:|---:|---:|---:|
-| vite-plugin-ngp | 18.0 s | 17.8 s | 10.3 s | 8.92 s |
-| the app's own CLI | 31.9 s | 23.1 s | 20.3 s | 9.78 s |
+| vite-plugin-ngp | 14.4 s | 14.3 s | 10.5 s | 8.92 s |
+| the app's own CLI | 24.9 s | 18.2 s | 20.3 s | 9.77 s |
 
-Both builds type-check: the plugin with TypeScript 7 in a child process, the CLIs with TypeScript 6 inside their compiler. On Super Productivity the plugin builds in 18 seconds against `ng build`'s 32 on the runner, and 10 against 20 on the laptop. On Ghostfolio the gap is smaller, 18 against 23 on the runner and 8.9 against 9.8 on the laptop, and the two builds aren't quite the same job: Nx's `browser-esbuild` builder bundles and then translates its output 14 times, and so does the plugin's `i18n` option, but the plugin also writes the service worker's manifest for each of the 14 folders through the bench's helper where the CLI does it once, in process.
+Both builds type-check: the plugin with TypeScript 7 in a child process, the CLIs with TypeScript 6 inside their compiler. On Super Productivity the plugin builds in 14 seconds against `ng build`'s 25 on the runner, and 10.5 against 20 on the laptop. On Ghostfolio the gap is smaller, 14 against 18 on the runner and 8.9 against 9.8 on the laptop, and the two builds aren't quite the same job: Nx's `browser-esbuild` builder bundles and then translates its output 14 times, and so does the plugin's `i18n` option, but the plugin also writes the service worker's manifest for each of the 14 folders through the bench's helper where the CLI does it once, in process.
 
 ## Bundle size
 
@@ -137,15 +137,15 @@ The peak between process start and the rendered page, and in brackets what the s
 
 | Toolchain | Super Productivity, CI | Ghostfolio, CI | Super Productivity, laptop | Ghostfolio, laptop |
 |---|---:|---:|---:|---:|
-| vite-plugin-ngp | 4.87 GB (3.73 GB settled) | 1.87 GB (1.78 GB settled) | 3.89 GB (3.05 GB settled) | 2.94 GB (2.94 GB settled) |
-| the app's own CLI | 3.62 GB (3.52 GB settled) | 3.60 GB (3.59 GB settled) | 3.97 GB (3.95 GB settled) | 3.52 GB (3.52 GB settled) |
+| vite-plugin-ngp | 3.03 GB (3.03 GB settled) | 2.11 GB (1.74 GB settled) | 3.36 GB (3.36 GB settled) | 3.20 GB (2.87 GB settled) |
+| the app's own CLI | 3.68 GB (3.63 GB settled) | 3.74 GB (3.73 GB settled) | 3.96 GB (3.90 GB settled) | 3.51 GB (3.51 GB settled) |
 
 ### Dev server, restart
 
 | Toolchain | Super Productivity, CI | Ghostfolio, CI | Super Productivity, laptop | Ghostfolio, laptop |
 |---|---:|---:|---:|---:|
-| vite-plugin-ngp | 2.09 GB (1.73 GB settled) | 931 MB (856 MB settled) | 2.18 GB (1.83 GB settled) | 999 MB ±6% (869 MB settled) |
-| the app's own CLI | 3.56 GB (3.52 GB settled) | 3.70 GB (3.68 GB settled) | 3.40 GB (3.35 GB settled) | 2.29 GB (2.28 GB settled) |
+| vite-plugin-ngp | 1.74 GB (1.74 GB settled) | 1.08 GB (852 MB settled) | 1.87 GB (1.87 GB settled) | 1.01 GB ±8% (874 MB settled) |
+| the app's own CLI | 3.62 GB (3.56 GB settled) | 3.59 GB (3.57 GB settled) | 3.43 GB (3.36 GB settled) | 2.32 GB (2.31 GB settled) |
 
 ### Dev server, after the edits
 
@@ -153,8 +153,8 @@ What the server held after the edit series, 24 edits in one session, and in brac
 
 | Toolchain | Super Productivity, CI | Ghostfolio, CI | Super Productivity, laptop | Ghostfolio, laptop |
 |---|---:|---:|---:|---:|
-| vite-plugin-ngp | 1.73 GB (2.20 GB peak) | 917 MB (1.25 GB peak) | 1.81 GB (2.25 GB peak) | 778 MB (1.12 GB peak) |
-| the app's own CLI | 3.84 GB (3.96 GB peak) | 3.97 GB (5.01 GB peak) | 3.50 GB (3.56 GB peak) | 2.31 GB (2.46 GB peak) |
+| vite-plugin-ngp | 1.71 GB (2.21 GB peak) | 941 MB (1.19 GB peak) | 1.75 GB (2.27 GB peak) | 832 MB (1.10 GB peak) |
+| the app's own CLI | 3.88 GB (3.92 GB peak) | 4.00 GB (4.31 GB peak) | 3.50 GB (3.50 GB peak) | 2.36 GB (2.50 GB peak) |
 
 ### Production build
 
@@ -162,18 +162,18 @@ The peak during the build.
 
 | Toolchain | Super Productivity, CI | Ghostfolio, CI | Super Productivity, laptop | Ghostfolio, laptop |
 |---|---:|---:|---:|---:|
-| vite-plugin-ngp | 4.17 GB | 2.08 GB | 4.03 GB | 2.26 GB ±6% |
-| the app's own CLI | 4.11 GB | 2.60 GB | 4.41 GB | 2.89 GB |
+| vite-plugin-ngp | 4.37 GB | 2.12 GB | 4.04 GB | 2.27 GB |
+| the app's own CLI | 4.26 GB | 2.59 GB | 4.49 GB | 2.88 GB |
 
-While you work, the plugin's dev server holds a third to a half of what the CLIs hold: after a restart and the page rendered, 1.7 GB against 3.5 GB on Super Productivity and 0.9 GB against 3.7 GB on Ghostfolio, on the runner, and the edits didn't grow it. Nx's server grew during the edits, to a peak of 5.0 GB on Ghostfolio, where the plugin's peaked at 1.25 GB.
+While you work, the plugin's dev server holds a quarter to a half of what the CLIs hold: after a restart and the page rendered, 1.7 GB against 3.6 GB on Super Productivity and 0.85 GB against 3.6 GB on Ghostfolio, on the runner, and the edits didn't grow it. Nx's server grew during the edits, to a peak of 4.3 GB on Ghostfolio, where the plugin's peaked at 1.2 GB.
 
-The cold start is the exception, and on Super Productivity the plugin is the heavier one: 4.9 GB at its peak on the runner against `ng serve`'s 3.6, and 3.7 GB once the page had rendered against 3.5. That's three processes at once, Vite pre-bundling dependencies, `tsgo` checking the program, and typia's program being built, and it falls to 2.1 GB on a restart. On Ghostfolio the plugin's cold start peaks at 1.9 GB against Nx's 3.6.
+The cold start is where the gap is smallest. On Super Productivity the plugin peaks at 3.0 GB on the runner against `ng serve`'s 3.7, and holds 3.0 GB once the page has rendered against 3.6. In the morning run, when the type-check started alongside the first page, that peak was 4.9 GB: three processes at once, Vite pre-bundling dependencies, `tsgo` checking the program, and typia's program being built. Now the check waits, and the peak falls to 1.7 GB on a restart. On Ghostfolio the plugin's cold start peaks at 2.1 GB against Nx's 3.7.
 
-Builds are close. The plugin's build of Super Productivity peaks at 4.2 GB on the runner, `ng build`'s at 4.1; on Ghostfolio 2.1 against 2.6. Part of the plugin's build memory is `tsgo`'s type-check running next to Rolldown, which the harness can't separate.
+Builds are close. The plugin's build of Super Productivity peaks at 4.4 GB on the runner, `ng build`'s at 4.3; on Ghostfolio 2.1 against 2.6. Part of the plugin's build memory is `tsgo`'s type-check running next to Rolldown, which the harness can't separate.
 
 ## What it adds up to
 
-If your app looks like Ghostfolio, an Nx workspace with Material and a few libraries, the plugin changes every number you wait on: a dev server ready in 4.5 seconds instead of 21, template edits in 130 ms instead of 3.7 seconds, builds a quarter faster, and a dev server that holds a quarter of the memory. If it looks like Super Productivity, a large Angular CLI app with a plugin system and compile-time validators, the edits and the restart improve as much, the build takes half the time, but the cold start on a small machine doesn't improve and costs more memory, and getting the app to run on a per-file compiler at all is a day of work that this page has done for you once.
+If your app looks like Ghostfolio, an Nx workspace with Material and a few libraries, the plugin changes every number you wait on: a dev server ready in 3.2 seconds instead of 16, template edits in 110 ms instead of 3 seconds, builds a fifth faster, and a dev server that holds a quarter of the memory. If it looks like Super Productivity, a large Angular CLI app with a plugin system and compile-time validators, the edits and the restart improve as much, the build takes a bit more than half the time, the cold start improves least, 10.5 seconds against 17.4 on four cores at about the same memory, and getting the app to run on a per-file compiler at all is a day of work that this page has done for you once.
 
 Neither app ran on the plugin without changes. The changes were the ones any per-file toolchain needs, not ones ngp needs, and the next section lists them.
 
@@ -196,7 +196,7 @@ Getting each app to run under the plugin took a day, and most of it wasn't about
 ## Where these numbers are weak
 
 - **Two apps.** Both are mid-sized, both use Angular Material, and both are the two real apps the private ngp benchmark had already pinned. An enterprise app with 50 libraries and a thousand components may behave differently, and nothing here says how.
-- **The runner's CPU varies.** GitHub assigns each job a machine, and two runs can land on different CPUs. Compare the two tools within a table, not a number here with one on the Performance page or from another run.
+- **The runner's CPU varies.** GitHub assigns each job a machine, and two runs can land on different CPUs. This run's CLI numbers came out 20 to 25% lower than the same day's morning run on both apps, with nothing changed on the CLI's side. Compare the two tools within a table, not a number here with one on the Performance page or from another run.
 - **The laptop was busy.** Other sessions were building on it. Samples waited for the 1-minute load average to drop below 6, and recorded it; that keeps them out of the worst spikes, not out of all of them.
 - **The plugin's Super Productivity numbers include typia's program.** Several seconds of each start and build build a TypeScript program for typia's transformer, which `ng build` gets from `ts-patch` inside a program it has anyway. The tables can't separate that from ngp.
 - **Memory is an upper bound.** Resident set sizes summed over processes count shared pages more than once, and a 100 ms sample can miss a shorter peak.

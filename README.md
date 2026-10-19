@@ -1,3 +1,5 @@
+<img src="site/public/logo.svg" alt="vite-plugin-ngp logo" width="128" height="128" />
+
 # vite-angular
 
 [![ci](https://github.com/push-based/vite-angular/actions/workflows/ci.yml/badge.svg)](https://github.com/push-based/vite-angular/actions/workflows/ci.yml)

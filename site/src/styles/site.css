@@ -14,7 +14,6 @@
    It applies when the visitor picks it (data-theme="dark"), or when the system is dark and no
    choice is saved. */
 :root {
-  --logo-gear: var(--color-brand-navy);
   --pushbased-navy: var(--color-brand-navy);
   /* Behind the search dialog: the darkest neutral, which the dark theme moves to the 25 step. */
   --search-scrim: var(--color-neutral-900);
@@ -47,7 +46,6 @@
     --color-primary-800: #DDD6FE;
     --color-primary-900: #ECE9FE;
     --color-surface: #0B0F17;
-    --logo-gear: #A48AFB;
     --pushbased-navy: #F8FAFC;
     --search-scrim: var(--color-neutral-25);
   }
@@ -79,7 +77,6 @@
   --color-primary-800: #DDD6FE;
   --color-primary-900: #ECE9FE;
   --color-surface: #0B0F17;
-  --logo-gear: #A48AFB;
   --pushbased-navy: #F8FAFC;
   --search-scrim: var(--color-neutral-25);
 }
@@ -118,10 +115,6 @@ a {
     --btn-bg: var(--color-primary-400);
     --btn-bg-hover: var(--color-primary-300);
   }
-}
-
-.logo-gear {
-  fill: var(--logo-gear);
 }
 
 .pushbased-navy {
@@ -631,7 +624,7 @@ code {
   width: 15rem;
 }
 
-.hero__logo svg {
+.hero__logo img {
   width: 100%;
   height: auto;
 }

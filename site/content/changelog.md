@@ -7,6 +7,12 @@ description: What changed in vite-plugin-ngp, newest first, for anyone following
 
 What changed in vite-plugin-ngp, newest first. The plugin isn't on npm, so there are no releases: this page is how you find out what landed since you last looked. Every entry links to the page that documents it.
 
+## 19 October 2026
+
+### Docs site
+
+- A new logo: an Angular "A" between two parentheses, inside a gear, in cyan to magenta. It's in the header, on the home page, as the favicon, and in the repo's README. Its colors no longer change with the theme.
+
 ## 18 October 2026
 
 ### Type-checking

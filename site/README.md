@@ -12,7 +12,7 @@ The public docs for vite-plugin-ngp, at https://push-based.github.io/vite-angula
 | `scripts/search-index.mjs` | Builds the search index with [Pagefind](https://pagefind.app) from the prerendered pages, into `dist/client/pagefind`. Only each page's article (`data-pagefind-body`) is indexed |
 | `src/app/search/` | The search dialog. The app imports it on the first ⌘K or click, and it loads Pagefind when it opens |
 | `scripts/check-docs.ts` | `pnpm docs:check`: fails when the Configuration table, the sidebar, a page's front matter or a link between pages has drifted from the code |
-| `scripts/logo.mjs` | Generates `public/logo.svg` |
+| `scripts/logo.mjs` | Generates `public/logo.svg` and `public/favicon.svg`, redrawn from `scripts/logo-reference.webp` |
 
 ## Work on it
 

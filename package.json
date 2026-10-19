@@ -1,5 +1,5 @@
 {
-  "name": "vite-angular",
+  "name": "vite-plugin-ngp-workspace",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@10.20.0",

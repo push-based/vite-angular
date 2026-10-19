@@ -232,7 +232,7 @@ Each entry records one choice: what we decided, why, what it costs, and when to 
 
 *16 October 2026*
 
-**Decision.** The user docs live in `site/`: an Angular app compiled by vite-plugin-ngp with `ssr: true`, prerendered to static HTML by `site/scripts/prerender.mjs`, hydrated in the browser, and deployed to GitHub Pages at https://push-based.github.io/vite-angular/ on every push to `main`. Pages are markdown in `site/content`, compiled to HTML at build time with marked and Shiki. The look is the PushBased design system's tokens and `.pb-*` classes. `CLAUDE.md` and the README require every user-visible change to update the matching page in the same commit.
+**Decision.** The user docs live in `site/`: an Angular app compiled by vite-plugin-ngp with `ssr: true`, prerendered to static HTML by `site/scripts/prerender.mjs`, hydrated in the browser, and deployed to GitHub Pages at https://push-based.github.io/vite-plugin-ngp/ on every push to `main`. Pages are markdown in `site/content`, compiled to HTML at build time with marked and Shiki. The look is the PushBased design system's tokens and `.pb-*` classes. `CLAUDE.md` and the README require every user-visible change to update the matching page in the same commit.
 
 **Why.** Building the docs with the plugin makes the site a second real app, next to the playground: every deploy runs per-module compilation, linking, the server build and hydration from a clean machine. Static prerendering is what Pages can host. Compiling markdown at build time keeps marked and Shiki out of the browser bundle.
 
@@ -683,3 +683,15 @@ A disk cache of the linker's output, keyed by file content and Angular version, 
 **Cost.** Two checkers to keep working, and a second compiler whose diagnostics can differ from ngc's. The end-to-end test runs against both and skips tsrs where its binary isn't installed, so a CI runner without it proves nothing about it. Each checker's build info is a separate cache, so switching checkers starts cold.
 
 **Revisit when** tsrs reaches 1.0 or tracks the same TypeScript release as `tsgo`, when it ships an Intel-Mac package, or when the gap on large apps is enough that the default should move.
+
+## 57. The repo is named after the plugin
+
+*19 October 2026*
+
+**Decision.** The repo moves from `push-based/vite-angular` to `push-based/vite-plugin-ngp`, and the docs site from https://push-based.github.io/vite-angular/ to https://push-based.github.io/vite-plugin-ngp/. The root `package.json` is `vite-plugin-ngp-workspace` and the bench's is `vite-plugin-ngp-bench`, because a pnpm workspace can't have two packages with the plugin's name. Getting started clones into `vite-plugin-ngp/`, so the paths in its examples changed to `../vite-plugin-ngp/...`. Earlier entries here, the changelog's history and the result files in `bench/results/` keep the old name where they record what was true then. Supersedes the name in [decision 10](decisions.md).
+
+**Why.** The package, the docs, the search results and every config snippet already say vite-plugin-ngp. "vite-angular" read as a general Vite-for-Angular project, which it isn't: it's one plugin, built on ngp.
+
+**Cost.** GitHub redirects the old repo's web, clone and API URLs, but not GitHub Pages: every link to the old docs URL now 404s, including ones outside this repo. A clone made before the rename keeps working through the redirect until someone creates a new repo named `vite-angular` in the org. Local checkouts keep their folder name until their owners rename them.
+
+**Revisit when** a new repo named `push-based/vite-angular` is wanted, since it would break the redirect.

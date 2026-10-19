@@ -14,7 +14,7 @@ import {ngp} from 'vite-plugin-ngp';
 export default defineConfig({
   plugins: [
     ngp({
-      toolchain: '../vite-angular/toolchain/out',
+      toolchain: '../vite-plugin-ngp/toolchain/out',
       engine: 'native',
       tsconfig: 'tsconfig.app.json',
       entries: ['src/main.ts'],

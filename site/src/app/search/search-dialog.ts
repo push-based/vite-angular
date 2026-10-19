@@ -114,7 +114,7 @@ export class SearchDialog {
 
   private go(url: string): void {
     this.close();
-    // '/vite-angular/configuration/#typecheck' → '/configuration#typecheck'
+    // '/vite-plugin-ngp/configuration/#typecheck' → '/configuration#typecheck'
     const route = '/' + (url.startsWith(SITE_BASE) ? url.slice(SITE_BASE.length) : url).replace(/\/(?=#|$)/, '');
     void this.router.navigateByUrl(route);
   }

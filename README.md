@@ -1,13 +1,13 @@
 <img src="site/public/logo.svg" alt="vite-plugin-ngp logo" width="128" height="128" />
 
-# vite-angular
+# vite-plugin-ngp
 
-[![ci](https://github.com/push-based/vite-angular/actions/workflows/ci.yml/badge.svg)](https://github.com/push-based/vite-angular/actions/workflows/ci.yml)
-[![pages](https://github.com/push-based/vite-angular/actions/workflows/pages.yml/badge.svg)](https://github.com/push-based/vite-angular/actions/workflows/pages.yml)
+[![ci](https://github.com/push-based/vite-plugin-ngp/actions/workflows/ci.yml/badge.svg)](https://github.com/push-based/vite-plugin-ngp/actions/workflows/ci.yml)
+[![pages](https://github.com/push-based/vite-plugin-ngp/actions/workflows/pages.yml/badge.svg)](https://github.com/push-based/vite-plugin-ngp/actions/workflows/pages.yml)
 
 **vite-plugin-ngp** lets Vite compile Angular one module at a time, with ngp, the Rust-and-TypeScript preprocessor Angular merged on 8 October 2026. Vite owns the module graph and asks for each file when the browser needs it. No whole-program compile runs first, unlike `ng serve` or Analog.
 
-**Docs: https://push-based.github.io/vite-angular/**
+**Docs: https://push-based.github.io/vite-plugin-ngp/**
 
 This README is for someone who has just cloned this repo. It covers what works today, how to run it, how the repo is laid out, and the rules for changing it. The docs site is for people using the plugin in their own app.
 
@@ -36,9 +36,9 @@ A first version on top of a prototype compiler. Each item below was checked in t
 - Preprocessors in inline `styles`. ngp compiles them as plain CSS, and there's no `inlineStyleLanguage`.
 - HTTP status codes from SSR, `@angular/ssr`'s per-route render modes, the service worker, and Windows outside WSL 2.
 
-**Where it's weakest.** Nobody can `npm install` this: ngp isn't published, so the repo builds it from Angular's source, and every `@angular/*` package is pinned to exactly `22.3.0-next.2`. The plugin also uses ngp's API below its intended surface, so any Angular commit can break it. And the numbers come from one laptop: at 5,000 components the dev server shows the first page in 1.9 s where `ng serve` takes 28.5 s, and a template edit lands in about 120 ms where `ng serve` takes 1.8 s, measured end to end with the harness in [bench](bench). Real apps with third-party libraries, Linux, and memory haven't been measured. The [Performance](https://push-based.github.io/vite-angular/performance/) page has the tables and says where they're weak.
+**Where it's weakest.** Nobody can `npm install` this: ngp isn't published, so the repo builds it from Angular's source, and every `@angular/*` package is pinned to exactly `22.3.0-next.2`. The plugin also uses ngp's API below its intended surface, so any Angular commit can break it. And the numbers come from one laptop: at 5,000 components the dev server shows the first page in 1.9 s where `ng serve` takes 28.5 s, and a template edit lands in about 120 ms where `ng serve` takes 1.8 s, measured end to end with the harness in [bench](bench). Real apps with third-party libraries, Linux, and memory haven't been measured. The [Performance](https://push-based.github.io/vite-plugin-ngp/performance/) page has the tables and says where they're weak.
 
-The full list is on the [status page](https://push-based.github.io/vite-angular/status/).
+The full list is on the [status page](https://push-based.github.io/vite-plugin-ngp/status/).
 
 ## Run it
 
@@ -76,7 +76,7 @@ pnpm --filter playground start
 
 [docs/building.md](docs/building.md) explains each build step, how to check the result, how to move to a newer Angular commit, and what to do when a step fails.
 
-To use the plugin in your own app, follow [Getting started](https://push-based.github.io/vite-angular/getting-started/) on the docs site.
+To use the plugin in your own app, follow [Getting started](https://push-based.github.io/vite-plugin-ngp/getting-started/) on the docs site.
 
 ## How it works, in one minute
 
@@ -86,7 +86,7 @@ To use the plugin in your own app, follow [Getting started](https://push-based.g
 - **Libraries get linked.** Angular's linker runs on `node_modules`, both in dependency pre-bundling and in builds, so the browser never needs the JIT compiler.
 - **HMR speaks the CLI's protocol.** Update modules are served at `/@ng/component` and announced with `angular:component-update`, so Angular's runtime applies them unchanged.
 
-[How it works](https://push-based.github.io/vite-angular/how-it-works/) has the details. [docs/design.md](docs/design.md) has the reasoning, and [docs/decisions.md](docs/decisions.md) logs every choice with its cost.
+[How it works](https://push-based.github.io/vite-plugin-ngp/how-it-works/) has the details. [docs/design.md](docs/design.md) has the reasoning, and [docs/decisions.md](docs/decisions.md) logs every choice with its cost.
 
 ## Repo layout
 

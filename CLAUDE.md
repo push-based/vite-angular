@@ -4,7 +4,7 @@ vite-plugin-ngp compiles Angular per module in Vite with ngp. See [README.md](RE
 
 ## Keep the docs in step with the code
 
-The public docs site at https://push-based.github.io/vite-angular/ is built from [site/content](site/content). It redeploys on every push to `main`. A change isn't done until the docs say what the code now does.
+The public docs site at https://push-based.github.io/vite-plugin-ngp/ is built from [site/content](site/content). It redeploys on every push to `main`. A change isn't done until the docs say what the code now does.
 
 When you add or change anything a user of the plugin would see, update the matching docs **in the same commit**, then push:
 

@@ -1,6 +1,6 @@
 # Docs site
 
-The public docs for vite-plugin-ngp, at https://push-based.github.io/vite-angular/. It's an Angular app compiled by the plugin itself, rendered to static HTML with Angular SSR, and hydrated in the browser. The look comes from the PushBased design system in `src/styles/tokens.css` and `src/styles/components.css`.
+The public docs for vite-plugin-ngp, at https://push-based.github.io/vite-plugin-ngp/. It's an Angular app compiled by the plugin itself, rendered to static HTML with Angular SSR, and hydrated in the browser. The look comes from the PushBased design system in `src/styles/tokens.css` and `src/styles/components.css`.
 
 | Path | What it is |
 |---|---|
@@ -22,7 +22,7 @@ From the repo root, after `pnpm toolchain`:
 pnpm site:dev
 ```
 
-Vite serves it at http://localhost:5173/vite-angular/, rendered on the server. To build what GitHub Pages serves:
+Vite serves it at http://localhost:5173/vite-plugin-ngp/, rendered on the server. To build what GitHub Pages serves:
 
 ```bash
 pnpm site:build

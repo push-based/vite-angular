@@ -9,6 +9,10 @@ What changed in vite-plugin-ngp, newest first. The plugin isn't on npm, so there
 
 ## 19 October 2026
 
+### Repo
+
+- The repo is now [push-based/vite-plugin-ngp](https://github.com/push-based/vite-plugin-ngp), named after the plugin, and these docs moved to https://push-based.github.io/vite-plugin-ngp/. Old GitHub links redirect; links to the old docs address don't. A fresh clone lands in `vite-plugin-ngp/`, so the `toolchain` paths in [Getting started](getting-started) changed to match. If you cloned before, run `git remote set-url origin https://github.com/push-based/vite-plugin-ngp.git`.
+
 ### Docs site
 
 - A new logo: an Angular "A" between two parentheses, inside a gear, in cyan to magenta. It's in the header, on the home page, as the favicon, and in the repo's README. The inside of the gear is transparent, so it looks the same on the light theme and the dark one.
@@ -73,7 +77,7 @@ What changed in vite-plugin-ngp, newest first. The plugin isn't on npm, so there
 - [Status and limits](status#what-doesnt-work-yet) says library builds aren't supported, and [Migrating from ng build](migrating-from-ng-build#cant-move-yet) lists a library project under what can't move.
 - [Migrating from ng build](migrating-from-ng-build#where-every-option-goes) now says where `localize` and `i18nMissingTranslation` go, since i18n works. It listed them as not yet possible.
 - An editing pass over every page: stale counts fixed, and the Server rendering page's prerender timing remeasured on the current 14 pages. [Server rendering](server-rendering#prerendering-for-static-hosting)
-- The repo, [push-based/vite-angular](https://github.com/push-based/vite-angular), is public. [Getting started](getting-started#1-build-ngp) now starts with `git clone` instead of asking for access, and no page calls the repo private any more.
+- The repo, [push-based/vite-angular](https://github.com/push-based/vite-plugin-ngp), is public. [Getting started](getting-started#1-build-ngp) now starts with `git clone` instead of asking for access, and no page calls the repo private any more.
 - Tables no longer break option names or types mid-word. The [Options](configuration#options) table puts each option's type and default in one cell so it fits the docs column, and on a phone every table with three or more columns stacks each row into labeled lines.
 
 ## 16 October 2026
@@ -122,5 +126,5 @@ The first day: from an empty repo to a plugin that compiles, serves, renders, te
 
 ### This site
 
-- Docs at https://push-based.github.io/vite-angular/, built with the plugin itself and prerendered with Angular SSR. They redeploy on every push.
+- Docs at https://push-based.github.io/vite-plugin-ngp/, built with the plugin itself and prerendered with Angular SSR. They redeploy on every push.
 - Dark theme, copy buttons, heading links, the file name on each snippet, and `llms.txt` for AI assistants.

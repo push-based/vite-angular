@@ -5,8 +5,8 @@ import {defineConfig} from 'vite';
 import {ngp} from 'vite-plugin-ngp';
 import {markdown} from './scripts/markdown';
 
-// GitHub Pages serves the site from /vite-angular/. SITE_BASE overrides it, for example '/'.
-const base = process.env.SITE_BASE ?? '/vite-angular/';
+// GitHub Pages serves the site from /vite-plugin-ngp/. SITE_BASE overrides it, for example '/'.
+const base = process.env.SITE_BASE ?? '/vite-plugin-ngp/';
 // Absolute URLs, for canonical links, social cards and the sitemap.
 const siteUrl = (process.env.SITE_ORIGIN ?? 'https://push-based.github.io') + base;
 

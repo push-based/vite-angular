@@ -9,7 +9,7 @@ import {fileURLToPath, pathToFileURL} from 'node:url';
 
 const site = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const client = path.join(site, 'dist/client');
-const base = process.env.SITE_BASE ?? '/vite-angular/';
+const base = process.env.SITE_BASE ?? '/vite-plugin-ngp/';
 const siteUrl = (process.env.SITE_ORIGIN ?? 'https://push-based.github.io') + base;
 
 const template = await readFile(path.join(client, 'index.html'), 'utf8');

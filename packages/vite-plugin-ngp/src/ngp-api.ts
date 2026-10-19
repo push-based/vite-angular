@@ -115,7 +115,7 @@ export async function loadNgp(toolchainDir: string, engine: Engine) {
     await fs.access(file).catch(() => {
       throw new Error(
         `vite-plugin-ngp: ${file} not found. Build ngp with \`pnpm toolchain\` in the ` +
-          `vite-angular repo root, then point the plugin's \`toolchain\` option or ` +
+          `vite-plugin-ngp repo root, then point the plugin's \`toolchain\` option or ` +
           `NGP_TOOLCHAIN at its toolchain/out directory.`,
       );
     });

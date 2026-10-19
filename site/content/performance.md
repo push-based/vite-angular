@@ -225,4 +225,4 @@ If your app is large and you use `ng serve`, the dev server is where the plugin 
 
 ## Run it yourself
 
-The harness is in `bench/` in the repo, with a [README](https://github.com/push-based/vite-angular/tree/main/bench) on how to run it: one command sets up the apps, one runs the benchmark, one prints these tables from its result files, and one draws the figures. The result files behind this page are in `bench/results/`, with the machine, versions, commit and load average of every sample.
+The harness is in `bench/` in the repo, with a [README](https://github.com/push-based/vite-plugin-ngp/tree/main/bench) on how to run it: one command sets up the apps, one runs the benchmark, one prints these tables from its result files, and one draws the figures. The result files behind this page are in `bench/results/`, with the machine, versions, commit and load average of every sample.

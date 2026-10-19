@@ -20,11 +20,11 @@ You don't need Rust, Bazel or an Angular checkout. The build installs its own Ru
 
 ## 1. Build ngp
 
-Angular hasn't published ngp to npm, so the plugin's repo, [push-based/vite-angular](https://github.com/push-based/vite-angular), builds it from Angular's source at a pinned commit. Clone it and build:
+Angular hasn't published ngp to npm, so the plugin's repo, [push-based/vite-plugin-ngp](https://github.com/push-based/vite-plugin-ngp), builds it from Angular's source at a pinned commit. Clone it and build:
 
 ```bash
-git clone https://github.com/push-based/vite-angular.git
-cd vite-angular
+git clone https://github.com/push-based/vite-plugin-ngp.git
+cd vite-plugin-ngp
 nvm use
 pnpm install
 pnpm toolchain
@@ -45,7 +45,7 @@ This builds the plugin and starts Vite on a small Angular app at `http://localho
 The plugin isn't on npm either. Install it from your clone, after `pnpm build` in the repo root:
 
 ```bash
-pnpm add -D ../vite-angular/packages/vite-plugin-ngp vite@8.3.4
+pnpm add -D ../vite-plugin-ngp/packages/vite-plugin-ngp vite@8.3.4
 ```
 
 > [!WARNING]
@@ -74,7 +74,7 @@ import {defineConfig} from 'vite';
 import {ngp} from 'vite-plugin-ngp';
 
 export default defineConfig({
-  plugins: [ngp({toolchain: '../vite-angular/toolchain/out'})],
+  plugins: [ngp({toolchain: '../vite-plugin-ngp/toolchain/out'})],
 });
 ```
 

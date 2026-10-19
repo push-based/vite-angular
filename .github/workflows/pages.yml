@@ -1,5 +1,5 @@
 # Builds the docs site in site/ (an Angular app compiled by vite-plugin-ngp and prerendered with
-# Angular SSR) and publishes it to GitHub Pages at https://push-based.github.io/vite-angular/.
+# Angular SSR) and publishes it to GitHub Pages at https://push-based.github.io/vite-plugin-ngp/.
 # Every push to main redeploys, so docs changes go live when they're pushed.
 name: pages
 

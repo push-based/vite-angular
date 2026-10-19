@@ -1,5 +1,5 @@
 {
-  "name": "vite-angular-bench",
+  "name": "vite-plugin-ngp-bench",
   "private": true,
   "type": "module",
   "description": "End-to-end benchmark: vite-plugin-ngp against ng serve/ng build, Analog and @oxc-angular/vite.",

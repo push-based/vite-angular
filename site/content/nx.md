@@ -79,7 +79,7 @@ A library the app reaches through an alias is source to the plugin, like any fil
 
 ## Buildable and publishable libraries
 
-Nx can also build a library on its own: `@nx/angular:package` runs ng-packagr and writes an Angular Package Format bundle to `dist/libs/<name>`, and `@nx/angular:ng-packagr-lite` does a lighter version of that for incremental builds. The plugin replaces neither. It compiles apps, and it has nothing that writes a library: no `.d.ts` files, no partially compiled `ɵɵngDeclare` output, no FESM bundle. Those come from ngc in partial compilation mode, which is what ng-packagr runs; the plugin only uses ngp's optimize mode, which compiles an app. [Decision 55](https://github.com/push-based/vite-angular/blob/main/docs/decisions.md#55-compile-apps-not-libraries) has the reasoning.
+Nx can also build a library on its own: `@nx/angular:package` runs ng-packagr and writes an Angular Package Format bundle to `dist/libs/<name>`, and `@nx/angular:ng-packagr-lite` does a lighter version of that for incremental builds. The plugin replaces neither. It compiles apps, and it has nothing that writes a library: no `.d.ts` files, no partially compiled `ɵɵngDeclare` output, no FESM bundle. Those come from ngc in partial compilation mode, which is what ng-packagr runs; the plugin only uses ngp's optimize mode, which compiles an app. [Decision 55](https://github.com/push-based/vite-plugin-ngp/blob/main/docs/decisions.md#55-compile-apps-not-libraries) has the reasoning.
 
 What to do depends on why the library is buildable:
 

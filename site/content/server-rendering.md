@@ -72,7 +72,7 @@ const template = await readFile('dist/client/index.html', 'utf8');
 const {default: render, routes} = await import('./dist/server/main.server.js');
 
 for (const route of routes) {
-  const html = await render(`http://localhost/vite-angular/${route}`, template);
+  const html = await render(`http://localhost/vite-plugin-ngp/${route}`, template);
   await writeFile(`dist/client/${route}/index.html`, html);
 }
 ```

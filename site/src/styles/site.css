@@ -624,7 +624,7 @@ code {
   width: 15rem;
 }
 
-.hero__logo img {
+.hero__logo svg {
   width: 100%;
   height: auto;
 }

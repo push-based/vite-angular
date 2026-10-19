@@ -1,7 +1,10 @@
 // Generates the vite-plugin-ngp logo: an Angular "A" split into facets, between two parentheses,
 // inside a gear. A vector redraw of scripts/logo-reference.webp, which is the source of truth for
 // its shapes and colors. Coordinates are relative to the gear's center.
-// Writes public/logo.svg and public/favicon.svg. <app-logo>, the README and the playground use them.
+// The inside of the gear is transparent. The parentheses are the one part that follows the theme:
+// navy on a light page, near-white on a dark one, like the PushBased logo.
+// Writes public/logo.svg and public/favicon.svg (for the favicons and the README; they follow the
+// system theme), and src/app/layout/logo-paths.ts for the inline <app-logo> (follows the site's).
 // Usage: node scripts/logo.mjs
 import {writeFileSync} from 'node:fs';
 const f = (n) => +n.toFixed(2);
@@ -46,51 +49,53 @@ const rightFacet = polygon([[19, -244], [200, -136], [201, 128]]);
 const counter = polygon([[0, -118], [80, 38], [-80, 38]]);
 const base = polygon([[-115, 93], [115, 93], [154, 164], [0, 254], [-154, 164]]);
 
-const ink = '#05060B';
+// Gradients run across each shape's bounding box: [id, x1, y1, x2, y2, [[offset, color], ...]].
+const gradients = [
+  ['gear', 0, 0, 1, 0, [[0, '#00C2FF'], [0.2, '#00E5FF'], [0.36, '#1E8BFF'], [0.52, '#8A4DFC'], [0.72, '#F00AF0'], [1, '#FF0AD2']]],
+  ['left', 0.3, 0, 0.5, 1, [[0, '#00F5FF'], [1, '#0A5CF2']]],
+  ['right', 0.2, 0, 0.8, 1, [[0, '#FF4CF0'], [0.5, '#E000FA'], [1, '#8A08F9']]],
+  ['counter', 0, 0, 0, 1, [[0, '#FF2EEA'], [1, '#F005FA']]],
+  ['base', 0, 0, 1, 0, [[0, '#10D8FC'], [0.5, '#8A1FFF'], [1, '#FF07D6']]],
+];
+const facets = [['left', leftFacet], ['right', rightFacet], ['counter', counter], ['base', base]];
+// The gap around each parenthesis, cut out of the gear.
+const gap = 18;
+const box = 'M-424,-424H424V424H-424Z';
+
+const gradient = ([id, x1, y1, x2, y2, stops]) =>
+  `    <linearGradient id="${id}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}">\n` +
+  stops.map(([o, c]) => `      <stop offset="${o}" stop-color="${c}"/>\n`).join('') +
+  `    </linearGradient>\n`;
 const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-424 -424 848 848" width="256" height="256" role="img" aria-labelledby="t">
   <title id="t">vite-plugin-ngp</title>
+  <style>.paren{fill:#2D0064}@media (prefers-color-scheme:dark){.paren{fill:#F8FAFC}}</style>
   <defs>
-    <linearGradient id="gear" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#00C2FF"/>
-      <stop offset="0.2" stop-color="#00E5FF"/>
-      <stop offset="0.36" stop-color="#1E8BFF"/>
-      <stop offset="0.52" stop-color="#8A4DFC"/>
-      <stop offset="0.72" stop-color="#F00AF0"/>
-      <stop offset="1" stop-color="#FF0AD2"/>
-    </linearGradient>
-    <linearGradient id="left" x1="0.3" y1="0" x2="0.5" y2="1">
-      <stop offset="0" stop-color="#00F5FF"/>
-      <stop offset="1" stop-color="#0A5CF2"/>
-    </linearGradient>
-    <linearGradient id="right" x1="0.2" y1="0" x2="0.8" y2="1">
-      <stop offset="0" stop-color="#FF4CF0"/>
-      <stop offset="0.5" stop-color="#E000FA"/>
-      <stop offset="1" stop-color="#8A08F9"/>
-    </linearGradient>
-    <linearGradient id="counter" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#FF2EEA"/>
-      <stop offset="1" stop-color="#F005FA"/>
-    </linearGradient>
-    <linearGradient id="base" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#10D8FC"/>
-      <stop offset="0.5" stop-color="#8A1FFF"/>
-      <stop offset="1" stop-color="#FF07D6"/>
-    </linearGradient>
-    <linearGradient id="paren" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#EAFBFF"/>
-      <stop offset="1" stop-color="#FFF0FC"/>
-    </linearGradient>
+${gradients.map(gradient).join('')}    <mask id="gap" maskUnits="userSpaceOnUse" x="-424" y="-424" width="848" height="848">
+      <path fill="#FFFFFF" d="${box}"/>
+      <path fill="#000000" stroke="#000000" stroke-width="${2 * gap}" d="${parens}"/>
+    </mask>
   </defs>
-  <circle r="${rInner + 6}" fill="${ink}"/>
-  <path fill="url(#gear)" fill-rule="evenodd" stroke="url(#gear)" stroke-width="10" stroke-linejoin="round" d="${gear}"/>
-  <path fill="url(#paren)" stroke="${ink}" stroke-width="36" paint-order="stroke" d="${parens}"/>
-  <path fill="url(#left)" d="${leftFacet}"/>
-  <path fill="url(#right)" d="${rightFacet}"/>
-  <path fill="url(#counter)" d="${counter}"/>
-  <path fill="url(#base)" d="${base}"/>
-</svg>
+  <path fill="url(#gear)" fill-rule="evenodd" stroke="url(#gear)" stroke-width="10" stroke-linejoin="round" mask="url(#gap)" d="${gear}"/>
+  <path class="paren" d="${parens}"/>
+${facets.map(([id, d]) => `  <path fill="url(#${id})" d="${d}"/>\n`).join('')}</svg>
 `;
 
 const root = new URL('..', import.meta.url);
 writeFileSync(new URL('public/logo.svg', root), svg);
 writeFileSync(new URL('public/favicon.svg', root), svg);
+writeFileSync(
+  new URL('src/app/layout/logo-paths.ts', root),
+  `// Generated by scripts/logo.mjs. Don't edit.\n` +
+    `export const LOGO = ${JSON.stringify(
+      {
+        box,
+        gap,
+        gear,
+        parens,
+        facets,
+        gradients: gradients.map(([id, x1, y1, x2, y2, stops]) => ({id, x1, y1, x2, y2, stops: stops.map(([offset, color]) => ({offset, color}))})),
+      },
+      null,
+      2,
+    )};\n`,
+);

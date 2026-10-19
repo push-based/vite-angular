@@ -104,4 +104,4 @@ A change a plugin user would notice needs its docs page in [site/content](site/c
 ## Related
 
 - [angular/angular#71259](https://github.com/angular/angular/pull/71259): the pull request that merged ngp into Angular.
-- [ng-hybrid-preprocessor-bench](https://github.com/push-based/ng-hybrid-preprocessor-bench) (private): PushBased's benchmark of ngp against ngc, and the investigation this plugin started from.
+- [ng-hybrid-preprocessor-bench](https://github.com/push-based/ng-hybrid-preprocessor-bench): PushBased's benchmark of ngp against ngc, and the investigation this plugin started from.

@@ -93,7 +93,7 @@ Babel is the slow one. Most of the plugin's cold start at 5,000 components is Vi
 This is where vite-plugin-ngp loses, plainly.
 
 - **The Angular CLI** is Angular's official toolchain.
-- **Analog** 2.8.1 is on npm and is a released, maintained project; 3.0 is in alpha. Its default path imports private `@angular/build` APIs, and Angular 22.2 broke it in three reported issues ([the bench's audit](https://github.com/push-based/ng-hybrid-preprocessor-bench/blob/main/docs/vite-plugin-analog-audit.md), private repo).
+- **Analog** 2.8.1 is on npm and is a released, maintained project; 3.0 is in alpha. Its default path imports private `@angular/build` APIs, and Angular 22.2 broke it in three reported issues ([the bench's audit](https://github.com/push-based/ng-hybrid-preprocessor-bench/blob/main/docs/vite-plugin-analog-audit.md)).
 - **`@oxc-angular/vite`** 0.0.41 is on npm, with prebuilt binaries for macOS, Linux and Windows. Its README says it's "in an experimental stage and is actively seeking maintainers", and the launch post called it "an experiment for research purposes". Commits are still landing: the last on 16 October 2026.
 - **vite-plugin-ngp** isn't on npm, and neither is ngp. You build ngp from Angular's source with one command, which installs a Rust toolchain and takes about 2 minutes on a 12-core M2 Max the first time ([Building ngp](building-ngp)). Every Angular package is pinned to exactly `22.3.0-next.2`, a prerelease, because ngp's API isn't public and the plugin reaches below it in two places ([Status and limits](status#where-its-weakest)). It runs on macOS and Linux; Windows only through WSL 2.
 

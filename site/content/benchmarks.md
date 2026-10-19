@@ -195,7 +195,7 @@ Getting each app to run under the plugin took a day, and most of it wasn't about
 
 ## Where these numbers are weak
 
-- **Two apps.** Both are mid-sized, both use Angular Material, and both are the two real apps the private ngp benchmark had already pinned. An enterprise app with 50 libraries and a thousand components may behave differently, and nothing here says how.
+- **Two apps.** Both are mid-sized, both use Angular Material, and both are the two real apps the [ngp benchmark](https://github.com/push-based/ng-hybrid-preprocessor-bench) had already pinned. An enterprise app with 50 libraries and a thousand components may behave differently, and nothing here says how.
 - **The runner's CPU varies.** GitHub assigns each job a machine, and two runs can land on different CPUs. This run's CLI numbers came out 20 to 25% lower than the same day's morning run on both apps, with nothing changed on the CLI's side. Compare the two tools within a table, not a number here with one on the Performance page or from another run.
 - **The laptop was busy.** Other sessions were building on it. Samples waited for the 1-minute load average to drop below 6, and recorded it; that keeps them out of the worst spikes, not out of all of them.
 - **The plugin's Super Productivity numbers include typia's program.** Several seconds of each start and build build a TypeScript program for typia's transformer, which `ng build` gets from `ts-patch` inside a program it has anyway. The tables can't separate that from ngp.

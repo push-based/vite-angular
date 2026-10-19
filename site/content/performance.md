@@ -21,7 +21,7 @@ Four toolchains, each with its own README's setup and nothing else, on the same 
 | Analog, `@analogjs/vite-plugin-angular` | 2.8.2-beta.1, with a one-line patch (see [below](performance#where-these-numbers-are-weak)) | no: `disableTypeChecking` is on by default |
 | `@oxc-angular/vite` | 0.0.41 | no, by design |
 
-The three Vite plugins ran on Vite 8.3.4. The apps are generated Angular CLI workspaces of 100, 1,000 and 5,000 components, the same ones the [ngp benchmark](https://github.com/push-based/ng-hybrid-preprocessor-bench) uses (private repo): standalone components with signals, control flow, `@defer`, pipes and directives, half of them with external templates. The fourth app is the repo's playground, 21 components. The Angular CLI can't run the playground, because it reads `import.meta.env`, which only Vite defines.
+The three Vite plugins ran on Vite 8.3.4. The apps are generated Angular CLI workspaces of 100, 1,000 and 5,000 components, the same ones the [ngp benchmark](https://github.com/push-based/ng-hybrid-preprocessor-bench) uses: standalone components with signals, control flow, `@defer`, pipes and directives, half of them with external templates. The fourth app is the repo's playground, 21 components. The Angular CLI can't run the playground, because it reads `import.meta.env`, which only Vite defines.
 
 Each start and build ran once to warm up, then 5 measured times. Each edit ran twice to warm up, then 20 measured times. The tables show medians. A number marked ±N% varied by more than 5% from run to run, as median absolute deviation.
 

@@ -15,6 +15,7 @@ What changed in vite-plugin-ngp, newest first. The plugin isn't on npm, so there
 
 ### Docs site
 
+- The [ngp benchmark](https://github.com/push-based/ng-hybrid-preprocessor-bench) is public, so its links on [Performance](performance), [Benchmarks](benchmarks) and [Comparison](comparison) work for everyone and no longer say "private repo". It has the generator behind the test apps, the methodology, and the audits the plugin's design started from.
 - A new logo: an Angular "A" between two parentheses, inside a gear, in cyan to magenta. It's in the header, on the home page, as the favicon, and in the repo's README. The inside of the gear is transparent, so it looks the same on the light theme and the dark one.
 
 ## 18 October 2026

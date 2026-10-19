@@ -131,7 +131,7 @@ What each app needed, and why it's fair:
 gh workflow run bench-real
 ```
 
-It isn't run on every push, because a full run takes about an hour per app. The result files behind the Benchmarks page are copied from the run's artifacts into [results/](results) as `ci-<app>.json`; each records the run's URL, the runner's CPU, cores and memory. The generated apps don't run on CI: the private bench repo found that a 2-core runner's network disk adds more noise than the comparison can stand, and the Performance page's numbers come from one laptop.
+It isn't run on every push, because a full run takes about an hour per app. The result files behind the Benchmarks page are copied from the run's artifacts into [results/](results) as `ci-<app>.json`; each records the run's URL, the runner's CPU, cores and memory. The generated apps don't run on CI: the [bench repo](https://github.com/push-based/ng-hybrid-preprocessor-bench) found that a 2-core runner's network disk adds more noise than the comparison can stand, and the Performance page's numbers come from one laptop.
 
 ## Noise, and what it can't tell you
 

@@ -695,3 +695,13 @@ A disk cache of the linker's output, keyed by file content and Angular version, 
 **Cost.** GitHub redirects the old repo's web, clone and API URLs, but not GitHub Pages: every link to the old docs URL now 404s, including ones outside this repo. A clone made before the rename keeps working through the redirect until someone creates a new repo named `vite-angular` in the org. Local checkouts keep their folder name until their owners rename them.
 
 **Revisit when** a new repo named `push-based/vite-angular` is wanted, since it would break the redirect.
+
+## 58. The bench repo is public too
+
+*19 October 2026*
+
+**Decision.** `push-based/ng-hybrid-preprocessor-bench` is public. Links into it from the docs site, the README and `bench/README.md` drop their "private" label, and the rule to keep them few is gone. Supersedes the bench half of [decision 47](decisions.md).
+
+**Why.** The Performance and Benchmarks pages lean on it: the generated apps come from its generator, and the Comparison page cites its Analog audit. A reader who couldn't open those links had to take the claims on trust.
+
+**Cost.** Its docs, spikes and results are published as they are, written when they weren't meant for outside readers. Earlier entries here and the changelog's history still call it private where they record what was true then.

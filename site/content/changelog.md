@@ -11,7 +11,7 @@ What changed in vite-plugin-ngp, newest first. The plugin isn't on npm, so there
 
 ### Docs site
 
-- A new logo: an Angular "A" between two parentheses, inside a gear, in cyan to magenta. It's in the header, on the home page, as the favicon, and in the repo's README. The inside of the gear is transparent, and the parentheses are navy on the light theme and near-white on the dark one.
+- A new logo: an Angular "A" between two parentheses, inside a gear, in cyan to magenta. It's in the header, on the home page, as the favicon, and in the repo's README. The inside of the gear is transparent, so it looks the same on the light theme and the dark one.
 
 ## 18 October 2026
 

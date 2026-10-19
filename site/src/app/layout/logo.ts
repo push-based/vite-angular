@@ -1,17 +1,17 @@
 import {ChangeDetectionStrategy, Component, input} from '@angular/core';
 import {LOGO} from './logo-paths';
 
-/**
- * The vite-plugin-ngp mark, drawn by scripts/logo.mjs. Inline so the parentheses can follow the
- * site's theme (`--pushbased-navy`); the inside of the gear is transparent.
- */
+/** The vite-plugin-ngp mark, drawn by scripts/logo.mjs. The inside of the gear is transparent. */
 @Component({
   selector: 'app-logo',
   template: `
     <svg viewBox="-424 -424 848 848" [attr.width]="size()" [attr.height]="size()" aria-hidden="true" focusable="false">
       <defs>
         @for (g of logo.gradients; track g.id) {
-          <linearGradient [attr.id]="id(g.id)" [attr.x1]="g.x1" [attr.y1]="g.y1" [attr.x2]="g.x2" [attr.y2]="g.y2">
+          <linearGradient
+            [attr.id]="id(g.id)"
+            [attr.gradientUnits]="g.id === 'gear' ? 'userSpaceOnUse' : null"
+            [attr.x1]="g.x1" [attr.y1]="g.y1" [attr.x2]="g.x2" [attr.y2]="g.y2">
             @for (s of g.stops; track s.offset) {
               <stop [attr.offset]="s.offset" [attr.stop-color]="s.color" />
             }
@@ -31,7 +31,7 @@ import {LOGO} from './logo-paths';
         [attr.mask]="url('gap')"
         [attr.d]="logo.gear"
       />
-      <path class="pushbased-navy" [attr.d]="logo.parens" />
+      <path [attr.fill]="url('gear')" [attr.d]="logo.parens" />
       @for (facet of logo.facets; track facet[0]) {
         <path [attr.fill]="url(facet[0])" [attr.d]="facet[1]" />
       }

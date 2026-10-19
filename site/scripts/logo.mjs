@@ -1,10 +1,10 @@
 // Generates the vite-plugin-ngp logo: an Angular "A" split into facets, between two parentheses,
 // inside a gear. A vector redraw of scripts/logo-reference.webp, which is the source of truth for
 // its shapes and colors. Coordinates are relative to the gear's center.
-// The inside of the gear is transparent. The parentheses are the one part that follows the theme:
-// navy on a light page, near-white on a dark one, like the PushBased logo.
-// Writes public/logo.svg and public/favicon.svg (for the favicons and the README; they follow the
-// system theme), and src/app/layout/logo-paths.ts for the inline <app-logo> (follows the site's).
+// The inside of the gear is transparent, and the parentheses share the gear's gradient, so the logo
+// looks the same on a light page and a dark one.
+// Writes public/logo.svg and public/favicon.svg (for the favicons and the README), and
+// src/app/layout/logo-paths.ts for the inline <app-logo>.
 // Usage: node scripts/logo.mjs
 import {writeFileSync} from 'node:fs';
 const f = (n) => +n.toFixed(2);
@@ -50,8 +50,9 @@ const counter = polygon([[0, -118], [80, 38], [-80, 38]]);
 const base = polygon([[-115, 93], [115, 93], [154, 164], [0, 254], [-154, 164]]);
 
 // Gradients run across each shape's bounding box: [id, x1, y1, x2, y2, [[offset, color], ...]].
+// The gear's runs across the whole logo instead, so the parentheses can share it.
 const gradients = [
-  ['gear', 0, 0, 1, 0, [[0, '#00C2FF'], [0.2, '#00E5FF'], [0.36, '#1E8BFF'], [0.52, '#8A4DFC'], [0.72, '#F00AF0'], [1, '#FF0AD2']]],
+  ['gear', -419, 0, 419, 0, [[0, '#00C2FF'], [0.2, '#00E5FF'], [0.36, '#1E8BFF'], [0.52, '#8A4DFC'], [0.72, '#F00AF0'], [1, '#FF0AD2']]],
   ['left', 0.3, 0, 0.5, 1, [[0, '#00F5FF'], [1, '#0A5CF2']]],
   ['right', 0.2, 0, 0.8, 1, [[0, '#FF4CF0'], [0.5, '#E000FA'], [1, '#8A08F9']]],
   ['counter', 0, 0, 0, 1, [[0, '#FF2EEA'], [1, '#F005FA']]],
@@ -63,12 +64,11 @@ const gap = 18;
 const box = 'M-424,-424H424V424H-424Z';
 
 const gradient = ([id, x1, y1, x2, y2, stops]) =>
-  `    <linearGradient id="${id}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}">\n` +
+  `    <linearGradient id="${id}"${id === 'gear' ? ' gradientUnits="userSpaceOnUse"' : ''} x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}">\n` +
   stops.map(([o, c]) => `      <stop offset="${o}" stop-color="${c}"/>\n`).join('') +
   `    </linearGradient>\n`;
 const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-424 -424 848 848" width="256" height="256" role="img" aria-labelledby="t">
   <title id="t">vite-plugin-ngp</title>
-  <style>.paren{fill:#2D0064}@media (prefers-color-scheme:dark){.paren{fill:#F8FAFC}}</style>
   <defs>
 ${gradients.map(gradient).join('')}    <mask id="gap" maskUnits="userSpaceOnUse" x="-424" y="-424" width="848" height="848">
       <path fill="#FFFFFF" d="${box}"/>
@@ -76,7 +76,7 @@ ${gradients.map(gradient).join('')}    <mask id="gap" maskUnits="userSpaceOnUse"
     </mask>
   </defs>
   <path fill="url(#gear)" fill-rule="evenodd" stroke="url(#gear)" stroke-width="10" stroke-linejoin="round" mask="url(#gap)" d="${gear}"/>
-  <path class="paren" d="${parens}"/>
+  <path fill="url(#gear)" d="${parens}"/>
 ${facets.map(([id, d]) => `  <path fill="url(#${id})" d="${d}"/>\n`).join('')}</svg>
 `;
 

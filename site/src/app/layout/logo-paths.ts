@@ -25,9 +25,9 @@ export const LOGO = {
   "gradients": [
     {
       "id": "gear",
-      "x1": 0,
+      "x1": -419,
       "y1": 0,
-      "x2": 1,
+      "x2": 419,
       "y2": 0,
       "stops": [
         {

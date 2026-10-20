@@ -21,7 +21,7 @@ import {writeEntryTsconfig} from './entry-tsconfig.js';
 import {i18nPlugin, type I18nOptions} from './i18n.js';
 import {link, LINKER_MARKER} from './linker.js';
 import {isSideEffectFree, optimize, OPTIMIZER_CANDIDATE} from './optimizer.js';
-import type {Engine} from './ngp-api.js';
+import {resolveToolchain, type Engine} from './ngp-api.js';
 import {polyfillsPlugin, usesZone, zoneAsyncPlugin} from './polyfills.js';
 import {
   buildReport,
@@ -41,7 +41,7 @@ export type {Budget} from './budgets.js';
 export interface NgpPluginOptions {
   /**
    * Directory holding an ngp build: `preprocessor/api.js` and `engines/`. Defaults to the
-   * NGP_TOOLCHAIN environment variable.
+   * NGP_TOOLCHAIN environment variable, then to the build bundled in the published package.
    */
   toolchain?: string;
   /** Analyzer engine. Defaults to `native`, with no fallback to wasm. */
@@ -357,10 +357,7 @@ function compilerPlugin(
   function getCompiler(consumer: Consumer): Promise<NgpCompiler> {
     let compiler = compilers.get(consumer);
     compiler ??= (async () => {
-      const toolchainDir = options.toolchain ?? process.env['NGP_TOOLCHAIN'];
-      if (!toolchainDir) {
-        throw new Error('vite-plugin-ngp: set the `toolchain` option or NGP_TOOLCHAIN to an ngp build.');
-      }
+      const toolchainDir = resolveToolchain(options.toolchain);
       const tsconfig = resolveTsconfig(config.root, options.tsconfig, testing);
       const analyzerTsconfig =
         options.entryOnlyTsconfig === false

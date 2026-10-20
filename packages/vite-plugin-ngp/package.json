@@ -33,11 +33,13 @@
   },
   "files": [
     "bin",
-    "dist"
+    "dist",
+    "ngp"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test": "node --test \"test/**/*.test.mjs\""
+    "test": "node --test \"test/**/*.test.mjs\"",
+    "prepack": "node ../../toolchain/bundle.mjs --check"
   },
   "peerDependencies": {
     "@angular/compiler": "22.3.0-next.2",

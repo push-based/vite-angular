@@ -6,19 +6,21 @@ Vite plugin that compiles Angular one module at a time with ngp, the Rust-and-Ty
 
 ## Before you install
 
-This package is the plugin only. It doesn't contain ngp, and Angular hasn't published ngp, so you build it once from the [plugin's repo](https://github.com/push-based/vite-plugin-ngp) with `pnpm toolchain` and point the plugin at the result. Every `@angular/*` package must be exactly `22.3.0-next.2`, the release built from the same commit as ngp. [Getting started](https://push-based.github.io/vite-plugin-ngp/getting-started/) walks through both.
+Angular hasn't published ngp, so this package carries its own build of it, from Angular's source at the commit behind `22.3.0-next.2`. It has native engines for macOS (arm64, x64) and glibc Linux (x64, arm64). Anywhere else, Alpine included, set `engine: 'wasm'`. Every `@angular/*` package must be exactly `22.3.0-next.2`, because ngp uses private APIs of the compiler it was built with.
 
 ```ts
 import {defineConfig} from 'vite';
 import {ngp} from 'vite-plugin-ngp';
 
 export default defineConfig({
-  plugins: [ngp({toolchain: '../vite-plugin-ngp/toolchain/out'})],
+  plugins: [ngp()],
 });
 ```
+
+The ngp build is unofficial: the Angular team doesn't publish or support it. `ngp/BUILD.json` names the Angular commit, and `ngp/LICENSE` is Angular's MIT licence.
 
 The [status page](https://push-based.github.io/vite-plugin-ngp/status/) lists what works and what doesn't.
 
 ## License
 
-MIT
+MIT. The bundled ngp build is Angular's code, under Angular's MIT licence in `ngp/LICENSE`.

@@ -1,9 +1,16 @@
-# Builds vite-plugin-ngp and publishes it to npm. Starts on the v* tag release.yml pushes, or by hand
-# from the Actions tab; a version already on npm is skipped.
+# Builds vite-plugin-ngp with ngp inside it and publishes it to npm. Starts on the v* tag release.yml
+# pushes, or by hand from the Actions tab; a version already on npm is skipped.
+#
+# ngp ships in the package (toolchain/bundle.mjs): its TypeScript backend, the wasm engine, and a
+# native engine for each of four platforms, each built on its own runner below. The package's
+# prepack refuses to pack if any of them is missing.
 #
 # No npm token: npm trusts this workflow file in the `release` environment as the package's
 # trusted publisher (OIDC), and adds provenance. https://docs.npmjs.com/trusted-publishers
 # Renaming this file or the environment breaks publishing until the npm settings match again.
+#
+# With "Dry run" ticked it builds and packs everything, uploads the tarball as an artifact, and
+# publishes nothing. The first release is published by hand from that tarball (docs/releasing.md).
 name: Publish
 
 on:
@@ -11,6 +18,11 @@ on:
     tags:
       - v*.*.*
   workflow_dispatch:
+    inputs:
+      dry-run:
+        description: Dry run (build and pack, publish nothing)
+        type: boolean
+        default: false
 
 concurrency:
   group: publish
@@ -18,13 +30,60 @@ concurrency:
 
 permissions:
   contents: read
-  id-token: write
 
 jobs:
+  native:
+    name: Build ngp (${{ matrix.platform }})
+    strategy:
+      matrix:
+        include:
+          - platform: darwin-arm64
+            os: macos-15
+          - platform: darwin-x64
+            os: macos-15-intel
+          # The oldest Ubuntu GitHub offers, for the oldest glibc: a binary linked on a newer one
+          # won't load on older distros.
+          - platform: linux-x64
+            os: ubuntu-22.04
+          - platform: linux-arm64
+            os: ubuntu-22.04-arm
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    env:
+      # Rust's own default for arm64 macOS, made explicit for the C code Cargo compiles too.
+      MACOSX_DEPLOYMENT_TARGET: '11.0'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/cache@v4
+        with:
+          path: |
+            toolchain/.cache/rust
+            toolchain/.cache/target
+          key: ngp-${{ matrix.os }}-${{ hashFiles('toolchain/versions.env') }}
+      - run: pnpm toolchain native
+      # Load the addon on the system it was built for, so one that can't load never ships.
+      - name: Load the native engine
+        run: node -e "require('./toolchain/out/engines/native/ng_analyze.node')"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ngp-native-${{ matrix.platform }}
+          path: toolchain/out/engines/native/ng_analyze.node
+          if-no-files-found: error
+
   publish:
     name: Publish packages
+    needs: native
     runs-on: ubuntu-latest
     environment: release
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Clone the repository
         uses: actions/checkout@v4
@@ -40,5 +99,29 @@ jobs:
           cache: pnpm
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+      # Same key as ci.yml, so this reuses the cache CI keeps warm on main.
+      - uses: actions/cache@v4
+        with:
+          path: |
+            toolchain/.cache/rust
+            toolchain/.cache/target
+          key: ngp-${{ runner.os }}-${{ hashFiles('toolchain/versions.env') }}
+      - name: Build ngp's backend and wasm engine
+        run: pnpm toolchain wasm
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: ngp-native-*
+          path: natives
+      - name: Bundle ngp into the package
+        run: node toolchain/bundle.mjs --natives natives
+      - name: Build the plugin
+        run: pnpm --filter vite-plugin-ngp build
+      - name: Pack the package
+        run: pnpm --filter vite-plugin-ngp pack --pack-destination "$RUNNER_TEMP/package"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vite-plugin-ngp-package
+          path: ${{ runner.temp }}/package/*.tgz
+          if-no-files-found: error
       - name: Publish packages to npm
-        run: pnpm nx release publish
+        run: pnpm nx release publish ${{ inputs.dry-run && '--dry-run' || '' }}

@@ -7,6 +7,12 @@ description: What changed in vite-plugin-ngp, newest first, for anyone following
 
 What changed in vite-plugin-ngp, newest first. The plugin isn't on npm, so there are no releases: this page is how you find out what landed since you last looked. Every entry links to the page that documents it.
 
+## 20 October 2026
+
+### Packaging
+
+- The plugin's package now carries its own ngp build: ngp's backend, the wasm engine, and native engines for macOS (arm64, x64) and glibc Linux (x64, arm64). When neither `toolchain` nor `NGP_TOOLCHAIN` is set, the plugin loads that build, so a released copy needs no options and no `pnpm toolchain`. Nothing is on npm yet, so for now this changes nothing for a copy installed from a clone. [Configuration](configuration), [Building ngp](building-ngp#the-build-inside-the-package)
+
 ## 19 October 2026
 
 ### Repo

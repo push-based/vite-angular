@@ -717,3 +717,15 @@ A disk cache of the linker's output, keyed by file content and Angular version, 
 **Cost.** Nx and commitlint add about 360 packages to the root `devDependencies`, used only to release and to check commit messages. Every commit message now follows a format, which the history before this entry doesn't. The package still doesn't contain ngp, so installing it from npm doesn't save users the `pnpm toolchain` build.
 
 **Revisit when** ngp is published, or the plugin ships an ngp build itself, since either changes what goes in the package.
+
+## 60. ngp ships inside the plugin's package, with a native engine for four platforms
+
+*20 October 2026*
+
+**Decision.** The `vite-plugin-ngp` package carries ngp in `ngp/`: the TypeScript backend, the wasm engine, and native engines for `darwin-arm64`, `darwin-x64`, `linux-x64` and `linux-arm64`, in `engines/native/<platform>-<arch>/`. The Publish workflow builds each native engine on its own runner (macOS 15 on arm64 and Intel, Ubuntu 22.04 on x64 and arm64), loads each one there, and assembles the bundle with `toolchain/bundle.mjs`. When neither `toolchain` nor `NGP_TOOLCHAIN` is set, the plugin loads the bundled build. The engine default stays `native`, with no fallback to wasm, as [decision 6](decisions.md) set it: on a platform without a bundled engine, musl Linux included, the plugin stops and says to set `engine: 'wasm'`. `toolchain/out` keeps its layout, with the host's engine directly in `engines/native/`, and the plugin still loads that. Supersedes the "package doesn't contain ngp" part of [decision 59](decisions.md).
+
+**Why.** Without ngp in the package, installing from npm saved users nothing: they still cloned the repo and ran a Rust build. One package, not a main package plus one per platform as esbuild does, keeps one trusted publisher and one first publish by hand on npm, and one version to keep in step.
+
+**Cost.** Every install downloads all four engines. One engine packed to 3.4 MB, so four should come to about 10 MB, against about 5 MB for a per-platform split. Each release runs four Rust builds, and every plugin release ships ngp again even when `ANGULAR_SHA` hasn't moved. The Linux engines need glibc 2.35 or newer. The first version can't be published from a laptop, which only has its own engine, so it's published by hand from the tarball CI builds.
+
+**Revisit when** Angular publishes ngp, or when the package size becomes a complaint: then split the native engines into per-platform packages under `optionalDependencies`.

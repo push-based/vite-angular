@@ -7,6 +7,8 @@ source "$here/versions.env"
 dest="$here/.cache/angular"
 
 if [[ -d "$dest/.git" ]] && [[ "$(git -C "$dest" rev-parse HEAD)" == "$ANGULAR_SHA" ]]; then
+  # Checkouts from before the bundled build lack the LICENSE that toolchain/bundle.mjs ships.
+  [[ -f "$dest/LICENSE" ]] || git -C "$dest" sparse-checkout add '/LICENSE'
   echo "angular already at $ANGULAR_SHA"
   exit 0
 fi
@@ -18,6 +20,7 @@ git -C "$dest" remote add origin https://github.com/angular/angular.git
 git -C "$dest" sparse-checkout set --no-cone \
   '/Cargo.toml' \
   '/Cargo.lock' \
+  '/LICENSE' \
   '/packages/compiler-cli/preprocessor/'
 git -C "$dest" fetch -q --depth 1 --filter=blob:none origin "$ANGULAR_SHA"
 git -C "$dest" -c advice.detachedHead=false checkout -q FETCH_HEAD

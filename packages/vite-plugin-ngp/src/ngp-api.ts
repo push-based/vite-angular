@@ -1,9 +1,10 @@
 // The slice of ngp's API this plugin uses, typed by hand. ngp isn't published, so there's no
 // package to take types from; these match `toolchain/out/preprocessor/api.js` at Angular 92e5aa8.
 
+import {existsSync} from 'node:fs';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
-import {pathToFileURL} from 'node:url';
+import {fileURLToPath, pathToFileURL} from 'node:url';
 
 export type Engine = 'native' | 'wasm';
 
@@ -102,14 +103,59 @@ export interface NgpApi {
 }
 
 /**
- * Loads ngp from a toolchain directory as `pnpm toolchain` lays it out in `toolchain/out`:
- * `preprocessor/api.js` and `engines/{native,wasm}/`.
+ * The ngp build inside the published package, which toolchain/bundle.mjs assembles before a
+ * release. A clone of the repo has none: there, `toolchain` or NGP_TOOLCHAIN points at
+ * toolchain/out.
+ */
+export const BUNDLED_TOOLCHAIN = fileURLToPath(new URL('../ngp/', import.meta.url));
+
+/** The platforms the published package carries a native engine for, as `<platform>-<arch>`. */
+export const NATIVE_PLATFORMS = ['darwin-arm64', 'darwin-x64', 'linux-x64', 'linux-arm64'];
+
+/** The toolchain to load: the option, then NGP_TOOLCHAIN, then the bundled build if there is one. */
+export function resolveToolchain(option: string | undefined, env = process.env): string {
+  const dir = option ?? env['NGP_TOOLCHAIN'] ?? (existsSync(BUNDLED_TOOLCHAIN) ? BUNDLED_TOOLCHAIN : undefined);
+  if (!dir) {
+    throw new Error(
+      'vite-plugin-ngp: no ngp build found. This copy of the plugin has none bundled, so set the ' +
+        '`toolchain` option or NGP_TOOLCHAIN to an ngp build, such as the repo\'s toolchain/out.',
+    );
+  }
+  return dir;
+}
+
+/**
+ * The native engine for this machine. The published package keeps one per platform under
+ * `engines/native/<platform>-<arch>/`; `pnpm toolchain` writes the host's to `engines/native/`.
+ * The per-platform builds link against glibc, so they're skipped on musl (Alpine).
+ */
+export function nativeBindingPath(toolchainDir: string, platform = `${process.platform}-${process.arch}`, musl = isMusl()) {
+  const perPlatform = path.join(toolchainDir, 'engines/native', platform, 'ng_analyze.node');
+  if (!musl && existsSync(perPlatform)) return perPlatform;
+  const host = path.join(toolchainDir, 'engines/native/ng_analyze.node');
+  if (existsSync(host)) return host;
+  throw new Error(
+    `vite-plugin-ngp: ${toolchainDir} has no native ngp engine for ${platform}${musl ? ' (musl)' : ''}. ` +
+      `Set \`engine: 'wasm'\`, which runs anywhere but analyzes up to twice as slowly, or build ngp ` +
+      `on this machine with \`pnpm toolchain\` in the vite-plugin-ngp repo.`,
+  );
+}
+
+function isMusl() {
+  if (process.platform !== 'linux') return false;
+  const report = process.report?.getReport() as {header?: {glibcVersionRuntime?: string}} | undefined;
+  return !report?.header?.glibcVersionRuntime;
+}
+
+/**
+ * Loads ngp from a toolchain directory: `preprocessor/api.js` and `engines/{native,wasm}/`, as
+ * `pnpm toolchain` lays out toolchain/out and toolchain/bundle.mjs lays out the bundled build.
  */
 export async function loadNgp(toolchainDir: string, engine: Engine) {
   const apiPath = path.join(toolchainDir, 'preprocessor/api.js');
   const binding =
     engine === 'native'
-      ? {nativeBinding: path.join(toolchainDir, 'engines/native/ng_analyze.node')}
+      ? {nativeBinding: nativeBindingPath(toolchainDir)}
       : {wasmBinding: path.join(toolchainDir, 'engines/wasm/ng_analyze.js')};
   for (const file of [apiPath, ...Object.values(binding)]) {
     await fs.access(file).catch(() => {

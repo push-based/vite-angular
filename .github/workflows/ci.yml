@@ -36,6 +36,10 @@ jobs:
 
       - run: pnpm toolchain
 
+      # The ngp bundle a release ships, with this runner's engine only (publish.yml bundles all four),
+      # so toolchain/bundle.mjs can't break between releases. The tests below still use toolchain/out.
+      - run: node toolchain/bundle.mjs --host-only
+
       # The plugin's own tests, then the playground's specs under Vitest.
       - run: pnpm test
 

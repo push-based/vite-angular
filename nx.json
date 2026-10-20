@@ -1,0 +1,41 @@
+{
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "targetDefaults": {
+    "nx-release-publish": {
+      "dependsOn": ["build"],
+      "options": {
+        "packageRoot": "{projectRoot}",
+        "registry": "https://registry.npmjs.org/",
+        "access": "public"
+      }
+    }
+  },
+  "release": {
+    "projects": ["vite-plugin-ngp"],
+    "projectsRelationship": "fixed",
+    "changelog": {
+      "automaticFromRef": true,
+      "projectChangelogs": false,
+      "workspaceChangelog": {
+        "createRelease": "github"
+      }
+    },
+    "git": {
+      "commit": true,
+      "push": true,
+      "pushRemote": "origin",
+      "tag": true,
+      "commitMessage": "release: {version}"
+    },
+    "version": {
+      "conventionalCommits": true,
+      "fallbackCurrentVersionResolver": "disk",
+      "versionActionsOptions": {
+        "skipLockFileUpdate": true
+      }
+    },
+    "releaseTag": {
+      "pattern": "v{version}"
+    }
+  }
+}

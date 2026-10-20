@@ -1,0 +1,44 @@
+# Builds vite-plugin-ngp and publishes it to npm. Starts on the v* tag release.yml pushes, or by hand
+# from the Actions tab; a version already on npm is skipped.
+#
+# No npm token: npm trusts this workflow file in the `release` environment as the package's
+# trusted publisher (OIDC), and adds provenance. https://docs.npmjs.com/trusted-publishers
+# Renaming this file or the environment breaks publishing until the npm settings match again.
+name: Publish
+
+on:
+  push:
+    tags:
+      - v*.*.*
+  workflow_dispatch:
+
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    name: Publish packages
+    runs-on: ubuntu-latest
+    environment: release
+    steps:
+      - name: Clone the repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      # Node 26 ships npm 11, which does the OIDC exchange. pnpm 10 packs the package, replacing
+      # workspace: ranges, and hands the tarball to npm publish.
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Publish packages to npm
+        run: pnpm nx release publish

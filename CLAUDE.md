@@ -51,3 +51,15 @@ Write docs in [Clarity](https://clarity.addy.ie/) style: for one reader you can 
 ## Commits
 
 Commit each coherent change on its own, with its docs, and push. Several sessions may share this checkout: commit only your own paths (`git commit -- <paths>`), and never revert changes you didn't make.
+
+Write every commit message as a conventional commit, because nx release computes versions and the changelog from them. The commit-msg hook rejects anything else:
+
+```text
+fix(vite-plugin-ngp): keep component state when a stylesheet is edited
+```
+
+- Type: `feat` (a user can do something new), `fix`, `perf`, `docs`, `refactor`, `test`, `build`, `ci` or `chore`. `feat` and `fix` cut a version, so a docs-only or bench change is never `feat`. Mark a breaking change with `!` after the type.
+- Scope, optional: `vite-plugin-ngp`, `playground`, `site`, `bench`, `toolchain` or `workflows`.
+- Subject in the imperative present tense, lowercase after the colon, no period, and the header at most 100 characters. Body lines at most 100 characters too.
+
+Don't bypass the hook with `--no-verify`. Releasing is in [docs/releasing.md](docs/releasing.md); never run `nx release` yourself unless asked.

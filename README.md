@@ -99,7 +99,7 @@ To use the plugin in your own app, follow [Getting started](https://push-based.g
 
 `pnpm test` builds the plugin and runs its tests against the ngp you built; CI runs the same on every push. [docs/building.md](docs/building.md) explains each build step, what to do when one fails, and how to move to a newer Angular commit.
 
-A change a plugin user would notice needs its docs page in [site/content](site/content) updated in the same commit, and a line in the [changelog](site/content/changelog.md). The site redeploys on every push to `main`. Design choices go in [docs/decisions.md](docs/decisions.md), with what they cost.
+A change a plugin user would notice needs its docs page in [site/content](site/content) updated in the same commit, and a line in the [changelog](site/content/changelog.md). The site redeploys on every push to `main`. Design choices go in [docs/decisions.md](docs/decisions.md), with what they cost. Commit messages are [conventional commits](https://www.conventionalcommits.org/), checked by a commit-msg hook, because releases are computed from them; [docs/releasing.md](docs/releasing.md) explains the rules and how a version reaches npm.
 
 ## Related
 

@@ -1,0 +1,53 @@
+# Versions vite-plugin-ngp from the conventional commits since the last tag, writes CHANGELOG.md,
+# commits `release: <version>`, tags it v<version>, pushes, and creates the GitHub release.
+# Run it by hand from the Actions tab. The tag it pushes starts publish.yml.
+#
+# It acts as the PushBased Bot GitHub App, so the push can bypass main's branch protection and the
+# tag push can start another workflow (pushes made with GITHUB_TOKEN don't).
+name: Release
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Version and release
+    runs-on: ubuntu-latest
+    environment: release
+    steps:
+      - name: Authenticate as "PushBased Bot" GitHub App
+        uses: actions/create-github-app-token@v2
+        id: app-token
+        with:
+          app-id: ${{ vars.GH_APP_ID }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+      - name: Fetch GitHub App's user ID
+        id: get-user-id
+        run: echo "user-id=$(gh api "/users/${{ steps.app-token.outputs.app-slug }}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+      - name: Configure Git user
+        run: |
+          git config --global user.name '${{ steps.app-token.outputs.app-slug }}[bot]'
+          git config --global user.email '${{ steps.get-user-id.outputs.user-id }}+${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com'
+      - name: Clone the repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
+      - uses: pnpm/action-setup@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Version, release and generate changelog
+        run: pnpm nx release --skip-publish
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}

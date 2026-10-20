@@ -15,3 +15,4 @@ packages/vite-plugin-ngp/test/.hmr-*/
 
 # Fixture copies made by the plugin tests
 packages/vite-plugin-ngp/test/.tmp/
+.nx/

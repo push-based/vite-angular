@@ -705,3 +705,15 @@ A disk cache of the linker's output, keyed by file content and Angular version, 
 **Why.** The Performance and Benchmarks pages lean on it: the generated apps come from its generator, and the Comparison page cites its Analog audit. A reader who couldn't open those links had to take the claims on trust.
 
 **Cost.** Its docs, spikes and results are published as they are, written when they weren't meant for outside readers. Earlier entries here and the changelog's history still call it private where they record what was true then.
+
+## 59. Publish to npm the PushBased way: Nx release, conventional commits, trusted publishing
+
+*20 October 2026*
+
+**Decision.** Release `vite-plugin-ngp` with the setup PushBased uses across its repos, copied from push-based/zod2nx-schema: `nx release` with conventional commits, a hand-started Release workflow that tags and creates the GitHub release as the PushBased Bot app, and a Publish workflow that publishes to npm through a trusted publisher (OIDC) in the `release` environment. Nx is added for releasing only: builds and tests still run through pnpm scripts. Commit messages are checked by commitlint, locally by a husky commit-msg hook and on pull request titles in CI. The workflows use pnpm, not npm. pnpm 10 packs the package and hands the tarball to `npm publish`, so npm still does the OIDC exchange. [docs/releasing.md](releasing.md) has the steps.
+
+**Why.** It's the org's convention, so anyone at PushBased who has released another package can release this one, and the npm and GitHub settings match what they've set up before. Trusted publishing means no npm token is stored anywhere, and every version gets provenance.
+
+**Cost.** Nx and commitlint add about 360 packages to the root `devDependencies`, used only to release and to check commit messages. Every commit message now follows a format, which the history before this entry doesn't. The package still doesn't contain ngp, so installing it from npm doesn't save users the `pnpm toolchain` build.
+
+**Revisit when** ngp is published, or the plugin ships an ngp build itself, since either changes what goes in the package.

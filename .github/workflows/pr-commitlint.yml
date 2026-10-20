@@ -1,0 +1,28 @@
+# A squash merge makes the pull request's title the commit on main, so the title must be a
+# conventional commit too. The commit-msg hook in .husky checks commits made locally.
+name: PR Commitlint
+
+on:
+  pull_request:
+    types: [opened, synchronize, edited]
+
+jobs:
+  check:
+    name: Check PR title
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone the repository
+        uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      # Passed through env, not interpolated into the script, so a title can't inject shell.
+      - name: Check PR title with commitlint
+        run: echo "$PR_TITLE" | pnpm exec commitlint
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}

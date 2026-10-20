@@ -37,9 +37,9 @@ pnpm nx release --dry-run --skip-publish
 
 | Step | Where | Who |
 |---|---|---|
-| Install the PushBased Bot GitHub App on the repo | Org settings → GitHub Apps | Org admin |
+| Install the [PushBased Bot](https://github.com/apps/pushbased-bot) GitHub App (`pushbased-bot`) on the repo | Org settings → GitHub Apps → PushBased Bot → Configure → Repository access | Org owner |
 | Create the `release` environment with variable `GH_APP_ID` = `2781189` and secret `GH_APP_PRIVATE_KEY` | Repo settings → Environments | Repo admin; the key comes from an EM |
-| Protect `main`: require a pull request, and let `push-based-bot` bypass it so Release can push | Repo settings → Branches | Repo admin |
+| Protect `main`: require a pull request, and let `pushbased-bot` bypass it so Release can push | Repo settings → Branches | Repo admin |
 | Publish the first version by hand (below) | A maintainer's machine | Someone in the push-based npm org |
 | Add the trusted publisher: GitHub Actions, `push-based` / `vite-plugin-ngp`, workflow `publish.yml`, environment `release` | npmjs.com → package settings | Same person |
 

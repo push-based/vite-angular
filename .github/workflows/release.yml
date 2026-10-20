@@ -4,10 +4,18 @@
 #
 # It acts as the PushBased Bot GitHub App, so the push can bypass main's branch protection and the
 # tag push can start another workflow (pushes made with GITHUB_TOKEN don't).
+#
+# With "Dry run" ticked it changes nothing: it prints the version and changelog it would make, and
+# checks that the bot's token can push here, which proves GH_APP_ID and GH_APP_PRIVATE_KEY work.
 name: Release
 
 on:
   workflow_dispatch:
+    inputs:
+      dry-run:
+        description: Dry run (print the release, push nothing)
+        type: boolean
+        default: false
 
 concurrency:
   group: release
@@ -48,6 +56,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Version, release and generate changelog
-        run: pnpm nx release --skip-publish
+        run: pnpm nx release --skip-publish ${{ inputs.dry-run && '--dry-run' || '' }}
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
+      # A dry run doesn't push, so connect to the remote the way a push would: GitHub refuses the
+      # bot's token here if the app can't write to the repo.
+      - name: Check the bot can push
+        if: inputs.dry-run
+        run: git push --dry-run origin HEAD:refs/heads/main

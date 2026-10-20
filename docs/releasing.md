@@ -25,6 +25,8 @@ The commit-msg hook in `.husky` checks each commit locally. `pnpm install` insta
 1. In the Actions tab, run **Release** on `main`. It computes the version from the commits since the last `v*` tag, updates `packages/vite-plugin-ngp/package.json` and `CHANGELOG.md`, commits `release: <version>`, tags `v<version>`, pushes both, and creates the GitHub release. If no commit since the last tag bumps the version, it does nothing.
 2. The tag starts **Publish**, which builds the plugin and publishes it to npm with provenance. If the run fails, start Publish again by hand on the tag; a version already on npm is skipped.
 
+To preview a release on CI, run **Release** with **Dry run** ticked. It prints the version and changelog it would make and pushes nothing. It also checks that the bot's token can push to the repo, so it's the way to test `GH_APP_ID` and `GH_APP_PRIVATE_KEY` after setting them up. It doesn't test the bypass of `main`'s branch protection, because GitHub only checks that on a real push.
+
 To preview a release locally without changing anything:
 
 ```bash

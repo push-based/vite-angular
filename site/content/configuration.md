@@ -5,7 +5,7 @@ description: Every option vite-plugin-ngp accepts, its default, and when to chan
 
 # Configuration
 
-`ngp()` takes one options object. A released package needs none of them, because it carries its own ngp build. A copy installed from a clone of the repo, as [Getting started](getting-started) does until the first npm release, needs `toolchain`.
+`ngp()` takes one options object. The package from npm needs none of them, because it carries its own ngp build ([Getting started](getting-started)). A copy built in a clone of the repo needs `toolchain`, or `NGP_TOOLCHAIN`, pointing at the repo's `toolchain/out`.
 
 ```ts
 import {defineConfig} from 'vite';

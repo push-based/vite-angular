@@ -29,9 +29,9 @@ A first version on top of a prototype compiler. Everything below was checked in 
 - Vitest with TestBed, compiling only the specs a run asks for.
 - `fileReplacements`, `budgets` and `polyfills` from angular.json, and one app at a time in an Nx workspace.
 
-**Not yet:** preprocessors in inline `styles`, HTTP status codes from SSR, the service worker, library builds, and Windows outside WSL 2.
+**Not yet:** preprocessors in inline `styles`, HTTP status codes from SSR, the service worker, library builds, and Windows outside WSL 2, which is untested.
 
-**The catch.** You can't `npm install` it. ngp isn't published, so this repo builds it from Angular's source, and every `@angular/*` package is pinned to exactly `22.3.0-next.2`. The plugin also uses ngp below its intended surface, so any Angular commit can break it. The [status page](https://push-based.github.io/vite-plugin-ngp/status/) lists every limit.
+**The catch.** It's on npm as [`@push-based/vite-plugin-ngp`](https://www.npmjs.com/package/@push-based/vite-plugin-ngp), but ngp isn't published, so the package carries its own build of it, made from Angular's source, and every `@angular/*` package is pinned to exactly `22.3.0-next.2`. The plugin also uses ngp below its intended surface, so any Angular commit can break it. The [status page](https://push-based.github.io/vite-plugin-ngp/status/) lists every limit.
 
 ## Try it
 
@@ -73,7 +73,7 @@ pnpm playground:build
 pnpm --filter playground start
 ```
 
-To use the plugin in your own app, follow [Getting started](https://push-based.github.io/vite-plugin-ngp/getting-started/). If you're coming from `ng build`, [Migrating from ng build](https://push-based.github.io/vite-plugin-ngp/migrating-from-ng-build/) says where each option goes.
+To use the plugin in your own app, `npm install -D @push-based/vite-plugin-ngp` and follow [Getting started](https://push-based.github.io/vite-plugin-ngp/getting-started/). If you're coming from `ng build`, [Migrating from ng build](https://push-based.github.io/vite-plugin-ngp/migrating-from-ng-build/) says where each option goes.
 
 ## How it works
 

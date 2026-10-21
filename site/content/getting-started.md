@@ -1,52 +1,29 @@
 ---
 title: Getting started
-description: Build ngp, run the playground, then add vite-plugin-ngp to your own Angular app.
+description: Install @push-based/vite-plugin-ngp from npm and serve your Angular app with Vite.
 ---
 
 # Getting started
 
-This page takes you from nothing to an Angular app served by Vite through vite-plugin-ngp. Plan on about ten minutes, most of it the one-time build of ngp. You'll need to pin exact Angular versions, because ngp is unreleased and only works with the Angular build it came from.
+This page takes you from an Angular app to the same app served by Vite through vite-plugin-ngp. Plan on about five minutes. You'll need to pin exact Angular versions, because the ngp build inside the package only works with the Angular release it was built from.
 
 ## What you need
 
 | | |
 |---|---|
-| Operating system | macOS or Linux. Windows only through WSL 2 |
+| Operating system | macOS (arm64 or x64) or Linux with glibc (x64 or arm64), WSL 2 included. Anywhere else, Alpine included, set `engine: 'wasm'` ([Configuration](configuration)). Windows itself is untested |
 | Node | 26 |
-| pnpm | 10 |
-| git, curl, a C compiler | Any recent version. On macOS, `xcode-select --install` installs all three |
+| Angular | Exactly `22.3.0-next.2` |
 
-You don't need Rust, Bazel or an Angular checkout. The build installs its own Rust inside the repo.
+You don't need Rust or a clone of the repo. Angular hasn't published ngp, so the package carries its own build of it, made from Angular's source at the commit behind `22.3.0-next.2`, with a native engine for each platform above.
 
-## 1. Build ngp
-
-Angular hasn't published ngp to npm, so the plugin's repo, [push-based/vite-plugin-ngp](https://github.com/push-based/vite-plugin-ngp), builds it from Angular's source at a pinned commit. Clone it and build:
+## 1. Install the plugin
 
 ```bash
-git clone https://github.com/push-based/vite-plugin-ngp.git
-cd vite-plugin-ngp
-nvm use
-pnpm install
-pnpm toolchain
+npm install -D @push-based/vite-plugin-ngp vite@8.3.4
 ```
 
-`pnpm toolchain` writes ngp into `toolchain/out`. The first run took about 2 minutes on a 12-core M2 Max, and longer on fewer cores. Later runs reuse their caches. [Building ngp](building-ngp) explains each step and what to do when one fails.
-
-## 2. Try the playground
-
-```bash
-pnpm dev
-```
-
-This builds the plugin and starts Vite on a small Angular app at `http://localhost:5173`. Edit a template under `playground/src/app` and the component updates in place, keeping its state.
-
-## 3. Add the plugin to your app
-
-The plugin isn't on npm either. Install it from your clone, after `pnpm build` in the repo root:
-
-```bash
-pnpm add -D ../vite-plugin-ngp/packages/vite-plugin-ngp vite@8.3.4
-```
+With pnpm, `pnpm add -D` takes the same two packages.
 
 > [!WARNING]
 > Pin every `@angular/*` package to exactly `22.3.0-next.2`, the release built from the same commit as ngp. Any other version fails, because ngp imports private APIs from `@angular/compiler-cli`.
@@ -67,20 +44,20 @@ pnpm add -D ../vite-plugin-ngp/packages/vite-plugin-ngp vite@8.3.4
 }
 ```
 
-Then add the plugin to `vite.config.ts`, pointing it at the ngp build:
+## 2. Add the plugin to Vite
 
 ```ts title="vite.config.ts"
 import {defineConfig} from 'vite';
 import {ngp} from '@push-based/vite-plugin-ngp';
 
 export default defineConfig({
-  plugins: [ngp({toolchain: '../vite-plugin-ngp/toolchain/out'})],
+  plugins: [ngp()],
 });
 ```
 
-You can also leave out `toolchain` and set the `NGP_TOOLCHAIN` environment variable instead.
+`ngp()` needs no options. It loads the ngp build inside the package, unless you point `toolchain` or the `NGP_TOOLCHAIN` variable at another one, such as a build of your own from the repo ([Building ngp](building-ngp)).
 
-## 4. Point Vite at your app
+## 3. Point Vite at your app
 
 Vite starts from `index.html`, not from `angular.json`. Put one in your project root that loads `src/main.ts`:
 
@@ -118,6 +95,21 @@ pnpm vite
 ```
 
 For a production build, run `pnpm vite build`. The output in `dist/` is a static site you can serve from any file host.
+
+## Try the playground
+
+The repo has a small Angular app that shows each feature: HMR, server rendering, i18n, the type-checker's overlay. It runs on the repo's own ngp build, so it needs pnpm 10, git, curl and a C compiler, and the first `pnpm toolchain` takes about 2 minutes on a 12-core M2 Max:
+
+```bash
+git clone https://github.com/push-based/vite-plugin-ngp.git
+cd vite-plugin-ngp
+nvm use
+pnpm install
+pnpm toolchain
+pnpm dev
+```
+
+`pnpm dev` starts it at `http://localhost:5173`. Edit a template under `playground/src/app` and the component updates in place, keeping its state.
 
 ## Next
 

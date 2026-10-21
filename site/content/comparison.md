@@ -7,7 +7,7 @@ description: How vite-plugin-ngp differs from ng serve, Analog and @oxc-angular/
 
 You already have three ways to run Angular with Vite in the picture: the Angular CLI, Analog's Vite plugin, and VoidZero's `@oxc-angular/vite`. This page is for you if you're choosing between them and want to know what vite-plugin-ngp does differently, and what it costs you. It compares how each one works, with one timing where a difference in the model shows up. [Performance](performance) has the rest.
 
-In one sentence: vite-plugin-ngp is the only one that compiles each module when Vite asks for it with Angular's own compiler, and it's the only one you can't `npm install`.
+In one sentence: vite-plugin-ngp is the only one that compiles each module when Vite asks for it with Angular's own compiler, and the only one built on a prototype compiler: its npm package carries an unofficial build of ngp and works with exactly one Angular prerelease.
 
 Analog and `@oxc-angular/vite` were checked in their source and docs on 17 October 2026: `@analogjs/vite-plugin-angular` 2.8.1, npm's `latest`, at commit [`58a9df6`](https://github.com/analogjs/analog/tree/58a9df609050ba9d43bcc062316a477216a03015/packages/vite-plugin-angular), and `@oxc-angular/vite` 0.0.41 with its repo at [`7c84088`](https://github.com/voidzero-dev/oxc-angular-compiler/tree/7c84088778dc4b2b5b4f33fd6c98af0e3a134fe5). Both change fast, so anything below can be out of date by the time you read it.
 
@@ -22,7 +22,7 @@ Analog and `@oxc-angular/vite` were checked in their source and docs on 17 Octob
 | Component HMR | On by default | Off by default | Off by default | On by default | On by default, with the CLI's rules |
 | SSR | `@angular/ssr`, with prerendering | `@analogjs/platform`, on by default | Same as default | An `ssrEntry` option; not tried here | A `render(url, document)` contract; you write the server |
 | Linking libraries | The CLI's oxc linker | Angular's linker | Angular's linker | Its own Rust linker | Angular's Babel linker |
-| How you get it | `npm install` | `npm install`, 2.8.1 | `npm install`, opt-in flag | `npm install`, 0.0.41, "experimental" | Build ngp from source; one Angular prerelease |
+| How you get it | `npm install` | `npm install`, 2.8.1 | `npm install`, opt-in flag | `npm install`, 0.0.41, "experimental" | `npm install`, 0.2.0; one Angular prerelease |
 
 Each row is explained below, with its source.
 
@@ -95,7 +95,7 @@ This is where vite-plugin-ngp loses, plainly.
 - **The Angular CLI** is Angular's official toolchain.
 - **Analog** 2.8.1 is on npm and is a released, maintained project; 3.0 is in alpha. Its default path imports private `@angular/build` APIs, and Angular 22.2 broke it in three reported issues ([the bench's audit](https://github.com/push-based/ng-hybrid-preprocessor-bench/blob/main/docs/vite-plugin-analog-audit.md)).
 - **`@oxc-angular/vite`** 0.0.41 is on npm, with prebuilt binaries for macOS, Linux and Windows. Its README says it's "in an experimental stage and is actively seeking maintainers", and the launch post called it "an experiment for research purposes". Commits are still landing: the last on 16 October 2026.
-- **vite-plugin-ngp** isn't on npm, and neither is ngp. You build ngp from Angular's source with one command, which installs a Rust toolchain and takes about 2 minutes on a 12-core M2 Max the first time ([Building ngp](building-ngp)). Every Angular package is pinned to exactly `22.3.0-next.2`, a prerelease, because ngp's API isn't public and the plugin reaches below it in two places ([Status and limits](status#where-its-weakest)). It runs on macOS and Linux; Windows only through WSL 2.
+- **vite-plugin-ngp** 0.2.0 is on npm as `@push-based/vite-plugin-ngp`, first published on 21 October 2026. ngp isn't published, so the package carries its own build of it, made from Angular's source, with native engines for macOS and glibc Linux ([Getting started](getting-started)). Every Angular package is pinned to exactly `22.3.0-next.2`, a prerelease, because ngp's API isn't public and the plugin reaches below it in two places ([Status and limits](status#where-its-weakest)). It runs on macOS and Linux, and elsewhere with the slower wasm engine; Windows is untested.
 
 ## Which one to pick
 

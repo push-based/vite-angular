@@ -41,9 +41,9 @@ export default defineConfig(({mode}) => ({
 }));
 ```
 
-Every path the plugin takes is relative to Vite's root, so `tsconfig`, `entries`, `polyfills` and `fileReplacements` are the app's own paths, without `apps/client/`. The workspace root appears only for the cache and output directories, so two apps never share them, and for the aliases, which the next section explains. `toolchain` is left out here; set it, or the `NGP_TOOLCHAIN` variable, as [Getting started](getting-started#3-add-the-plugin-to-your-app) says. `oxc.decorator` is explained under [Libraries compile with the app](nx#libraries-compile-with-the-app).
+Every path the plugin takes is relative to Vite's root, so `tsconfig`, `entries`, `polyfills` and `fileReplacements` are the app's own paths, without `apps/client/`. The workspace root appears only for the cache and output directories, so two apps never share them, and for the aliases, which the next section explains. `toolchain` is left out because the npm package carries its own ngp build ([Getting started](getting-started#2-add-the-plugin-to-vite)). `oxc.decorator` is explained under [Libraries compile with the app](nx#libraries-compile-with-the-app).
 
-`index.html` is the app's own, with the `styles` list from `project.json` as `<link>` tags and the entry as a module script, the way [Getting started](getting-started#4-point-vite-at-your-app) describes. A stylesheet from a package, like Ghostfolio's `node_modules/open-color/open-color.css`, is simpler as an `import 'open-color/open-color.css'` in `main.ts`, where Vite resolves the package.
+`index.html` is the app's own, with the `styles` list from `project.json` as `<link>` tags and the entry as a module script, the way [Getting started](getting-started#3-point-vite-at-your-app) describes. A stylesheet from a package, like Ghostfolio's `node_modules/open-color/open-color.css`, is simpler as an `import 'open-color/open-color.css'` in `main.ts`, where Vite resolves the package.
 
 The dev server serves `libs/` and `node_modules` from above its root. On Ghostfolio it did that without configuration; if yours answers a file under `libs/` with a 403, Vite didn't recognize the workspace, and `server.fs.allow: [workspace]` tells it.
 

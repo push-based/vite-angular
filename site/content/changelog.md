@@ -5,12 +5,13 @@ description: What changed in vite-plugin-ngp, newest first, for anyone following
 
 # Changelog
 
-What changed in vite-plugin-ngp, newest first. The plugin isn't on npm, so there are no releases: this page is how you find out what landed since you last looked. Every entry links to the page that documents it.
+What changed in vite-plugin-ngp, newest first, written for people using it. Every entry links to the page that documents it. Versions on npm, with the commits in each, are in the repo's [CHANGELOG.md](https://github.com/push-based/vite-plugin-ngp/blob/main/CHANGELOG.md) and its [GitHub releases](https://github.com/push-based/vite-plugin-ngp/releases).
 
 ## 21 October 2026
 
 ### Packaging
 
+- On npm: `npm install -D @push-based/vite-plugin-ngp`. 0.2.0 is the first version there, and it needs no `toolchain` option and no `pnpm toolchain`, because it carries its own ngp build. [Getting started](getting-started) now starts from npm; building ngp in a clone is for working on the plugin. [Status and limits](status#where-its-weakest)
 - The package is now named `@push-based/vite-plugin-ngp`, under the PushBased npm org like its other packages. Import the plugin with `import {ngp} from '@push-based/vite-plugin-ngp'`. If you installed it from a clone, run `pnpm install` again and change that one import in `vite.config.ts`; the plugin's options didn't change. [Getting started](getting-started)
 
 ## 20 October 2026
@@ -90,7 +91,7 @@ What changed in vite-plugin-ngp, newest first. The plugin isn't on npm, so there
 - [Status and limits](status#what-doesnt-work-yet) says library builds aren't supported, and [Migrating from ng build](migrating-from-ng-build#cant-move-yet) lists a library project under what can't move.
 - [Migrating from ng build](migrating-from-ng-build#where-every-option-goes) now says where `localize` and `i18nMissingTranslation` go, since i18n works. It listed them as not yet possible.
 - An editing pass over every page: stale counts fixed, and the Server rendering page's prerender timing remeasured on the current 14 pages. [Server rendering](server-rendering#prerendering-for-static-hosting)
-- The repo, [push-based/vite-angular](https://github.com/push-based/vite-plugin-ngp), is public. [Getting started](getting-started#1-build-ngp) now starts with `git clone` instead of asking for access, and no page calls the repo private any more.
+- The repo, [push-based/vite-angular](https://github.com/push-based/vite-plugin-ngp), is public. [Getting started](getting-started#try-the-playground) now starts with `git clone` instead of asking for access, and no page calls the repo private any more.
 - Tables no longer break option names or types mid-word. The [Options](configuration#options) table puts each option's type and default in one cell so it fits the docs column, and on a phone every table with three or more columns stacks each row into labeled lines.
 
 ## 16 October 2026

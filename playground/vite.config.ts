@@ -5,7 +5,7 @@ import {ngp} from '@push-based/vite-plugin-ngp';
 export default defineConfig(({mode}) => ({
   plugins: [
     ngp({
-      // ngp isn't on npm: `pnpm toolchain` in the repo root builds it into toolchain/out.
+      // The repo's own ngp build, from `pnpm toolchain`. An app using the npm package leaves this out.
       toolchain: process.env.NGP_TOOLCHAIN ?? resolve(import.meta.dirname, '../toolchain/out'),
       // Renders pages on the server with src/main.server.ts, in dev and in `vite build`.
       ssr: true,

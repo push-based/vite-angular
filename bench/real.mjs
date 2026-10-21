@@ -94,8 +94,9 @@ for (const extras of [path.join(BENCH, 'real/shared'), path.join(BENCH, 'real', 
 }
 // The plugin comes from bench/node_modules, linked into the app's node_modules under its own name.
 // The app's own packages stay as they are; `vite` is linked only when the app doesn't have it.
-for (const dep of ['vite-plugin-ngp', 'vite']) {
+for (const dep of ['@push-based/vite-plugin-ngp', 'vite']) {
   const target = path.join(dest, 'node_modules', dep);
+  fs.mkdirSync(path.dirname(target), {recursive: true});
   if (dep === 'vite' && fs.existsSync(target) && !fs.lstatSync(target).isSymbolicLink()) continue;
   fs.rmSync(target, {recursive: true, force: true});
   fs.symlinkSync(path.join(BENCH, 'node_modules', dep), target, 'dir');

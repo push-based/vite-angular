@@ -11,7 +11,7 @@ With `ssr: true`, the plugin renders every page on the server in the dev server,
 
 ```ts
 import {defineConfig} from 'vite';
-import {ngp} from 'vite-plugin-ngp';
+import {ngp} from '@push-based/vite-plugin-ngp';
 
 export default defineConfig({
   plugins: [ngp({ssr: true})],

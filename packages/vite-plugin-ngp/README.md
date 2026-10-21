@@ -10,7 +10,7 @@ Angular hasn't published ngp, so this package carries its own build of it, from 
 
 ```ts
 import {defineConfig} from 'vite';
-import {ngp} from 'vite-plugin-ngp';
+import {ngp} from '@push-based/vite-plugin-ngp';
 
 export default defineConfig({
   plugins: [ngp()],

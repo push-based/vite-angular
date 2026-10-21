@@ -21,7 +21,7 @@ pnpm add -D vitest@5.0.4 jsdom@30.1.2
 
 ```ts
 import {defineConfig} from 'vitest/config';
-import {ngp} from 'vite-plugin-ngp';
+import {ngp} from '@push-based/vite-plugin-ngp';
 
 export default defineConfig({
   plugins: [ngp()],

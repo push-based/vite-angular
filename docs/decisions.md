@@ -729,3 +729,13 @@ A disk cache of the linker's output, keyed by file content and Angular version, 
 **Cost.** Every install downloads all four engines. One engine packed to 3.4 MB, so four should come to about 10 MB, against about 5 MB for a per-platform split. Each release runs four Rust builds, and every plugin release ships ngp again even when `ANGULAR_SHA` hasn't moved. The Linux engines need glibc 2.35 or newer. The first version can't be published from a laptop, which only has its own engine, so it's published by hand from the tarball CI builds.
 
 **Revisit when** Angular publishes ngp, or when the package size becomes a complaint: then split the native engines into per-platform packages under `optionalDependencies`.
+
+## 61. The npm package is @push-based/vite-plugin-ngp
+
+*21 October 2026*
+
+**Decision.** Publish the plugin as `@push-based/vite-plugin-ngp`, not as the unscoped `vite-plugin-ngp`. The repo, the folder `packages/vite-plugin-ngp`, the Vite plugin's `name` and the Nx project name (set by the `nx` field in the package's `package.json`, so commit scopes and `nx.json` don't change) keep the short name. The package's `publishConfig` sets `access: public`, since npm publishes a scoped package as private otherwise. Supersedes the package name in [decision 57](decisions.md).
+
+**Why.** On npm only a scoped package belongs to an org. Unscoped, it would belong to whoever published it first, and the org could only be added as further owners one user at a time. `@push-based/zod2nx-schema` and `@push-based/angular-toolkit-mcp` are scoped the same way, and [decision 59](decisions.md) follows the org's conventions. The ngp build inside the package ([decision 60](decisions.md)) is unaffected.
+
+**Cost.** Vite plugins are usually unscoped `vite-plugin-*` packages, and that's where people search. Every import in the docs, the playground, the site and the bench changed, and anyone who installed from a clone changes one import. `v0.1.0` was tagged and released on GitHub under the old name before the rename and was never on npm, so the first version on npm is `0.2.0`.

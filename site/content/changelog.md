@@ -7,6 +7,12 @@ description: What changed in vite-plugin-ngp, newest first, for anyone following
 
 What changed in vite-plugin-ngp, newest first. The plugin isn't on npm, so there are no releases: this page is how you find out what landed since you last looked. Every entry links to the page that documents it.
 
+## 21 October 2026
+
+### Packaging
+
+- The package is now named `@push-based/vite-plugin-ngp`, under the PushBased npm org like its other packages. Import the plugin with `import {ngp} from '@push-based/vite-plugin-ngp'`. If you installed it from a clone, run `pnpm install` again and change that one import in `vite.config.ts`; the plugin's options didn't change. [Getting started](getting-started)
+
 ## 20 October 2026
 
 ### Packaging

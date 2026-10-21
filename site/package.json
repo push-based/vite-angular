@@ -24,6 +24,6 @@
     "shiki": "4.4.3",
     "typescript": "6.0.3",
     "vite": "8.3.4",
-    "vite-plugin-ngp": "workspace:*"
+    "@push-based/vite-plugin-ngp": "workspace:*"
   }
 }

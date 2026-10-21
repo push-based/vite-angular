@@ -20,7 +20,7 @@ const VITE = path.join(NM, 'vite/bin/vite.js');
  */
 export const VITE_CONFIGS = {
   ngp: `import {defineConfig} from 'vite';
-import {ngp} from 'vite-plugin-ngp';
+import {ngp} from '@push-based/vite-plugin-ngp';
 
 // vite-plugin-ngp's documented setup. The toolchain comes from NGP_TOOLCHAIN.
 export default defineConfig({
@@ -31,7 +31,7 @@ export default defineConfig({
 `,
   // Not a default: ngp with its type-check off, to compare with tools that don't type-check.
   'ngp-notc': `import {defineConfig} from 'vite';
-import {ngp} from 'vite-plugin-ngp';
+import {ngp} from '@push-based/vite-plugin-ngp';
 
 // vite-plugin-ngp's documented setup with typeCheck: false.
 export default defineConfig({
@@ -42,7 +42,7 @@ export default defineConfig({
 `,
   // Not a default: ngp checking with tsrs instead of tsgo, to compare the two checkers.
   'ngp-tsrs': `import {defineConfig} from 'vite';
-import {ngp} from 'vite-plugin-ngp';
+import {ngp} from '@push-based/vite-plugin-ngp';
 
 // vite-plugin-ngp's documented setup with typeChecker: 'tsrs', which the bench installs next to it.
 export default defineConfig({
@@ -102,7 +102,7 @@ function viteTool(id, label, pkg) {
 }
 
 export const TOOLS = {
-  ngp: viteTool('ngp', 'vite-plugin-ngp', 'vite-plugin-ngp'),
+  ngp: viteTool('ngp', 'vite-plugin-ngp', '@push-based/vite-plugin-ngp'),
   cli: {
     id: 'cli',
     label: 'Angular CLI',
@@ -127,8 +127,8 @@ export const TOOLS = {
   },
   analog: viteTool('analog', 'Analog', '@analogjs/vite-plugin-angular'),
   oxc: viteTool('oxc', '@oxc-angular/vite', '@oxc-angular/vite'),
-  'ngp-notc': viteTool('ngp-notc', 'vite-plugin-ngp, typeCheck off', 'vite-plugin-ngp'),
-  'ngp-tsrs': viteTool('ngp-tsrs', 'vite-plugin-ngp, typeChecker tsrs', 'vite-plugin-ngp'),
+  'ngp-notc': viteTool('ngp-notc', 'vite-plugin-ngp, typeCheck off', '@push-based/vite-plugin-ngp'),
+  'ngp-tsrs': viteTool('ngp-tsrs', 'vite-plugin-ngp, typeChecker tsrs', '@push-based/vite-plugin-ngp'),
   'analog-hmr': viteTool('analog-hmr', 'Analog, liveReload on', '@analogjs/vite-plugin-angular'),
 };
 

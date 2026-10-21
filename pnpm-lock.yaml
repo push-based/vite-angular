@@ -124,6 +124,9 @@ importers:
       '@angular/compiler-cli':
         specifier: 22.3.0-next.2
         version: 22.3.0-next.2(@angular/compiler@22.3.0-next.2)(typescript@6.0.3)
+      '@push-based/vite-plugin-ngp':
+        specifier: workspace:*
+        version: link:../packages/vite-plugin-ngp
       jsdom:
         specifier: 30.1.2
         version: 30.1.2
@@ -136,9 +139,6 @@ importers:
       vite:
         specifier: 8.3.4
         version: 8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.105.2)(yaml@2.9.0)
-      vite-plugin-ngp:
-        specifier: workspace:*
-        version: link:../packages/vite-plugin-ngp
       vitest:
         specifier: 5.0.4
         version: 5.0.4(@types/node@26.6.5)(jsdom@30.1.2)(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.105.2)(yaml@2.9.0))
@@ -173,6 +173,9 @@ importers:
       '@angular/compiler-cli':
         specifier: 22.3.0-next.2
         version: 22.3.0-next.2(@angular/compiler@22.3.0-next.2)(typescript@6.0.3)
+      '@push-based/vite-plugin-ngp':
+        specifier: workspace:*
+        version: link:../packages/vite-plugin-ngp
       marked:
         specifier: 18.0.14
         version: 18.0.14
@@ -188,9 +191,6 @@ importers:
       vite:
         specifier: 8.3.4
         version: 8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.105.2)(yaml@2.9.0)
-      vite-plugin-ngp:
-        specifier: workspace:*
-        version: link:../packages/vite-plugin-ngp
 
 packages:
 

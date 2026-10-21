@@ -1,8 +1,8 @@
 # Releasing
 
-This page is for whoever publishes vite-plugin-ngp to npm. It follows PushBased's publishing setup, the same one push-based/zod2nx-schema uses: Nx release picks the version from conventional commits, one GitHub workflow tags and creates the release, and a second publishes to npm without an npm token.
+This page is for whoever publishes vite-plugin-ngp to npm, as `@push-based/vite-plugin-ngp`. It follows PushBased's publishing setup, the same one push-based/zod2nx-schema uses: Nx release picks the version from conventional commits, one GitHub workflow tags and creates the release, and a second publishes to npm without an npm token.
 
-Only `packages/vite-plugin-ngp` is published. The playground, the site and the bench are private. The package carries its own ngp build, so users don't run `pnpm toolchain`: ngp's TypeScript backend, the wasm engine, and a native engine for macOS arm64 and x64 and Linux x64 and arm64 (glibc). A package with one native engine packed to 3.4 MB; with all four it should be about 10 MB, if the other three compress like the macOS arm64 one (2.1 MB).
+Only `packages/vite-plugin-ngp` is published, under the push-based npm org's scope like the org's other packages. Its Nx project name stays `vite-plugin-ngp` (the `nx` field in its `package.json`), so that's the commit scope and the name in `nx.json`. The playground, the site and the bench are private. The package carries its own ngp build, so users don't run `pnpm toolchain`: ngp's TypeScript backend, the wasm engine, and a native engine for macOS arm64 and x64 and Linux x64 and arm64 (glibc). A package with one native engine packed to 3.4 MB; with all four it should be about 10 MB, if the other three compress like the macOS arm64 one (2.1 MB).
 
 ## Commit messages
 
@@ -47,12 +47,12 @@ pnpm nx release --dry-run --skip-publish
 | Create the `release` environment with variable `GH_APP_ID` = `2781189` and secret `GH_APP_PRIVATE_KEY` | Repo settings → Environments | Repo admin; the key comes from an EM |
 | Protect `main`: require a pull request, and let `pushbased-bot` bypass it so Release can push | Repo settings → Branches | Repo admin |
 | Publish the first version by hand (below) | A maintainer's machine | Someone in the push-based npm org |
-| Add the trusted publisher: GitHub Actions, `push-based` / `vite-plugin-ngp`, workflow `publish.yml`, environment `release` | npmjs.com → package settings | Same person |
+| Add the trusted publisher: GitHub Actions, `push-based` / `vite-plugin-ngp`, workflow `publish.yml`, environment `release` | npmjs.com → `@push-based/vite-plugin-ngp` → Settings | Same person |
 
-The first version has to be published by hand, because npm only lets you add a trusted publisher to a package that already exists. Publish it from the tarball CI builds, not from your machine, which only has its own platform's engine. Tag the release first:
+The first version has to be published by hand, because npm only lets you add a trusted publisher to a package that already exists. Publish it from the tarball CI builds, not from your machine, which only has its own platform's engine. Tag the release first. With no `v*` tag in the repo yet, that's `pnpm nx release 0.1.0 --first-release --skip-publish`. Once one exists, it's:
 
 ```bash
-pnpm nx release 0.1.0 --first-release --skip-publish
+pnpm nx release --skip-publish
 ```
 
 That needs `GH_TOKEN` set, or `gh` logged in, to create the GitHub release. The tag starts Publish, which fails at its last step because npm doesn't know the package yet. Its tarball is complete. Download it, log in, and publish it:
@@ -66,9 +66,11 @@ npm login
 ```
 
 ```bash
-npm publish ./first-release/vite-plugin-ngp-0.1.0.tgz
+npm publish ./first-release/push-based-vite-plugin-ngp-0.2.0.tgz
 ```
 
-`gh run download` without a run id asks which run to take: pick the Publish run for `v0.1.0`. This first version has no provenance; every version the workflow publishes does. After the trusted publisher is saved, set the package's publishing access on npmjs.com to require two-factor authentication and disallow tokens, so only the workflow can publish.
+`gh run download` without a run id asks which run to take: pick the Publish run for the tag you just pushed. Write the path with `./`, or npm reads `first-release/...` as a GitHub repo. The package's `publishConfig` makes it public; without it npm would publish a scoped package as private. This first version has no provenance; every version the workflow publishes does. After the trusted publisher is saved, set the package's publishing access on npmjs.com to require two-factor authentication and disallow tokens, so only the workflow can publish.
 
 Renaming `publish.yml` or the `release` environment breaks publishing until the npm settings are changed to match.
+
+`v0.1.0` is tagged and has a GitHub release but was never on npm: the package was renamed to its scoped name before anyone published it. The first version on npm is `0.2.0`.

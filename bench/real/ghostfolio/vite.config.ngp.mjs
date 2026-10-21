@@ -2,7 +2,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {defineConfig} from 'vite';
-import {ngp} from 'vite-plugin-ngp';
+import {ngp} from '@push-based/vite-plugin-ngp';
 import {angularServiceWorker} from './bench-ngsw.mjs';
 
 // vite-plugin-ngp on Ghostfolio's Nx client (apps/client), written the way the plugin's docs say

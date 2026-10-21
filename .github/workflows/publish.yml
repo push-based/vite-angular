@@ -115,9 +115,9 @@ jobs:
       - name: Bundle ngp into the package
         run: node toolchain/bundle.mjs --natives natives
       - name: Build the plugin
-        run: pnpm --filter vite-plugin-ngp build
+        run: pnpm --filter @push-based/vite-plugin-ngp build
       - name: Pack the package
-        run: pnpm --filter vite-plugin-ngp pack --pack-destination "$RUNNER_TEMP/package"
+        run: pnpm --filter @push-based/vite-plugin-ngp pack --pack-destination "$RUNNER_TEMP/package"
       - uses: actions/upload-artifact@v4
         with:
           name: vite-plugin-ngp-package

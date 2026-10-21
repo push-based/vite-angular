@@ -2,7 +2,7 @@ import {execFileSync} from 'node:child_process';
 import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {defineConfig} from 'vite';
-import {ngp} from 'vite-plugin-ngp';
+import {ngp} from '@push-based/vite-plugin-ngp';
 import {markdown} from './scripts/markdown';
 
 // GitHub Pages serves the site from /vite-plugin-ngp/. SITE_BASE overrides it, for example '/'.

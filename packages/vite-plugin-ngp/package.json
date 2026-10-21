@@ -1,5 +1,8 @@
 {
-  "name": "vite-plugin-ngp",
+  "name": "@push-based/vite-plugin-ngp",
+  "nx": {
+    "name": "vite-plugin-ngp"
+  },
   "version": "0.1.0",
   "description": "Vite plugin that compiles Angular with ngp, Angular's hybrid Rust/TypeScript preprocessor",
   "license": "MIT",
@@ -76,5 +79,8 @@
     "esbuild": "0.28.2",
     "magic-string": "1.4.3",
     "typescript7": "npm:typescript@7.0.2"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

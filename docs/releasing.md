@@ -73,4 +73,4 @@ npm publish ./first-release/push-based-vite-plugin-ngp-0.2.0.tgz
 
 Renaming `publish.yml` or the `release` environment breaks publishing until the npm settings are changed to match.
 
-`v0.1.0` is tagged and has a GitHub release but was never on npm: the package was renamed to its scoped name before anyone published it. The first version on npm is `0.2.0`.
+`v0.1.0` is a tag with no GitHub release and nothing on npm: the package was renamed to its scoped name before anyone published it, and the release was deleted. The tag stays because Nx reads the current version from it. The first version on npm is `0.2.0`.

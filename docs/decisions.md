@@ -739,3 +739,13 @@ A disk cache of the linker's output, keyed by file content and Angular version, 
 **Why.** On npm only a scoped package belongs to an org. Unscoped, it would belong to whoever published it first, and the org could only be added as further owners one user at a time. `@push-based/zod2nx-schema` and `@push-based/angular-toolkit-mcp` are scoped the same way, and [decision 59](decisions.md) follows the org's conventions. The ngp build inside the package ([decision 60](decisions.md)) is unaffected.
 
 **Cost.** Vite plugins are usually unscoped `vite-plugin-*` packages, and that's where people search. Every import in the docs, the playground, the site and the bench changed, and anyone who installed from a clone changes one import. `v0.1.0` was tagged under the old name before the rename and never published; its GitHub release was deleted and the tag kept, so the first version on npm is `0.2.0`.
+
+## 62. Building ngp is a contributor doc, not a page on the site
+
+*21 October 2026*
+
+**Decision.** The site's Building ngp page and the clone-and-build steps in Getting started and the README are gone. The site documents installing from npm only. Building ngp in a clone, the build inside the package and what to do when a build fails are in [docs/building.md](building.md), which the README links for anyone running the playground or working on the plugin.
+
+**Why.** Since 0.2.0 the npm package carries ngp ([decision 60](decisions.md#60-ngp-ships-inside-the-plugins-package-with-a-native-engine-for-four-platforms)), so no user of the plugin needs Rust, a C compiler or `pnpm toolchain`. A page about it in the site's sidebar made the setup look harder than it is.
+
+**Cost.** Someone who wants an ngp build from another Angular commit, the one reason left to set `toolchain`, finds how to make one only from the repo. The Benchmarks page still starts from `pnpm toolchain`, because reproducing the bench means running the repo.

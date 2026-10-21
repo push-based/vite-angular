@@ -32,7 +32,7 @@ export default defineConfig({
 });
 ```
 
-Pass `ngp()` the same `toolchain` option as in your Vite config, or set `NGP_TOOLCHAIN`. Leave out `ssr`: the plugin ignores it under Vitest anyway.
+Leave out `ssr`: the plugin ignores it under Vitest anyway.
 
 `src/test-setup.ts` starts TestBed once per test file, and resets it after every test:
 

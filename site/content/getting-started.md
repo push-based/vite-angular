@@ -55,7 +55,7 @@ export default defineConfig({
 });
 ```
 
-`ngp()` needs no options. It loads the ngp build inside the package, unless you point `toolchain` or the `NGP_TOOLCHAIN` variable at another one, such as a build of your own from the repo ([Building ngp](building-ngp)).
+`ngp()` needs no options. It loads the ngp build inside the package. [Configuration](configuration) lists what you can change.
 
 ## 3. Point Vite at your app
 
@@ -95,21 +95,6 @@ pnpm vite
 ```
 
 For a production build, run `pnpm vite build`. The output in `dist/` is a static site you can serve from any file host.
-
-## Try the playground
-
-The repo has a small Angular app that shows each feature: HMR, server rendering, i18n, the type-checker's overlay. It runs on the repo's own ngp build, so it needs pnpm 10, git, curl and a C compiler, and the first `pnpm toolchain` takes about 2 minutes on a 12-core M2 Max:
-
-```bash
-git clone https://github.com/push-based/vite-plugin-ngp.git
-cd vite-plugin-ngp
-nvm use
-pnpm install
-pnpm toolchain
-pnpm dev
-```
-
-`pnpm dev` starts it at `http://localhost:5173`. Edit a template under `playground/src/app` and the component updates in place, keeping its state.
 
 ## Next
 

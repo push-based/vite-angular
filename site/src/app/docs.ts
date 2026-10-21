@@ -16,7 +16,7 @@ export interface Doc {
 
 /**
  * Sidebar sections, in order. Guide: setup and the core model. Features: one page per capability
- * (styles, type-checking, Vitest, i18n, ...). Project: status, building ngp, performance.
+ * (styles, type-checking, Vitest, i18n, ...). Project: status, performance, changelog.
  */
 export const SECTIONS = ['Guide', 'Features', 'Project'] as const;
 
@@ -46,7 +46,6 @@ export const DOCS: DocEntry[] = [
   {path: 'status', label: 'Status and limits', section: 'Project', load: () => import('../../content/status.md').then((m) => m.default)},
   {path: 'performance', label: 'Performance', section: 'Project', load: () => import('../../content/performance.md').then((m) => m.default)},
   {path: 'benchmarks', label: 'Benchmarks: real apps', section: 'Project', load: () => import('../../content/benchmarks.md').then((m) => m.default)},
-  {path: 'building-ngp', label: 'Building ngp', section: 'Project', load: () => import('../../content/building-ngp.md').then((m) => m.default)},
   {path: 'changelog', label: 'Changelog', section: 'Project', load: () => import('../../content/changelog.md').then((m) => m.default)},
 ];
 

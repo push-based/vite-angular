@@ -35,45 +35,25 @@ A first version on top of a prototype compiler. Everything below was checked in 
 
 ## Try it
 
-You need macOS or Linux (Windows only through WSL 2), Node 26, pnpm 10, git, curl and a C compiler. You don't need Rust, Bazel or an Angular checkout: the build installs its own Rust inside the repo and leaves your system alone.
+You need macOS or Linux, Node 26, and every `@angular/*` package pinned to exactly `22.3.0-next.2`.
 
 ```bash
-git clone https://github.com/push-based/vite-plugin-ngp.git
+npm install -D @push-based/vite-plugin-ngp vite@8.3.4
 ```
 
-```bash
-cd vite-plugin-ngp
+```ts
+// vite.config.ts
+import {defineConfig} from 'vite';
+import {ngp} from '@push-based/vite-plugin-ngp';
+
+export default defineConfig({
+  plugins: [ngp()],
+});
 ```
 
-```bash
-nvm use
-```
+[Getting started](https://push-based.github.io/vite-plugin-ngp/getting-started/) has the rest: the `index.html` Vite starts from, and which tsconfig the plugin reads. If you're coming from `ng build`, [Migrating from ng build](https://push-based.github.io/vite-plugin-ngp/migrating-from-ng-build/) says where each option goes.
 
-```bash
-pnpm install
-```
-
-```bash
-pnpm toolchain
-```
-
-```bash
-pnpm dev
-```
-
-`pnpm toolchain` builds ngp from Angular's source. It takes about 2 minutes the first time on a 12-core M2 Max, and later runs reuse their caches. `pnpm dev` starts the playground at http://localhost:5173, rendered on the server and hydrated in the browser. Edit any `.html` file under `playground/src/app` and the component updates in place, keeping its state.
-
-For a production build, served by Node at http://localhost:4000:
-
-```bash
-pnpm playground:build
-```
-
-```bash
-pnpm --filter playground start
-```
-
-To use the plugin in your own app, `npm install -D @push-based/vite-plugin-ngp` and follow [Getting started](https://push-based.github.io/vite-plugin-ngp/getting-started/). If you're coming from `ng build`, [Migrating from ng build](https://push-based.github.io/vite-plugin-ngp/migrating-from-ng-build/) says where each option goes.
+To run the playground in this repo, or to work on the plugin, [docs/building.md](docs/building.md) builds ngp from a clone.
 
 ## How it works
 

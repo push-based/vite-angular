@@ -21,7 +21,8 @@ When you add or change anything a user of the plugin would see, update the match
 | A number measured with `bench/` on the generated apps | `site/content/performance.md`, and the figures: `node bench/charts.mjs` redraws `site/content/charts/` from the result files |
 | A number measured with `bench/` on a real app, or how the real apps are set up | `site/content/benchmarks.md`, its figures (same command), and `bench/README.md` |
 | What works, what doesn't, a new limit or a fixed one | `site/content/status.md` |
-| Setup steps, required versions, the toolchain | `site/content/getting-started.md`, `site/content/building-ngp.md` |
+| Setup steps, required versions | `site/content/getting-started.md` |
+| How the repo builds ngp, `toolchain/`, what goes in the package | `docs/building.md` |
 | A number on the home page, or the home page's claims | `site/src/app/pages/home.ts` and `home.html` |
 | Anything above that a user would notice | also a line in `site/content/changelog.md`, under today's date, linking to the page that documents it |
 | A design choice | an entry in `docs/decisions.md`, and `docs/design.md` |

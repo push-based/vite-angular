@@ -66,7 +66,7 @@ npm login
 ```
 
 ```bash
-npm publish first-release/vite-plugin-ngp-0.1.0.tgz
+npm publish ./first-release/vite-plugin-ngp-0.1.0.tgz
 ```
 
 `gh run download` without a run id asks which run to take: pick the Publish run for `v0.1.0`. This first version has no provenance; every version the workflow publishes does. After the trusted publisher is saved, set the package's publishing access on npmjs.com to require two-factor authentication and disallow tokens, so only the workflow can publish.

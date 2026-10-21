@@ -36,6 +36,18 @@
     },
     "releaseTag": {
       "pattern": "v{version}"
+    },
+    "conventionalCommits": {
+      "types": {
+        "build": {
+          "semverBump": "none",
+          "changelog": {
+            "title": "📦 Build",
+            "hidden": false
+          }
+        }
+      }
     }
-  }
+  },
+  "analytics": false
 }
